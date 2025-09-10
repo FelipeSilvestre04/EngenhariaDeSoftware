@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test.js",
+    "prepare": "husky"
   },
   "repository": {
     "type": "git",
@@ -16,5 +17,10 @@
     "url": "https://github.com/FelipeSilvestre04/EngenhariaDeSoftware/issues"
   },
   "homepage": "https://github.com/FelipeSilvestre04/EngenhariaDeSoftware#readme",
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "husky": "^9.1.7"
+  }
 }
