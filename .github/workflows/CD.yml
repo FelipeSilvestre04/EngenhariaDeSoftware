@@ -20,12 +20,12 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Build da imagem Docker
-      run: docker build -t tassoedcc/secretarIA:${{ github.sha }} .
+      run: docker build -t tassoedcc/secretar_ia:${{ github.sha }} .
 
     - name: Push da imagem para Docker Hub
-      run: docker push tassoedcc/secretarIA:${{ github.sha }}
+      run: docker push tassoedcc/secretar_ia:${{ github.sha }}
 
     - name: Tag 'latest'
       run: |
-        docker tag tassoedcc/secretarIA:${{ github.sha }} tassoedcc/secretarIA:latest
-        docker push tassoedcc/secretarIA:latest
+        docker tag tassoedcc/secretar_ia:${{ github.sha }} tassoedcc/secretar_ia:latest
+        docker push tassoedcc/secretar_ia:latest
