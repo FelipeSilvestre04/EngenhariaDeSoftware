@@ -1,5 +1,6 @@
-import {test, describe} from "node:test";
-import assert from "node:assert";
+const {test, describe} = require("node:test");
+const assert = require("node:assert");
+
 
 describe("Test", () => {
     test("hello bro", ()=>{
