@@ -1,18 +1,21 @@
-# Usar imagem base oficial do Node
+# Imagem base Node
 FROM node:18-alpine
 
-# Criar diretório da aplicação
+# Diretório da aplicação
 WORKDIR /app
 
 # Copiar dependências e instalar
 COPY package*.json ./
-RUN npm ci --only=production --ignore-scripts
+# Instalar dependências
+RUN npm install --production --ignore-scripts
 
-# Copiar restante do código
+
+# Copiar o restante do código
 COPY . .
 
-# Porta usada pela app
-EXPOSE 3000
+# Expor porta (Render define $PORT)
+ENV PORT=10000
+EXPOSE $PORT
 
 # Comando para iniciar a app
 CMD ["node", "src/index.js"]
