@@ -11,8 +11,9 @@ RUN npm ci --only=production --ignore-scripts
 # Copiar restante do código
 COPY . .
 
-# Porta usada pela app
-EXPOSE 3000
+# Expor porta (Render define a porta via env $PORT)
+ENV PORT=10000
+EXPOSE $PORT
 
 # Comando para iniciar a app
 CMD ["node", "src/index.js"]
