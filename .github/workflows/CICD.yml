@@ -52,3 +52,11 @@ jobs:
       run: |
         docker tag tassoedcc/secretar_ia:${{ github.sha }} tassoedcc/secretar_ia:latest
         docker push tassoedcc/secretar_ia:latest
+    
+  deploy-to-render:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render Deploy
+        run: |
+          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
