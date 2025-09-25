@@ -9,7 +9,7 @@ dotenv.config();
 export const createModel = (model_name, temperature) => new ChatGroq({
     apiKey: process.env.GROQ_API_KEY,
     model: model_name,
-    temperature: temperature
+    temperature: temperature,
 });
 
 export async function consulta(sys_prompt, prompt, modelInstance){
