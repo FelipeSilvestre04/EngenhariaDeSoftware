@@ -14,7 +14,7 @@ export const config = {
     },
     llm: {
         apiKey: process.env.GROQ_API_KEY,
-        defaultModel: 'openai/gpt-oss-120b',
+        defaultModel: 'qwen/qwen3-32b',
         defaultTemperature: 0.3,
     },
 };
