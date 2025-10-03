@@ -4,7 +4,7 @@ import {LLMService} from "../services/LLMService.js"
 // importante saber: protocolo HTTP
 
 export class LLMController{
-    constructor(apiKey){
+    constructor(apiKey, temperature, modelName){
         this.llmService = new LLMService(apiKey);
         this.llmService.createModel(temperature, modelName);
     }
@@ -29,7 +29,7 @@ export class LLMController{
                 res.writeHead(500, { 'Content-Type': 'application/json'});
                 res.end(JSON.stringify({error: result.error}));
             }
-            
+
         } catch (error) {
             res.writeHead(500, {'Content-Type': 'application/json'});
             res.end(JSON.stringify({error: error.message}))
