@@ -4,9 +4,9 @@ import {LLMService} from "../services/LLMService.js"
 // importante saber: protocolo HTTP
 
 export class LLMController{
-    constructor(apiKey, temperature, modelName){
-        this.llmService = new LLMService(apiKey);
-        this.llmService.createModel(temperature, modelName);
+    constructor(config){
+        this.llmService = new LLMService(config.llm.apiKey);
+        this.llmService.createModel(config.llm.defaultTemperature, config.llm.defaultModel);
     }
 
     async handleConsulta(req, res){

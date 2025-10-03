@@ -6,8 +6,8 @@ import {LLMController} from '../controllers/LLMController.js'
 // identifica por exemplo se o metodo é GET e se requisita o resultado de uma consulta
 
 export class LLMRoutes {
-    construct(apiKey, temperature, modelName) {
-        llmController = new LLMController(apiKey, temperature, modelName);
+    construct(config) {
+        llmController = new LLMController(config);
     }
 
     async handle(req, res){
