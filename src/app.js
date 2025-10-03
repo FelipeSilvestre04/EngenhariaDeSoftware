@@ -1,4 +1,4 @@
-import { LLMRoutes } from "./modules/llm";
+import { LLMRoutes } from "./modules/llm/index.js";
 
 export class AppRouter {
     constructor(config){
