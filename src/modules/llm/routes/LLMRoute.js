@@ -6,15 +6,15 @@ import {LLMController} from '../controllers/LLMController.js'
 // identifica por exemplo se o metodo é GET e se requisita o resultado de uma consulta
 
 export class LLMRoutes {
-    construct(config) {
-        llmController = new LLMController(config);
+    constructor(config) {
+        this.llmController = new LLMController(config);
     }
 
     async handle(req, res){
         // descubro o caminho e o metodo
         const url = new URL(req.url, `http://${req.headers.host}`);
         const pathname = url.pathname;
-        const method = url.method;
+        const method = req.method;
 
         if (pathname === '/llm/consulta' && method === 'GET'){
             return await this.llmController.handleConsulta(req, res);
