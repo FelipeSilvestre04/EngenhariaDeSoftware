@@ -1,4 +1,5 @@
 import { LLMRoutes } from "./modules/llm/index.js";
+import { CalendarRoute } from "./modules/calendar/routes/CalendarRoute.js";
 
 export class AppRouter {
     constructor(config){
@@ -9,6 +10,7 @@ export class AppRouter {
     initializeModules(){
         return {
             llm: new LLMRoutes(this.config),
+            calendar: new CalendarRoute(this.config),
         };
     }
 
@@ -23,6 +25,10 @@ export class AppRouter {
                 message: 'Server is running',
                 timestamp: new Date().toISOString()
             }));
+        }
+
+        if (pathname.startsWith('/calendar')){
+            return await this.modules.calendar.handle(request, response);
         }
 
         if (pathname.startsWith('/llm')) {
