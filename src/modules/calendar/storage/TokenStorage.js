@@ -10,7 +10,7 @@ export class TokenStorage {
         this.defaultUserId = 'default';
     }
 
-    async saveTokens(userId = this.defaultUserId, tokens){
+    async saveTokens(tokens, userId = this.defaultUserId){
         const TOKEN_PATH = path.join(__dirname, `tokens-${userId}.json`);
         await fs.writeFile(TOKEN_PATH, JSON.stringify(tokens, null, 2));
     }
@@ -34,6 +34,18 @@ export class TokenStorage {
             return true;
         } catch {
             return false;
+        }
+    }
+
+    async deleteTokens(){
+        const TOKEN_PATH = path.join(__dirname, `tokens-${userId}.json`);
+
+        if (this.hasTokens()){
+            try{
+                await fs.rm(TOKEN_PATH);
+            } catch (error) {
+                throw new Error(`Não foi possível deletar tokens. Erro: ${error.message}`);
+            }
         }
     }
 }
