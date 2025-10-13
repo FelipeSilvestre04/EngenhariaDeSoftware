@@ -1,5 +1,5 @@
 import { google } from 'googleapis';
-import { TokenStorage } from '../storage/TokenStorage';
+import { TokenStorage } from '../storage/TokenStorage.js';
 
 
 // funcoes basicas do calendar tool
@@ -7,7 +7,7 @@ export class CalendarModel {
     constructor(config){
         // criar storage?
         this.tokenStorage = new TokenStorage();
-        this.oauth2Client = new google.auth.Oauth2(
+        this.oauth2Client = new google.auth.OAuth2(
             config.googleCalendar.clientId,
             config.googleCalendar.clientSecret,
             config.googleCalendar.redirectUri
@@ -98,7 +98,7 @@ export class CalendarModel {
     }
 
     async logout(){
-        this.tokenStorage.deleteTokens();
+        await this.tokenStorage.deleteTokens();
         this.oauth2Client.setCredentials({});
         this.calendar = null;
     }

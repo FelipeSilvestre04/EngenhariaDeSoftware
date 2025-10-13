@@ -1,8 +1,8 @@
-import { CalendarController } from "../controllers/CalendarController";
+import { CalendarController } from "../controllers/CalendarController.js";
 
 export class CalendarRoute {
     constructor (config){
-        this.controller = CalendarController(config);
+        this.controller = new CalendarController(config);
     }
 
     async handle(req, res){
@@ -19,7 +19,7 @@ export class CalendarRoute {
         }
 
         if (pathname === '/calendar/events' && method === 'GET') {
-            
+
         }
     }
 }
