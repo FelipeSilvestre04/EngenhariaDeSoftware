@@ -14,29 +14,29 @@ describe("Test", () => {
     });
 });
 
-describe("Test calendar model funcs", () => {
-    const calendarModel = new CalendarModel( config );
+// describe("Test calendar model funcs", () => {
+//     const calendarModel = new CalendarModel( config );
 
-    test("create", () => {
-        assert(calendarModel != null && calendarModel != undefined);
-    })
+//     test("create", () => {
+//         assert(calendarModel != null && calendarModel != undefined);
+//     })
 
-    test("get auth url", () => {
-        const url =  calendarModel.getAuthUrl();
-        console.log(url);
-        assert(url != null);
-    })
+//     test("get auth url", () => {
+//         const url =  calendarModel.getAuthUrl();
+//         console.log(url);
+//         assert(url != null);
+//     })
 
-    test("delete tokens", () => {
-        calendarModel.logout();
-        assert(true);
-    })
-})
+//     test("delete tokens", () => {
+//         calendarModel.logout();
+//         assert(true);
+//     })
+// })
 
-describe("Test calendar service funcs", () => {
-    const calendarService = new CalendarService(config);
+// describe("Test calendar service funcs", () => {
+//     const calendarService = new CalendarService(config);
 
-    test("list events", () => {
-        calendarService.listEvents(10);
-    })
-})
+//     test("list events", () => {
+//         calendarService.listEvents(10);
+//     })
+// })

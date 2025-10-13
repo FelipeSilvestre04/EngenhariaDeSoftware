@@ -77,4 +77,35 @@ export class CalendarController {
             }))
         }
     }
+
+    async checkStatus(req, res){
+        try{
+            const isAuth = this.service.checkAuthentication();
+
+            res.writeHead(200, {'Content-Type': 'application/json'});
+            res.end(JSON.stringify({
+                authenticated: isAuth,
+                message: isAuth ? 'Usuário autenticado' : 'Usuário não autenticado'
+            }));
+        } catch (error) {
+            res.writeHead(500, { 'Content-Type': 'application/json'});
+            res.end(JSON.stringify({ error: error.message }));
+        }
+    }
+
+    async logout(request, response) {
+        try {
+            await this.calendarService.logout();
+            
+            response.writeHead(200, { 'Content-Type': 'application/json' });
+            response.end(JSON.stringify({ 
+                success: true,
+                message: 'Logout realizado com sucesso' 
+            }));
+        } catch (error) {
+            response.writeHead(500, { 'Content-Type': 'application/json' });
+            response.end(JSON.stringify({ error: error.message }));
+        }
+    }
+    
 }
