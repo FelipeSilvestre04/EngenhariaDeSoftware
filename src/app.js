@@ -14,6 +14,10 @@ export class AppRouter {
         };
     }
 
+    getUserIdFromCookie(req) {
+        return this.modules.calendar.controller.getUserIdFromRequest(req)
+    }
+
     async handle(req, res){
         const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
 
@@ -27,7 +31,24 @@ export class AppRouter {
             }));
         }
 
-        if (pathname.startsWith('/calendar')){
+        if (pathname.startsWith('/calendar')) {
+            // Rotas públicas (não precisam de inicialização)
+            const publicRoutes = ['/calendar/auth', '/calendar/oauth2callback'];
+            const isPublicRoute = publicRoutes.some(route => pathname === route);
+
+            if (!isPublicRoute) {
+                // Rotas protegidas - inicializa calendar
+                const userId = this.getUserIdFromCookie(req);
+                if (userId) {
+                    try {
+                        await this.modules.calendar.controller.service.initialize(userId);
+                        console.log(`✅ Calendar inicializado para: ${userId}`);
+                    } catch (error) {
+                        console.error(`❌ Erro ao inicializar calendar: ${error.message}`);
+                    }
+                }
+            }
+
             return await this.modules.calendar.handle(req, res);
         }
 

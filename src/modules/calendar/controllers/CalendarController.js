@@ -5,7 +5,6 @@ export class CalendarController {
     constructor(config){
         this.service = new CalendarService(config);
         this.sessionManager = new SessionManager();
-        this.service.initialize();
     }
 
     // Helper para extrair cookies

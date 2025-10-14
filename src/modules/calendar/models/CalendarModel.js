@@ -1,7 +1,7 @@
 import { google } from 'googleapis';
 import { config } from '../../../shared/config/index.js';
 import { TokenStorage } from '../storage/TokenStorage.js';
-
+import crypto from 'crypto';
 
 // funcoes basicas do calendar tool
 export class CalendarModel {
@@ -22,7 +22,6 @@ export class CalendarModel {
             access_type: 'offline',
             scope: [
                 ...config.googleCalendar.scopes,
-                'https://www.googleapis.com/auth/userinfo.email' // ← Pedir email
             ],
             prompt: 'consent'
         });
@@ -39,19 +38,19 @@ export class CalendarModel {
 
             // Buscar email do usuário
             const oauth2 = google.oauth2({ version: 'v2', auth: this.oauth2Client });
-            const userInfo = await oauth2.userinfo.get();
-            const userEmail = userInfo.data.email;
+
 
             // Usar email como userId
-            this.currentUserId = userEmail;
-            await this.tokenStorage.saveTokens(userEmail, tokens);
+            const userId = crypto.randomUUID();
+            this.currentUserId = userId;
+            await this.tokenStorage.saveTokens(userId, tokens);
             
             this.calendar = google.calendar({
                 version: 'v3',
                 auth: this.oauth2Client
             });
                         
-            return { tokens, userId: userEmail };
+            return { tokens, userId: userId };
         } catch (error) {
             throw new Error(`Erro ao autenticar: ${error.message}`);
         }
