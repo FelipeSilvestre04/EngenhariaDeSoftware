@@ -28,7 +28,7 @@ export class AppRouter {
         }
 
         if (pathname.startsWith('/calendar')){
-            return await this.modules.calendar.handle(request, response);
+            return await this.modules.calendar.handle(req, res);
         }
 
         if (pathname.startsWith('/llm')) {
