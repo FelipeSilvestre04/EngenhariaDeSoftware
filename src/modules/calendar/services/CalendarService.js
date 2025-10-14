@@ -13,13 +13,13 @@ export class CalendarService {
         return this.model.getAuthUrl();
     }
 
-    handleOauthCallback(code){
+    async handleOauthCallback(code){
         if (!code){
             throw new Error("Código de autorização não fornecido.");
         }
 
         try {
-            this.model.autheticateWithCode(code);
+            await this.model.authenticateWithCode(code);
             return {
                 success: true,
                 message: 'Autenticação realizada com sucesso!'
@@ -41,4 +41,12 @@ export class CalendarService {
         console.log(items);
         return items;
     }   
+
+    async logout(){
+        try {
+            this.model.logout();
+        } catch (error) {
+            throw new Error('Erro ao deslogar!');
+        }
+    }
 }

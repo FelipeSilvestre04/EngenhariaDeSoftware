@@ -45,23 +45,28 @@ export class CalendarModel {
     }
 
     async initialize(){
-        const tokens = await this.tokenStorage.loadTokens();
+        try {
+            const tokens = await this.tokenStorage.loadTokens();
 
-        if (tokens){
-            this.oauth2Client.setCredentials(tokens);
-            this.calendar = google.calendar({
-                version: 'v3',
-                auth: this.oauth2Client
-            });
+            if (tokens){
+                this.oauth2Client.setCredentials(tokens);
+                this.calendar = google.calendar({
+                    version: 'v3',
+                    auth: this.oauth2Client
+                });
 
-            if (tokens.expiry_date && tokens.expiry_date < Date.now()){
-                await this.refreshToken();
+                if (tokens.expiry_date && tokens.expiry_date < Date.now()){
+                    await this.refreshToken();
+                }
+
+                return true;
             }
 
-            return true;
+            return false;
+        } catch (error) {
+            console.log('⚠️ Não foi possível carregar tokens:', error.message);
+            return false;
         }
-
-        return false;
     }
 
     async refreshToken(){
@@ -83,7 +88,7 @@ export class CalendarModel {
         }
 
         try {
-            const events = await this.calendar.events.list({
+            const response = await this.calendar.events.list({
               calendarId: 'primary',
               timeMin: new Date().toISOString(),
               maxResults: maxResults,
@@ -91,7 +96,21 @@ export class CalendarModel {
               orderBy: 'startTime',  
             });
 
-            return events.data.items || [];
+            const events = response.data.items || [];
+            
+            // Formatar os eventos para retornar dados mais limpos
+            return events.map(event => ({
+                id: event.id,
+                summary: event.summary || 'Sem título',
+                description: event.description || '',
+                start: event.start.dateTime || event.start.date,
+                end: event.end.dateTime || event.end.date,
+                location: event.location || '',
+                status: event.status,
+                htmlLink: event.htmlLink,
+                creator: event.creator?.email || '',
+                attendees: event.attendees?.map(a => a.email) || []
+            }));
         } catch (error) {
             throw new Error(`Não foi possível retornar lista de eventos! Erro: ${error.message}`);
         }

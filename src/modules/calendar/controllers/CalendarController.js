@@ -69,7 +69,7 @@ export class CalendarController {
                 count: events.length,
                 events: events
             }));
-        } catch {error} {
+        } catch (error) {
             res.writeHead(500, {'Content-Type': 'application/json'});
             res.end(JSON.stringify({
                 error: 'Erro ao buscar eventos',

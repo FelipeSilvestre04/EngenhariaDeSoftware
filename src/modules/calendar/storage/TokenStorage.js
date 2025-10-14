@@ -22,7 +22,7 @@ export class TokenStorage {
             const data = await fs.readFile(TOKEN_PATH, 'utf8');
             return JSON.parse(data);
         } catch (error) {
-            if (error.code === 'ENDENT') return null;
+            if (error.code === 'ENOENT') return null;
             throw error;
         }
     }
