@@ -28,8 +28,8 @@ export class CalendarModel {
         });
     }
 
-    async isAutheticated(){
-        return await this.tokenStorage.hasTokens();
+    async isAuthenticated(userId = 'default'){
+        return await this.tokenStorage.hasTokens(userId);
     }
 
     async authenticateWithCode(code){
@@ -51,13 +51,15 @@ export class CalendarModel {
                 auth: this.oauth2Client
             });
             
+            console.log(`✅ Tokens salvos para usuário: ${userEmail}`);
+            
             return { tokens, userId: userEmail };
         } catch (error) {
             throw new Error(`Erro ao autenticar: ${error.message}`);
         }
     }
 
-    async initialize(userId) {
+    async initialize(userId = 'default') {
         const tokens = await this.tokenStorage.loadTokens(userId);
         
         if (tokens) {
@@ -65,13 +67,17 @@ export class CalendarModel {
             this.oauth2Client.setCredentials(tokens);
             this.calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
             
+            console.log(`✅ Tokens carregados para usuário: ${userId}`);
+            
             if (tokens.expiry_date && tokens.expiry_date < Date.now()) {
+                console.log('⚠️  Token expirado, renovando...');
                 await this.refreshToken(userId);
             }
             
             return true;
         }
         
+        console.log('⚠️  Nenhum token encontrado. Usuário precisa autenticar.');
         return false;
     }
 
@@ -119,9 +125,10 @@ export class CalendarModel {
         }
     }
 
-    async logout(){
-        await this.tokenStorage.deleteTokens();
+    async logout(userId = 'default'){
+        await this.tokenStorage.deleteTokens(userId);
         this.oauth2Client.setCredentials({});
         this.calendar = null;
+        this.currentUserId = null;
     }
 }
