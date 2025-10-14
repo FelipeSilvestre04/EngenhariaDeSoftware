@@ -50,9 +50,7 @@ export class CalendarModel {
                 version: 'v3',
                 auth: this.oauth2Client
             });
-            
-            console.log(`✅ Tokens salvos para usuário: ${userEmail}`);
-            
+                        
             return { tokens, userId: userEmail };
         } catch (error) {
             throw new Error(`Erro ao autenticar: ${error.message}`);
