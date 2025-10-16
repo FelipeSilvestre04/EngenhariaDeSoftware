@@ -111,7 +111,7 @@ export class LLMService{
 
     // aqui implementar os serviços que vao utilizar processConsulta.
     async checaAgenda(){
-        const systemPrompt = "Faça a consulta na agenda do usuário e diga se está vazia, com tarefas ou lotada. Invente dados."
+        const systemPrompt = "Faça a consulta na agenda do usuário e diga se está vazia, com tarefas ou lotada."
         const userPrompt = `Como está a agenda do usuário? Me de quais as próximas atividades e o horário de cada uma`
         return await this.processConsulta(systemPrompt, userPrompt);
     }

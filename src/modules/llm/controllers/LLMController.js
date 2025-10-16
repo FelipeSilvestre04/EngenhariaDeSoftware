@@ -14,7 +14,7 @@ export class LLMController{
             // aqui é uma extração de dados qualquer da requisição. nesse caso 
             // pegando o nome do cara q fez a request.
             const url = new URL(req.url, `http://${req.headers.host}`);
-            const name = url.searchParams.get('name') || 'Tasso';
+            const name = url.searchParams.get('name') || 'usuário';
 
             const result = await this.llmService.checaAgenda(name);
 
