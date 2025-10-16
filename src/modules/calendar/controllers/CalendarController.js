@@ -1,10 +1,8 @@
 import { CalendarService } from "../services/CalendarService.js";
-import { SessionManager } from "../utils/SessionManager.js";
 
 export class CalendarController {
     constructor(config){
         this.service = new CalendarService(config);
-        this.sessionManager = new SessionManager();
     }
 
     // Helper para extrair cookies
@@ -21,12 +19,11 @@ export class CalendarController {
     // Helper para pegar userId da sessão
     getUserIdFromRequest(req) {
         const cookies = this.parseCookies(req.headers.cookie);
-        const sessionId = cookies.sessionId;
         
-        if (!sessionId) return null;
+        // Agora pegamos o userId diretamente do cookie (não mais sessionId)
+        const userId = cookies.userId;
         
-        const session = this.sessionManager.getSession(sessionId);
-        return session?.userId || null;
+        return userId || null;
     }
 
     async initiateAuth(req, res){
@@ -59,19 +56,19 @@ export class CalendarController {
             const result = await this.service.handleOauthCallback(code);
 
             if (result.success){
-                // Cria sessão com o userId (email)
-                const sessionId = this.sessionManager.createSession(result.userId);
+                console.log(`🍪 Criando cookie para userId: ${result.userId}`);
                 
-                // Define cookie com sessionId
+                // Define cookie com userId diretamente (os tokens OAuth já estão salvos em arquivo)
                 res.writeHead(200, {
                     'Content-Type': 'text/html',
-                    'Set-Cookie': `sessionId=${sessionId}; HttpOnly; Path=/; Max-Age=604800` // 7 dias
+                    'Set-Cookie': `userId=${encodeURIComponent(result.userId)}; HttpOnly; Path=/; Max-Age=604800; SameSite=Lax` // 7 dias
                 });
                 res.end(`
                     <h1>✅ Autenticação realizada com sucesso!</h1>
                     <p>Bem-vindo, ${result.userId}!</p>
-                    <p>Você já pode acessar seus eventos.</p>
-                    <a href="/calendar/events">Ver meus eventos</a>
+                    <p>Seus tokens foram salvos e persistirão mesmo após reiniciar o servidor.</p>
+                    <a href="/calendar">Ir para o menu</a> | 
+                    <a href="/llm/consulta">Ver meus eventos com IA</a>
                 `);
             } else {
                 throw new Error(result.message);
@@ -140,23 +137,16 @@ export class CalendarController {
     async logout(request, response) {
         try {
             const userId = this.getUserIdFromRequest(request);
-            const cookies = this.parseCookies(request.headers.cookie);
-            const sessionId = cookies.sessionId;
             
             // Remove tokens do usuário
             if (userId) {
                 await this.service.logout(userId);
             }
             
-            // Remove sessão
-            if (sessionId) {
-                this.sessionManager.deleteSession(sessionId);
-            }
-            
-            // Remove cookie
+            // Remove cookie userId
             response.writeHead(200, {
                 'Content-Type': 'application/json',
-                'Set-Cookie': 'sessionId=; HttpOnly; Path=/; Max-Age=0' // Remove cookie
+                'Set-Cookie': 'userId=; HttpOnly; Path=/; Max-Age=0' // Remove cookie
             });
             response.end(JSON.stringify({
                 success: true,

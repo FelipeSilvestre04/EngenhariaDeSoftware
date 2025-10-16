@@ -6,8 +6,8 @@ import {LLMController} from '../controllers/LLMController.js'
 // identifica por exemplo se o metodo é GET e se requisita o resultado de uma consulta
 
 export class LLMRoutes {
-    constructor(config) {
-        this.llmController = new LLMController(config);
+    constructor(config, calendarService) {
+        this.llmController = new LLMController(config, calendarService);
     }
 
     async handle(req, res){

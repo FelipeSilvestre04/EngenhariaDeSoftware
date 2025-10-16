@@ -4,8 +4,8 @@ import {LLMService} from "../services/LLMService.js"
 // importante saber: protocolo HTTP
 
 export class LLMController{
-    constructor(config){
-        this.llmService = new LLMService(config.llm.apiKey);
+    constructor(config, calendarService){
+        this.llmService = new LLMService(config.llm.apiKey, calendarService);
         this.llmService.createModel(config.llm.defaultTemperature, config.llm.defaultModel);
     }
 
