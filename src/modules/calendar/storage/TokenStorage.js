@@ -37,10 +37,11 @@ export class TokenStorage {
         }
     }
 
-    async deleteTokens(){
+    // Dentro da classe TokenStorage
+    async deleteTokens(userId = this.defaultUserId){ // ADICIONADO (userId = this.defaultUserId)
         const TOKEN_PATH = path.join(__dirname, `tokens-${userId}.json`);
 
-        if (this.hasTokens()){
+        if (await this.hasTokens(userId)){ // Passando userId aqui também
             try{
                 await fs.rm(TOKEN_PATH);
             } catch (error) {

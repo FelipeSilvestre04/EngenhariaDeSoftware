@@ -121,4 +121,18 @@ export class CalendarModel {
         this.oauth2Client.setCredentials({});
         this.calendar = null;
     }
+    async createEvent(event) {
+    if (!this.calendar) {
+        throw new Error("Usuário não autenticado!");
+    }
+    try {
+        const response = await this.calendar.events.insert({
+            calendarId: 'primary',
+            resource: event,
+        });
+        return response.data;
+    } catch (error) {
+        throw new Error(`Não foi possível criar o evento: ${error.message}`);
+    }
+}
 }

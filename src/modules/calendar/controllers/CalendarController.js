@@ -1,3 +1,4 @@
+// src/modules/calendar/controllers/CalendarController.js
 import { CalendarService } from "../services/CalendarService.js";
 
 export class CalendarController {
@@ -9,15 +10,11 @@ export class CalendarController {
     async initiateAuth(req, res){
         try{
             const authUrl = this.service.getAuthenticationUrl();
-
             res.writeHead(302, { Location: authUrl });
             res.end();
         } catch(error) {
             res.writeHead(500, {'Content-Type': 'application/json'});
-            res.end(JSON.stringify({
-                error: "Erro ao iniciar autenticação",
-                message: error.message
-            }));
+            res.end(JSON.stringify({ error: "Erro ao iniciar autenticação", message: error.message }));
         }
     }
 
@@ -25,26 +22,14 @@ export class CalendarController {
         try {
             const url = new URL(req.url, `http://${req.headers.host}`);
             const code = url.searchParams.get('code');
-            const error = url.searchParams.get('error');
+            if (!code) throw new Error("Código de autorização não encontrado.");
 
-            if (error){
-                res.writeHead(403, { 'Content-Type': 'text/html'});
-                res.end('<h1>Acesso Negado!</h1><p>Você precisa permitir acesso ao Google Calendar!</p>');
-                return;
-            }
+            await this.service.handleOauthCallback(code);
 
-            const result = await this.service.handleOauthCallback(code);
-
-            if (result.success){
-                res.writeHead(200, {'Content-Type': 'text/html'});
-                res.end(`
-                    <h1>✅ Autenticação realizada com sucesso!</h1>
-                    <p>Você já pode acessar seus eventos.</p>
-                    <a href="/calendar/events">Ver meus eventos</a>
-                `);
-            } else {
-                throw new Error(result.message);
-            }
+            // CORREÇÃO IMPORTANTE: Redireciona de volta para a sua aplicação no frontend!
+            res.writeHead(302, { Location: 'http://localhost:5173' });
+            res.end();
+            
         } catch (error) {
             res.writeHead(500, { 'Content-Type': 'text/html' });
             res.end(`<h1>Erro na autenticação</h1><p>${error.message}</p>`);
@@ -56,56 +41,43 @@ export class CalendarController {
             const isAuth = await this.service.checkAuthentication();
 
             if(!isAuth){
-                res.writeHead(302, { Location: '/calendar/auth'});
-                res.end();
-                return;
+                res.writeHead(401, {'Content-Type': 'application/json'});
+                return res.end(JSON.stringify({ success: false, error: 'Usuário não autenticado' }));
             }
 
             const events = await this.service.listEvents();
 
             res.writeHead(200, {'Content-Type': 'application/json'});
-            res.end(JSON.stringify({
-                success: true,
-                count: events.length,
-                events: events
-            }));
+            res.end(JSON.stringify({ success: true, count: events.length, events: events }));
         } catch (error) {
             res.writeHead(500, {'Content-Type': 'application/json'});
-            res.end(JSON.stringify({
-                error: 'Erro ao buscar eventos',
-                message: error.message
-            }))
+            res.end(JSON.stringify({ error: 'Erro ao buscar eventos', message: error.message }));
         }
     }
 
     async checkStatus(req, res){
         try{
-            const isAuth = this.service.checkAuthentication();
+            // CORREÇÃO IMPORTANTE: Faltava o 'await' para esperar a verificação.
+            const isAuth = await this.service.checkAuthentication();
 
             res.writeHead(200, {'Content-Type': 'application/json'});
-            res.end(JSON.stringify({
-                authenticated: isAuth,
-                message: isAuth ? 'Usuário autenticado' : 'Usuário não autenticado'
-            }));
+            res.end(JSON.stringify({ authenticated: isAuth }));
         } catch (error) {
             res.writeHead(500, { 'Content-Type': 'application/json'});
             res.end(JSON.stringify({ error: error.message }));
         }
     }
 
-    async logout(request, response) {
+    async logout(req, res) {
         try {
-            await this.calendarService.logout();
+            // CORREÇÃO IMPORTANTE: Estava usando o nome errado (this.calendarService).
+            await this.service.logout();
             
-            response.writeHead(200, { 'Content-Type': 'application/json' });
-            response.end(JSON.stringify({ 
-                success: true,
-                message: 'Logout realizado com sucesso' 
-            }));
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: true, message: 'Logout realizado com sucesso' }));
         } catch (error) {
-            response.writeHead(500, { 'Content-Type': 'application/json' });
-            response.end(JSON.stringify({ error: error.message }));
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: error.message }));
         }
     }
-    
 }

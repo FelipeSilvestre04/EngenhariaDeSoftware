@@ -93,3 +93,44 @@ body {
   background-color: #e0e0e0;
   box-shadow: inset 0 3px 5px rgba(0,0,0,.125);
 }
+
+/* Adicione no final de client/src/App.css */
+
+/* --- Estilo para o ponto de evento no calendário --- */
+.event-dot {
+  height: 8px;
+  width: 8px;
+  background-color: #FEBE10; /* Nosso amarelo */
+  border-radius: 50%;
+  margin: 2px auto 0; /* Centraliza o ponto abaixo do número */
+}
+
+/* Adicione no final de client/src/App.css */
+
+/* --- Estilos para as bolhas de chat --- */
+.message {
+  padding: 0.8rem 1rem;
+  border-radius: 18px;
+  max-width: 70%;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.ai-message {
+  background-color: #f1f0f0;
+  align-self: flex-start; /* Alinha à esquerda */
+  border-bottom-left-radius: 4px;
+}
+
+.user-message {
+  background-color: #ffea00; /* Um azul para diferenciar */
+  color: white;
+  align-self: flex-end; /* Alinha à direita */
+  border-bottom-right-radius: 4px;
+}
+
+/* Faz a área de mensagens se comportar como um chat de verdade */
+.messages-area {
+    display: flex;
+    flex-direction: column;
+}

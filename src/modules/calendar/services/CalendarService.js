@@ -49,4 +49,19 @@ export class CalendarService {
             throw new Error('Erro ao deslogar!');
         }
     }
+
+    async createEvent(summary, start, end) {
+    const event = {
+        summary: summary,
+        start: {
+            dateTime: start,
+            timeZone: 'America/Sao_Paulo', // Importante ajustar para o fuso horário correto
+        },
+        end: {
+            dateTime: end,
+            timeZone: 'America/Sao_Paulo',
+        },
+    };
+    return await this.model.createEvent(event);
+}
 }

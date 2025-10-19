@@ -1,41 +1,47 @@
-import {LLMModel} from "../models/LLMModel.js"
+// src/modules/llm/services/LLMService.js
+import { LLMModel } from "../models/LLMModel.js";
 
-// o serviço é o que vai ser usado pelo controller. ele executará o modelo 
-// e irá usá-lo para entregar um serviço específico.
-
-export class LLMService{
-    constructor(apiKey){
+export class LLMService {
+    constructor(apiKey) {
         this.model = new LLMModel(apiKey);
     }
 
-    createModel(temperature, modelName){
+    createModel(temperature, modelName) {
         this.model.initialize(modelName, temperature);
     }
 
-    async processConsulta(systemPrompt, userPrompt){
+    async processConsulta(systemPrompt, userPrompt) {
         try {
             const response = await this.model.query(systemPrompt, userPrompt);
-            
-            return {
-                success: true,
-                content: response.content,
-                metaData: {
-                    timeStamp: new Date().toISOString()
-                }
-            };
-        } catch (error){
-            return {
-                success: false,
-                error: error.message
+            let content = response.content;
+            // Limpeza para remover tags de pensamento
+            if (content.includes('</think>')) {
+                content = content.split('</think>')[1].trim();
             }
+            return { success: true, content: content };
+        } catch (error) {
+            return { success: false, error: error.message };
         }
     }
 
-    // aqui implementar os serviços que vao utilizar processConsulta.
-    async checaAgenda(name){
-        const systemPrompt = "Faça a consulta na agenda do usuário e diga se está vazia, com tarefas ou lotada. Invente dados."
-        const userPrompt = `Como está a agenda do ${name}?`
+    // FERRAMENTA 1: Analisa a intenção e retorna JSON
+    async analyzeIntent(userPrompt) {
+        const currentDate = new Date().toISOString();
+        const systemPrompt = `
+            Sua tarefa é analisar o pedido do usuário e determinar a intenção.
+            A data e hora atual é: ${currentDate}. Responda SEMPRE em formato JSON.
+            Opções de intenção: 'CRIAR_EVENTO' ou 'RESPONDER_PERGUNTA'.
+            Se a intenção for 'CRIAR_EVENTO', extraia "summary", "start_time" (ISO), e "end_time" (ISO).
+            Se não houver end_time, assuma 1 hora após o início.
+            Não inclua explicações ou tags <think> fora do objeto JSON.
+        `;
         return await this.processConsulta(systemPrompt, userPrompt);
     }
 
+    // FERRAMENTA 2: Gera uma resposta em português a partir de um contexto
+    async generateNaturalResponse(contextualPrompt) {
+        // A CORREÇÃO ESTÁ AQUI:
+        const systemPrompt = `Você é um assistente pessoal prestativo e conciso. Responda à pergunta do usuário de forma direta, baseado apenas no contexto fornecido. Não use formatação Markdown, como asteriscos para negrito.`;
+        return await this.processConsulta(systemPrompt, contextualPrompt);
+    }
 }

@@ -2,36 +2,56 @@
 import { useState } from 'react';
 
 export function ChatWindow() {
-  // Estados para controlar o input do usuário, a resposta, o loading e erros
+  // 1. MUDANÇA PRINCIPAL: "messages" agora é um array de objetos.
+  // Começamos com a mensagem inicial da IA.
+  const [messages, setMessages] = useState([
+    { id: 1, text: 'Olá! Sou sua assistente de IA. Faça uma pergunta sobre sua agenda.', sender: 'ai' }
+  ]);
   const [input, setInput] = useState('');
-  const [response, setResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
 
-  // Função chamada ao clicar no botão
   const handleSubmit = async () => {
-    if (!input) {
-      setError('Por favor, digite um nome para consultar a agenda.');
-      return;
-    }
+    if (!input) return; // Não faz nada se o input estiver vazio
 
+    // 2. ADICIONA A MENSAGEM DO USUÁRIO NA TELA IMEDIATAMENTE
+    const userMessage = {
+      id: Date.now(),
+      text: input,
+      sender: 'user'
+    };
+    setMessages(prevMessages => [...prevMessages, userMessage]);
+
+    // 3. LIMPA O INPUT
+    setInput('');
     setIsLoading(true);
-    setError(null);
-    setResponse('');
 
     try {
-      // A chamada para o backend que já tínhamos feito
-      const res = await fetch(`/llm/consulta?name=${input}`);
+      const res = await fetch(`/llm/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: input }),
+      });
 
-      if (!res.ok) {
-        throw new Error(`Erro na rede: ${res.statusText}`);
-      }
+      if (!res.ok) throw new Error(`Erro na rede: ${res.statusText}`);
 
       const data = await res.json();
-      setResponse(data.answer);
+
+      // 4. ADICIONA A RESPOSTA DA IA NA TELA
+      const aiMessage = {
+        id: Date.now() + 1, // id ligeiramente diferente para evitar colisões
+        text: data.answer,
+        sender: 'ai'
+      };
+      setMessages(prevMessages => [...prevMessages, aiMessage]);
 
     } catch (err) {
-      setError(`Falha ao buscar resposta: ${err.message}`);
+      const errorMessage = {
+        id: Date.now() + 1,
+        text: `Desculpe, ocorreu um erro: ${err.message}`,
+        sender: 'ai',
+        isError: true
+      };
+      setMessages(prevMessages => [...prevMessages, errorMessage]);
     } finally {
       setIsLoading(false);
     }
@@ -41,28 +61,27 @@ export function ChatWindow() {
     <div className="chat-window-container">
       <h2>Chat com IA</h2>
       <div className="messages-area">
-        {/* Mensagem inicial */}
-        <div className="ai-message">Olá! Sou sua assistente de IA. Digite um nome para consultar a agenda.</div>
-
-        {/* Mostra o status de carregamento */}
-        {isLoading && <p>Consultando a agenda...</p>}
-        
-        {/* Mostra mensagens de erro */}
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        
-        {/* Mostra a resposta da IA quando ela chegar */}
-        {response && (
-          <div className="ai-message" style={{ marginTop: '1rem' }}>
-            <p>{response}</p>
+        {/* 5. RENDERIZA TODAS AS MENSAGENS DO ARRAY */}
+        {messages.map(message => (
+          <div
+            key={message.id}
+            className={`message ${message.sender === 'ai' ? 'ai-message' : 'user-message'}`}
+            style={{ color: message.isError ? 'red' : 'inherit' }}
+          >
+            {message.text}
           </div>
-        )}
+        ))}
+        {/* Mostra um indicador de "digitando..." */}
+        {isLoading && <div className="ai-message">...</div>}
       </div>
       <div className="input-area">
         <input
           type="text"
-          placeholder="Digite um nome..."
+          placeholder="Pergunte sobre sua agenda..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          // Permite enviar com a tecla Enter
+          onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
           disabled={isLoading}
         />
         <button onClick={handleSubmit} disabled={isLoading}>
