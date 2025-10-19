@@ -85,12 +85,19 @@ body {
 }
 
 /* --- Coluna do Calendário --- */
+/* --- Coluna do Calendário --- */
 .calendar-view-container {
   flex: 0.3; /* Ocupa 30% do espaço */
   padding: 2rem;
   border-left: 1px solid #e9ecef;
+
+  /* ADIÇÕES AQUI */
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 4rem); /* Altura total da tela menos o padding */
 }
 
 .calendar-view-container h2 {
   margin-top: 0;
+  flex-shrink: 0; /* Impede que o título seja esmagado */
 }
