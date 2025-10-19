@@ -37,15 +37,15 @@ export function CalendarView() {
     return <p>Carregando calendário...</p>;
   }
 
-  // O componente Calendar precisa estar dentro de um elemento com altura definida.
-  // Nosso CSS já cuida disso no container pai.
+  // A MUDANÇA ESTÁ AQUI: um div pai com altura de 100%
   return (
-    <Calendar
-      localizer={localizer}
-      events={events}
-      startAccessor="start"
-      endAccessor="end"
-      style={{ height: '100%', width: '100%' }}
-    />
+    <div style={{ height: '100%' }}>
+      <Calendar
+        localizer={localizer}
+        events={events}
+        startAccessor="start"
+        endAccessor="end"
+      />
+    </div>
   );
 }
