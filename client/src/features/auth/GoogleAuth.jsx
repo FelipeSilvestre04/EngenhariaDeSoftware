@@ -31,33 +31,26 @@ export function GoogleAuth() {
     window.location.reload();
   };
 
-  if (isLoading) {
-    return (
-      <div className="calendar-view-container">
-        <p>Verificando autenticação...</p>
-      </div>
-    );
-  }
-
-  if (isAuthenticated) {
-    return (
-      <div className="calendar-view-container">
-        {/* Este div é crucial. Ele cresce e dá altura para o CalendarView */}
-        <div style={{ flexGrow: 1 }}>
-          <CalendarView />
-        </div>
-        <button onClick={handleLogout} style={{ marginTop: '1rem', flexShrink: 0 }}>
-          Desconectar do Google
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="calendar-view-container">
-      <h3>Conectar Calendário</h3>
-      <p>Conecte sua conta para ver seus eventos.</p>
-      <button onClick={handleLogin}>Conectar com Google</button>
+      {isLoading && <p>Verificando autenticação...</p>}
+
+      {!isLoading && isAuthenticated && (
+        <>
+          <CalendarView />
+          <button onClick={handleLogout} style={{ marginTop: 'auto', width: '100%' }}>
+            Desconectar do Google
+          </button>
+        </>
+      )}
+
+      {!isLoading && !isAuthenticated && (
+        <div>
+          <h3>Conectar Calendário</h3>
+          <p>Conecte sua conta para ver seus eventos.</p>
+          <button onClick={handleLogin}>Conectar com Google</button>
+        </div>
+      )}
     </div>
   );
 }

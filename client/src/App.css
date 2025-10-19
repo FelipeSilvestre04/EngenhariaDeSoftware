@@ -3,8 +3,7 @@ body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   background-color: #f8f9fa;
-  /* Impede a barra de rolagem na página inteira */
-  overflow: hidden;
+  overflow: hidden; 
 }
 
 .main-container {
@@ -19,25 +18,10 @@ body {
   padding: 2rem;
   border-right: 1px solid #e9ecef;
 }
-
-.project-list-container h2 {
-  margin-top: 0;
-}
-
-.project-list-container ul {
-  list-style: none;
-  padding: 0;
-}
-
-.project-list-container li {
-  padding: 0.8rem;
-  cursor: pointer;
-  border-radius: 6px;
-}
-
-.project-list-container li:hover {
-  background-color: #e9ecef;
-}
+.project-list-container h2 { margin-top: 0; }
+.project-list-container ul { list-style: none; padding: 0; }
+.project-list-container li { padding: 0.8rem; cursor: pointer; border-radius: 6px; }
+.project-list-container li:hover { background-color: #e9ecef; }
 
 /* --- Coluna do Chat --- */
 .chat-window-container {
@@ -46,20 +30,15 @@ body {
   display: flex;
   flex-direction: column;
 }
-
-.chat-window-container h2 {
-  margin-top: 0;
-}
-
+.chat-window-container h2 { margin-top: 0; }
 .messages-area {
   flex-grow: 1;
   background-color: #fff;
   border: 1px solid #e9ecef;
   border-radius: 8px;
   padding: 1rem;
-  overflow-y: auto; /* Adiciona scroll se as mensagens forem muitas */
+  overflow-y: auto;
 }
-
 .input-area {
   margin-top: 1rem;
   display: flex;
@@ -67,7 +46,6 @@ body {
   border-radius: 8px;
   padding: 0.5rem;
 }
-
 .input-area input {
   flex-grow: 1;
   border: none;
@@ -75,10 +53,9 @@ body {
   font-size: 1rem;
   background: transparent;
 }
-
 .input-area button {
   border: none;
-  background-color: #FEBE10; /* Amarelo */
+  background-color: #FEBE10;
   color: white;
   border-radius: 6px;
   width: 40px;
@@ -87,15 +64,19 @@ body {
   font-size: 1.2rem;
 }
 
-/* --- Coluna do Calendário (CORREÇÃO FINAL) --- */
+/* --- Coluna do Calendário --- */
 .calendar-view-container {
   flex: 0.3;
   padding: 2rem;
   border-left: 1px solid #e9ecef;
-  
-  /* Essencial: define como um container flexível que organiza os filhos em coluna */
   display: flex;
   flex-direction: column;
+}
+
+/* A CLASSE QUE VAI SERVIR DE "TELA" PARA O CALENDÁRIO */
+.calendar-wrapper {
+  flex-grow: 1; /* Faz esta div esticar e ocupar todo o espaço vertical */
+  position: relative; /* Necessário para o filho se posicionar corretamente */
 }
 
 /* --- Estilos para o React Big Calendar --- */
@@ -105,13 +86,9 @@ body {
   padding: 5px 10px;
   border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.2s; /* Efeito suave */
+  transition: background-color 0.2s;
 }
-
-.rbc-toolbar button:hover {
-  background-color: #e6e6e6;
-}
-
+.rbc-toolbar button:hover { background-color: #e6e6e6; }
 .rbc-toolbar .rbc-active {
   background-color: #e0e0e0;
   box-shadow: inset 0 3px 5px rgba(0,0,0,.125);

@@ -1,9 +1,7 @@
 // client/src/features/calendar/CalendarView.jsx
 import { useState, useEffect } from 'react';
-import { Calendar, momentLocalizer } from 'react-big-calendar';
-import moment from 'moment';
-
-const localizer = momentLocalizer(moment);
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css'; // Importa o estilo padrão do novo calendário
 
 export function CalendarView() {
   const [events, setEvents] = useState([]);
@@ -15,13 +13,7 @@ export function CalendarView() {
         const res = await fetch('/calendar/events');
         const data = await res.json();
         if (data.success) {
-          const formattedEvents = data.events.map(event => ({
-            title: event.summary,
-            start: new Date(event.start),
-            end: new Date(event.end),
-            allDay: false
-          }));
-          setEvents(formattedEvents);
+          setEvents(data.events);
         }
       } catch (error) {
         console.error("Erro ao buscar eventos:", error);
@@ -29,7 +21,6 @@ export function CalendarView() {
         setIsLoading(false);
       }
     };
-
     fetchEvents();
   }, []);
 
@@ -37,15 +28,24 @@ export function CalendarView() {
     return <p>Carregando calendário...</p>;
   }
 
-  // A MUDANÇA ESTÁ AQUI: um div pai com altura de 100%
   return (
-    <div style={{ height: '100%' }}>
-      <Calendar
-        localizer={localizer}
-        events={events}
-        startAccessor="start"
-        endAccessor="end"
-      />
+    <div>
+      {/* O novo componente de calendário! As setas já vêm por padrão. */}
+      <Calendar />
+
+      {/* Vamos manter a lista de eventos por enquanto, logo abaixo */}
+      <div style={{ marginTop: '1rem', maxHeight: '200px', overflowY: 'auto' }}>
+         <h4>Próximos Compromissos:</h4>
+         {events.length > 0 ? (
+           <ul>
+             {events.map(event => (
+               <li key={event.id}>{event.summary}</li>
+             ))}
+           </ul>
+         ) : (
+           <p>Nenhum compromisso encontrado.</p>
+         )}
+      </div>
     </div>
   );
 }
