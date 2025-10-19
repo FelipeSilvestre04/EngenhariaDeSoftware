@@ -1,57 +1,51 @@
-// client/src/features/auth/GoogleAuth.jsx
+// client/src/features/calendar/CalendarView.jsx
 import { useState, useEffect } from 'react';
-import { CalendarView } from '../calendar/CalendarView';
+import { Calendar, momentLocalizer } from 'react-big-calendar';
+import moment from 'moment';
 
-export function GoogleAuth() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+const localizer = momentLocalizer(moment);
+
+export function CalendarView() {
+  const [events, setEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuthStatus = async () => {
+    const fetchEvents = async () => {
       try {
-        const res = await fetch('/calendar/check');
+        const res = await fetch('/calendar/events');
         const data = await res.json();
-        setIsAuthenticated(data.authenticated);
+        if (data.success) {
+          const formattedEvents = data.events.map(event => ({
+            title: event.summary,
+            start: new Date(event.start),
+            end: new Date(event.end),
+            allDay: false
+          }));
+          setEvents(formattedEvents);
+        }
       } catch (error) {
-        console.error("Erro ao verificar autenticação:", error);
+        console.error("Erro ao buscar eventos:", error);
       } finally {
         setIsLoading(false);
       }
     };
-    checkAuthStatus();
+
+    fetchEvents();
   }, []);
 
-  const handleLogin = () => {
-    window.location.href = 'http://localhost:10000/calendar/auth';
-  };
-
-  const handleLogout = async () => {
-    await fetch('/calendar/logout');
-    window.location.reload();
-  };
-
   if (isLoading) {
-    // Envolvemos em um container para manter o layout
-    return <div className="calendar-view-container"><p>Verificando autenticação...</p></div>;
+    return <p>Carregando calendário...</p>;
   }
 
-  // Agora, o CalendarView ou o botão de login são retornados diretamente
-  if (isAuthenticated) {
-    return (
-      <div className="calendar-view-container">
-        <CalendarView />
-        <button onClick={handleLogout} style={{ marginTop: '1rem', flexShrink: 0 }}>
-          Desconectar do Google
-        </button>
-      </div>
-    );
-  }
-
+  // O componente Calendar precisa estar dentro de um elemento com altura definida.
+  // Nosso CSS já cuida disso no container pai.
   return (
-    <div className="calendar-view-container">
-      <h3>Conectar Calendário</h3>
-      <p>Conecte sua conta para ver seus eventos.</p>
-      <button onClick={handleLogin}>Conectar com Google</button>
-    </div>
+    <Calendar
+      localizer={localizer}
+      events={events}
+      startAccessor="start"
+      endAccessor="end"
+      style={{ height: '100%', width: '100%' }}
+    />
   );
 }
