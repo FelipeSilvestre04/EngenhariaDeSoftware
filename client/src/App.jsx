@@ -1,11 +1,16 @@
-import { LlmTest } from './features/chat/LlmTest';
+// client/src/App.jsx
+import { ProjectList } from './features/projects/ProjectList';
+import { ChatWindow } from './features/chat/ChatWindow';
+import { CalendarView } from './features/calendar/CalendarView';
 import './App.css';
 
 function App() {
   return (
-    <main>
-      <LlmTest />
-    </main>
+    <div className="main-container">
+      <ProjectList />
+      <ChatWindow />
+      <CalendarView />
+    </div>
   );
 }
 
