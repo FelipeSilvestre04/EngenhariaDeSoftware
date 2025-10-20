@@ -86,7 +86,35 @@ export class LLMService{
             }
         );
 
-        this.tools.push(getCalendarEventsTool);
+        const createEventTool = tool(
+            async ({summary, description, location, startDateTime, endDateTime}) => {
+                try {
+                    const event = await this.calendarService.createEvent({
+                        summary,
+                        description,
+                        location,
+                        startDateTime,
+                        endDateTime
+                    });
+                    return `Evento criado com sucesso: ${event.summary} em ${event.start}`;
+                } catch (error) {
+                    return `Erro ao criar evento: ${error.message}`;
+                }
+            },
+            {
+                name: "create_calendar_event",
+                description: "Cria um novo evento no calendário Google do usuário. Use esta ferramenta para agendar compromissos, reuniões ou lembretes.",
+                schema: z.object({
+                    summary: z.string().describe("Título do evento"),
+                    description: z.string().optional().describe("Descrição do evento"),
+                    location: z.string().optional().describe("Local do evento"),
+                    startDateTime: z.string().describe("Data e hora de início no formato ISO 8601"),
+                    endDateTime: z.string().describe("Data e hora de término no formato ISO 8601")
+                }),
+            }
+        );
+
+        this.tools.push(getCalendarEventsTool, createEventTool);
     }
 
 

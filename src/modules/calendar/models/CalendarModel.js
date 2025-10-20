@@ -122,6 +122,34 @@ export class CalendarModel {
         }
     }
 
+    async insertEvent({summary, description, location, startDateTime, endDateTime}){
+        if (!this.calendar) {
+            throw new Error("Usuário não autenticado! Autenticar primeiro.");
+        }
+        try {
+            const event = {
+                summary: summary,
+                description: description
+                , location: location,
+                start: {
+                    dateTime: startDateTime,
+                    timeZone: 'America/Sao_Paulo'
+                },
+                end: {
+                    dateTime: endDateTime,
+                    timeZone: 'America/Sao_Paulo'
+                }
+            };
+            const response = await this.calendar.events.insert({
+                calendarId: 'primary',
+                resource: event
+            });
+            return response.data;
+        } catch (error) {
+            throw new Error(`Não foi possível criar o evento! Erro: ${error.message}`);
+        }
+    }
+
     async logout(userId = 'default'){
         await this.tokenStorage.deleteTokens(userId);
         this.oauth2Client.setCredentials({});

@@ -66,6 +66,17 @@ export class CalendarService {
         return items;
     }   
 
+    async createEvent({summary, description, location, startDateTime, endDateTime}){
+        const event = await this.model.insertEvent({
+            summary,
+            description,
+            location,
+            startDateTime,
+            endDateTime
+        });
+        return event;
+    }
+
     async logout(userId){
         try {
             const userToLogout = userId || this.currentUserId;
