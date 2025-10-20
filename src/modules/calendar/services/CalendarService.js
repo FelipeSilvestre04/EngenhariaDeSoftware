@@ -61,6 +61,16 @@ export class CalendarService {
         return hasTokens;
     }
 
+    async ensureInitialized() {
+        // Verifica se o calendar está inicializado
+        if (!this.model.calendar && this.currentUserId) {
+            console.log("⚠️ Calendar não inicializado, inicializando com userId:", this.currentUserId);
+            await this.model.initialize(this.currentUserId);
+        } else if (!this.model.calendar) {
+            throw new Error("Calendar não pode ser inicializado: userId não definido");
+        }
+    }
+
     async listEvents(maxResults = 10){
         await this.ensureInitialized(); // Garante inicialização antes de listar
         console.log("LOG: [CalendarService] Buscando eventos...");
@@ -69,6 +79,15 @@ export class CalendarService {
     }   
 
     async createEvent({summary, description, location, startDateTime, endDateTime}){
+        await this.ensureInitialized(); // Garante inicialização antes de criar evento
+        console.log("🔧 [CalendarService] Criando evento:", {
+            summary,
+            description,
+            location,
+            startDateTime,
+            endDateTime
+        });
+        
         const event = await this.model.insertEvent({
             summary,
             description,
@@ -76,6 +95,8 @@ export class CalendarService {
             startDateTime,
             endDateTime
         });
+        
+        console.log("✅ [CalendarService] Evento criado:", event);
         return event;
     }
 

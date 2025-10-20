@@ -26,7 +26,7 @@ export class LLMController{
                 });
             });
             
-            const result = await this.llmService.consulta(name, prompt);
+            const result = await this.llmService.checaAgenda(name, prompt);
 
             // cria resposta http
             if (result.success) {

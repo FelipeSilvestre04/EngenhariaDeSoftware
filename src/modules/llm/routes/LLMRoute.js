@@ -10,7 +10,8 @@ export class LLMRoutes {
         const pathname = url.pathname;
         const method = req.method;
 
-        if (pathname === '/llm/consulta' && method === 'POST'){
+        // Aceita tanto /llm/consulta quanto /llm/query
+        if ((pathname === '/llm/consulta' || pathname === '/llm/query') && method === 'POST'){
             return await this.llmController.handleConsulta(req, res);
         }
         

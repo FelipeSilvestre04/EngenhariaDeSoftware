@@ -240,7 +240,38 @@ export class LLMService{
 
     // aqui implementar os serviços que vao utilizar processConsulta.
     async checaAgenda(name, prompt){
-        const systemPrompt = "Você é um assistente que ajuda os usuários a gerenciar e consultar seus calendários do Google Calendar. Utilize as ferramentas disponíveis para buscar eventos e fornecer informações precisas sobre a agenda do usuário. Se você adicionar um novo evento, avise ao usuário.";
+        // Obter data e hora atual
+        const now = new Date();
+        const dateTimeInfo = {
+            dataCompleta: now.toLocaleString('pt-BR', { 
+                timeZone: 'America/Sao_Paulo',
+                dateStyle: 'full',
+                timeStyle: 'long'
+            }),
+            dataISO: now.toISOString(),
+            diaSemana: now.toLocaleDateString('pt-BR', { weekday: 'long' }),
+            timestamp: now.getTime()
+        };
+
+        const systemPrompt = `Você é um assistente que ajuda os usuários a gerenciar e consultar seus calendários do Google Calendar. 
+
+INFORMAÇÕES DE DATA E HORA ATUAL:
+- Data e hora completa: ${dateTimeInfo.dataCompleta}
+- Data ISO 8601: ${dateTimeInfo.dataISO}
+- Dia da semana: ${dateTimeInfo.diaSemana}
+
+INSTRUÇÕES IMPORTANTES:
+1. Use estas informações para calcular datas relativas (amanhã, próxima semana, etc)
+2. Ao criar eventos, SEMPRE use o formato ISO 8601 para startDateTime e endDateTime
+3. Se o usuário não especificar hora, use um horário padrão (ex: 09:00)
+4. Se o usuário não especificar duração, use 1 hora de duração padrão
+5. Utilize as ferramentas disponíveis para buscar eventos e criar novos eventos
+6. Se você adicionar um novo evento, confirme os detalhes ao usuário
+
+Exemplo de formato correto para datas:
+- Início: "2025-10-21T14:00:00-03:00"
+- Fim: "2025-10-21T15:00:00-03:00"`;
+
         const userPrompt = prompt;
         return await this.processConsulta(systemPrompt, userPrompt);
     }

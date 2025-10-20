@@ -44,10 +44,22 @@ export class CalendarController {
             const code = url.searchParams.get('code');
             if (!code) throw new Error("Código de autorização não encontrado.");
 
-            await this.service.handleOauthCallback(code);
+            const result = await this.service.handleOauthCallback(code);
+
+            // Define o cookie userId no navegador
+            const cookieOptions = [
+                `userId=${result.userId}`,
+                'Path=/',
+                'HttpOnly',
+                'SameSite=Lax',
+                'Max-Age=2592000' // 30 dias
+            ].join('; ');
 
             // Redireciona de volta para a aplicação React após a autenticação
-            res.writeHead(302, { Location: 'http://localhost:5173' }); 
+            res.writeHead(302, { 
+                Location: 'http://localhost:5173',
+                'Set-Cookie': cookieOptions
+            }); 
             res.end();
             
         } catch (error) {
@@ -99,16 +111,33 @@ export class CalendarController {
 
     async logout(req, res) {
         try {
-            await this.calendarService.logout();
+            const userId = this.getUserIdFromRequest(req);
             
-            response.writeHead(200, { 'Content-Type': 'application/json' });
-            response.end(JSON.stringify({ 
+            if (!userId) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                return res.end(JSON.stringify({ 
+                    success: false,
+                    error: 'Nenhum usuário autenticado' 
+                }));
+            }
+
+            await this.service.logout(userId);
+            
+            // Remove o cookie userId
+            res.writeHead(200, { 
+                'Content-Type': 'application/json',
+                'Set-Cookie': 'userId=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT'
+            });
+            res.end(JSON.stringify({ 
                 success: true,
                 message: 'Logout realizado com sucesso' 
             }));
         } catch (error) {
             res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: error.message }));
+            res.end(JSON.stringify({ 
+                success: false,
+                error: error.message 
+            }));
         }
     }
 }
