@@ -1,7 +1,5 @@
-import {LLMService} from "../services/LLMService.js"
-// o controller recebe a requisição HTTP e trata ela executando o serviço e entregando
-// a resposta que vem desse serviço.
-// importante saber: protocolo HTTP
+// src/modules/llm/controllers/LLMController.js
+import { LLMService } from "../services/LLMService.js";
 
 export class LLMController{
     constructor(config, calendarService){
@@ -43,10 +41,10 @@ export class LLMController{
             }
 
         } catch (error) {
+            console.error("Erro detalhado no handleQuery:", error);
             res.writeHead(500, {'Content-Type': 'application/json'});
-            res.end(JSON.stringify({error: error.message}))
+            res.end(JSON.stringify({ error: `Desculpe, algo deu errado: ${error.message}` }));
         }
-
     }
 
 }

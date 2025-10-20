@@ -88,7 +88,7 @@ export class CalendarModel {
         }
     }
 
-    async getEvents(maxResults = 10){
+    async getEvents(maxResults = 365){
         if (!this.calendar) {
             throw new Error("Usuário não autenticado! Autenticar primeiro.");
         }
@@ -156,4 +156,19 @@ export class CalendarModel {
         this.calendar = null;
         this.currentUserId = null;
     }
+    
+    async createEvent(event) {
+    if (!this.calendar) {
+        throw new Error("Usuário não autenticado!");
+    }
+    try {
+        const response = await this.calendar.events.insert({
+            calendarId: 'primary',
+            resource: event,
+        });
+        return response.data;
+    } catch (error) {
+        throw new Error(`Não foi possível criar o evento: ${error.message}`);
+    }
+}
 }

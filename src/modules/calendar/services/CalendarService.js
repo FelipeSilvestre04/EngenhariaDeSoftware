@@ -1,3 +1,4 @@
+// src/modules/calendar/services/CalendarService.js
 import { CalendarModel } from "../models/CalendarModel.js";
 
 export class CalendarService {
@@ -60,9 +61,10 @@ export class CalendarService {
         return hasTokens;
     }
 
-    async listEvents(maxResults= 10){
+    async listEvents(maxResults = 10){
+        await this.ensureInitialized(); // Garante inicialização antes de listar
+        console.log("LOG: [CalendarService] Buscando eventos...");
         const items = await this.model.getEvents(maxResults);
-        console.log(items);
         return items;
     }   
 

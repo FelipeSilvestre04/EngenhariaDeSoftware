@@ -1,3 +1,4 @@
+// src/app.js
 import { LLMRoutes } from "./modules/llm/index.js";
 import { CalendarRoute } from "./modules/calendar/routes/CalendarRoute.js";
 
@@ -64,7 +65,6 @@ export class AppRouter {
 
             return await this.modules.calendar.handle(req, res);
         }
-
         if (pathname.startsWith('/llm')) {
             // Inicializa calendar para o LLM poder usar
             const userId = this.getUserIdFromCookie(req);
@@ -79,8 +79,6 @@ export class AppRouter {
             
             return await this.modules.llm.handle(req, res);
         }
-
-        // Rota padrão para requisições não encontradas
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Route not found' }));
     }
