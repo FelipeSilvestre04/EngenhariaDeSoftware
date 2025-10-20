@@ -13,10 +13,16 @@ export class LLMController {
     }
 
     async getBody(req) {
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
             let body = '';
             req.on('data', chunk => body += chunk.toString());
-            req.on('end', () => resolve(JSON.parse(body)));
+            req.on('end', () => {
+                try {
+                    resolve(JSON.parse(body));
+                } catch (error) {
+                    reject(new Error("Corpo da requisição inválido. Esperado um JSON."));
+                }
+            });
         });
     }
 
@@ -24,41 +30,56 @@ export class LLMController {
         try {
             const { prompt } = await this.getBody(req);
             
-            // 1. O controlador pergunta à IA qual é o plano de ação (a intenção)
             const intentResult = await this.llmService.analyzeIntent(prompt);
             if (!intentResult.success) throw new Error(intentResult.error);
 
-            // Tenta interpretar a resposta da IA, que deve ser um JSON
             let llmResponse;
             try {
-                // Remove quaisquer caracteres estranhos antes de tentar parsear o JSON
-                const cleanJsonString = intentResult.content.substring(intentResult.content.indexOf('{'));
-                llmResponse = JSON.parse(cleanJsonString);
+                const jsonMatch = intentResult.content.match(/\{[\s\S]*\}/);
+                
+                if (!jsonMatch) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    return res.end(JSON.stringify({ answer: intentResult.content }));
+                }
+
+                llmResponse = JSON.parse(jsonMatch[0]);
+
             } catch (e) {
-                // Se a IA não responder com um JSON (ex: uma saudação simples),
-                // apenas retorne a resposta dela diretamente.
+                console.error("Falha ao parsear JSON da IA. Resposta original:", intentResult.content);
+                const fallbackAnswer = await this.llmService.generateNaturalResponse(prompt);
+                const answer = (fallbackAnswer.success && fallbackAnswer.content) 
+                               ? fallbackAnswer.content 
+                               : "Desculpe, não consegui entender sua solicitação.";
+
                 res.writeHead(200, { 'Content-Type': 'application/json' });
-                return res.end(JSON.stringify({ answer: intentResult.content }));
+                return res.end(JSON.stringify({ answer: answer }));
             }
 
-            // 2. O Maestro lê o plano e age corretamente
             if (llmResponse.action === 'CRIAR_EVENTO' && llmResponse.details) {
+                if (!this.calendarService) {
+                    throw new Error("O serviço de calendário não está disponível para criar o evento.");
+                }
+                
                 const { summary, start_time, end_time } = llmResponse.details;
 
-                // Executa a ação de verdade!
+                console.log(`LOG: [LLMController] Intenção de criar evento recebida. Chamando calendarService.createEvent com:`, { summary, start_time, end_time });
+
                 await this.calendarService.createEvent(summary, start_time, end_time);
                 
-                // Envia uma confirmação real para o usuário
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ answer: `Ok, agendei: "${summary}"` }));
 
-            } else { // Se a ação for RESPONDER_PERGUNTA ou qualquer outra coisa
+            } else { 
+                if (!this.calendarService) {
+                    throw new Error("O serviço de calendário não está disponível para responder a pergunta.");
+                }
+
                 const events = await this.calendarService.listEvents();
                 const calendarContext = events.map(e => `- ${e.summary} (Início: ${new Date(e.start).toLocaleString()})`).join('\n');
                 
                 const finalPrompt = `
-                    Contexto da Agenda:
-                    ${calendarContext || "A agenda está vazia."}
+                    Contexto da Agenda do Usuário:
+                    ${calendarContext || "A agenda do usuário está vazia."}
                     ---
                     Pergunta do usuário: "${prompt}"
                 `;
@@ -71,7 +92,7 @@ export class LLMController {
             }
 
         } catch (error) {
-            console.error("Erro no handleQuery:", error);
+            console.error("Erro detalhado no handleQuery:", error);
             res.writeHead(500, {'Content-Type': 'application/json'});
             res.end(JSON.stringify({ error: `Desculpe, algo deu errado: ${error.message}` }));
         }

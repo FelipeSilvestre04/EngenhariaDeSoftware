@@ -4,7 +4,8 @@ import { CalendarService } from "../services/CalendarService.js";
 export class CalendarController {
     constructor(config){
         this.service = new CalendarService(config);
-        this.service.initialize();
+        // A inicialização foi removida daqui para evitar problemas de concorrência.
+        // O próprio serviço agora garante que está inicializado antes de cada ação.
     }
 
     async initiateAuth(req, res){
@@ -26,8 +27,8 @@ export class CalendarController {
 
             await this.service.handleOauthCallback(code);
 
-            // CORREÇÃO IMPORTANTE: Redireciona de volta para a sua aplicação no frontend!
-            res.writeHead(302, { Location: 'http://localhost:5173' });
+            // Redireciona de volta para a aplicação React após a autenticação
+            res.writeHead(302, { Location: 'http://localhost:5173' }); 
             res.end();
             
         } catch (error) {
@@ -57,7 +58,6 @@ export class CalendarController {
 
     async checkStatus(req, res){
         try{
-            // CORREÇÃO IMPORTANTE: Faltava o 'await' para esperar a verificação.
             const isAuth = await this.service.checkAuthentication();
 
             res.writeHead(200, {'Content-Type': 'application/json'});
@@ -70,7 +70,6 @@ export class CalendarController {
 
     async logout(req, res) {
         try {
-            // CORREÇÃO IMPORTANTE: Estava usando o nome errado (this.calendarService).
             await this.service.logout();
             
             res.writeHead(200, { 'Content-Type': 'application/json' });

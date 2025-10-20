@@ -82,7 +82,7 @@ export class CalendarModel {
         }
     }
 
-    async getEvents(maxResults = 10){
+    async getEvents(maxResults = 365){
         if (!this.calendar) {
             throw new Error("Usuário não autenticado! Autenticar primeiro.");
         }
