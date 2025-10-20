@@ -16,13 +16,25 @@ export class LLMController{
             const url = new URL(req.url, `http://${req.headers.host}`);
             const name = url.searchParams.get('name') || 'usuário';
 
-            const result = await this.llmService.checaAgenda(name);
+            let body = '';
+            req.on('data', chunk => {
+                body += chunk.toString();
+            });
+            
+            const prompt = await new Promise((resolve) => {
+                req.on('end', () => {
+                    const data = JSON.parse(body);
+                    resolve(data.prompt);
+                });
+            });
+            
+            const result = await this.llmService.consulta(name, prompt);
 
             // cria resposta http
             if (result.success) {
                 res.writeHead(200, { 'Content-Type': 'application/json'});
                 res.end(JSON.stringify({
-                    question: `Como está a agenda do ${name}`,
+                    question: `${prompt}`,
                     answer: result.content
                 }));
             } else {
@@ -36,4 +48,5 @@ export class LLMController{
         }
 
     }
+
 }

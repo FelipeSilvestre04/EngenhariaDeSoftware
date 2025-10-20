@@ -16,7 +16,7 @@ export class LLMRoutes {
         const pathname = url.pathname;
         const method = req.method;
 
-        if (pathname === '/llm/consulta' && method === 'GET'){
+        if (pathname === '/llm/consulta' && method === 'POST'){
             return await this.llmController.handleConsulta(req, res);
         }
         //if (pathname === 'llm/query' && method === 'POST'){ return await this.llmController.handleQuery(req, res); }
@@ -24,4 +24,5 @@ export class LLMRoutes {
         res.writeHead(404, {'Content-Type': 'application/json'});
         res.end(JSON.stringify({error: 'Route not found'}));
     }
+
 }

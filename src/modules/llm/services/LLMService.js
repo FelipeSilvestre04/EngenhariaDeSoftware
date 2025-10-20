@@ -138,9 +138,9 @@ export class LLMService{
     }
 
     // aqui implementar os serviços que vao utilizar processConsulta.
-    async checaAgenda(){
+    async checaAgenda(name, prompt){
         const systemPrompt = "Você é um assistente que ajuda os usuários a gerenciar e consultar seus calendários do Google Calendar. Utilize as ferramentas disponíveis para buscar eventos e fornecer informações precisas sobre a agenda do usuário. Se você adicionar um novo evento, avise ao usuário.";
-        const userPrompt = `Como está a agenda do usuário? Me de quais as próximas atividades e o horário de cada uma`
+        const userPrompt = prompt;
         return await this.processConsulta(systemPrompt, userPrompt);
     }
 
