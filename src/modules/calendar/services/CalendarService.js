@@ -1,12 +1,17 @@
+// src/modules/calendar/services/CalendarService.js
 import { CalendarModel } from "../models/CalendarModel.js";
 
 export class CalendarService {
     constructor(config){
         this.model = new CalendarModel(config);
+        this.currentUserId = null; // Armazena o userId da sessão atual
     }
 
-    async initialize(){
-        return await this.model.initialize();
+    async initialize(userId){
+        if (userId) {
+            this.currentUserId = userId;
+        }
+        return await this.model.initialize(userId || this.currentUserId);
     }
 
     getAuthenticationUrl(){
@@ -19,10 +24,15 @@ export class CalendarService {
         }
 
         try {
-            await this.model.authenticateWithCode(code);
+            const result = await this.model.authenticateWithCode(code);
+            
+            // Armazena o userId na sessão
+            this.currentUserId = result.userId;
+            
             return {
                 success: true,
-                message: 'Autenticação realizada com sucesso!'
+                message: 'Autenticação realizada com sucesso!',
+                userId: result.userId
             }
         } catch (error){
             return {
@@ -32,19 +42,70 @@ export class CalendarService {
         }
     }
 
-    async checkAuthentication() {
-        return await this.model.isAutheticated();
+    async checkAuthentication(userId) {
+        // Se não passou userId, usa o da sessão atual
+        const userToCheck = userId || this.currentUserId;
+        
+        if (!userToCheck) {
+            return false;
+        }
+        
+        const hasTokens = await this.model.isAuthenticated(userToCheck);
+        
+        // Se tem tokens, inicializa o model com esse userId
+        if (hasTokens && !this.model.calendar) {
+            await this.model.initialize(userToCheck);
+            this.currentUserId = userToCheck;
+        }
+        
+        return hasTokens;
     }
 
-    async listEvents(maxResults= 10){
+    async ensureInitialized() {
+        // Verifica se o calendar está inicializado
+        if (!this.model.calendar && this.currentUserId) {
+            console.log("⚠️ Calendar não inicializado, inicializando com userId:", this.currentUserId);
+            await this.model.initialize(this.currentUserId);
+        } else if (!this.model.calendar) {
+            throw new Error("Calendar não pode ser inicializado: userId não definido");
+        }
+    }
+
+    async listEvents(maxResults = 10){
+        await this.ensureInitialized(); // Garante inicialização antes de listar
+        console.log("LOG: [CalendarService] Buscando eventos...");
         const items = await this.model.getEvents(maxResults);
-        console.log(items);
         return items;
     }   
 
-    async logout(){
+    async createEvent({summary, description, location, startDateTime, endDateTime}){
+        await this.ensureInitialized(); // Garante inicialização antes de criar evento
+        console.log("🔧 [CalendarService] Criando evento:", {
+            summary,
+            description,
+            location,
+            startDateTime,
+            endDateTime
+        });
+        
+        const event = await this.model.insertEvent({
+            summary,
+            description,
+            location,
+            startDateTime,
+            endDateTime
+        });
+        
+        console.log("✅ [CalendarService] Evento criado:", event);
+        return event;
+    }
+
+    async logout(userId){
         try {
-            this.model.logout();
+            const userToLogout = userId || this.currentUserId;
+            await this.model.logout(userToLogout);
+            this.currentUserId = null;
+            return { success: true, message: 'Logout realizado com sucesso' };
         } catch (error) {
             throw new Error('Erro ao deslogar!');
         }

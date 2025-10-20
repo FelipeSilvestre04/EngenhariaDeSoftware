@@ -1,11 +1,9 @@
-import {LLMService} from "../services/LLMService.js"
-// o controller recebe a requisição HTTP e trata ela executando o serviço e entregando
-// a resposta que vem desse serviço.
-// importante saber: protocolo HTTP
+// src/modules/llm/controllers/LLMController.js
+import { LLMService } from "../services/LLMService.js";
 
 export class LLMController{
-    constructor(config){
-        this.llmService = new LLMService(config.llm.apiKey);
+    constructor(config, calendarService){
+        this.llmService = new LLMService(config.llm.apiKey, calendarService);
         this.llmService.createModel(config.llm.defaultTemperature, config.llm.defaultModel);
     }
 
@@ -14,15 +12,27 @@ export class LLMController{
             // aqui é uma extração de dados qualquer da requisição. nesse caso 
             // pegando o nome do cara q fez a request.
             const url = new URL(req.url, `http://${req.headers.host}`);
-            const name = url.searchParams.get('name') || 'Tasso';
+            const name = url.searchParams.get('name') || 'usuário';
 
-            const result = await this.llmService.checaAgenda(name);
+            let body = '';
+            req.on('data', chunk => {
+                body += chunk.toString();
+            });
+            
+            const prompt = await new Promise((resolve) => {
+                req.on('end', () => {
+                    const data = JSON.parse(body);
+                    resolve(data.prompt);
+                });
+            });
+            
+            const result = await this.llmService.checaAgenda(name, prompt);
 
             // cria resposta http
             if (result.success) {
                 res.writeHead(200, { 'Content-Type': 'application/json'});
                 res.end(JSON.stringify({
-                    question: `Como está a agenda do ${name}`,
+                    question: `${prompt}`,
                     answer: result.content
                 }));
             } else {
@@ -31,9 +41,10 @@ export class LLMController{
             }
 
         } catch (error) {
+            console.error("Erro detalhado no handleQuery:", error);
             res.writeHead(500, {'Content-Type': 'application/json'});
-            res.end(JSON.stringify({error: error.message}))
+            res.end(JSON.stringify({ error: `Desculpe, algo deu errado: ${error.message}` }));
         }
-
     }
+
 }
