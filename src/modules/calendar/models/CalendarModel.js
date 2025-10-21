@@ -80,9 +80,65 @@ export class CalendarModel {
             console.error('Erro ao renovar token:', error.message);
             throw new Error('Token expirado. Faça login novamente.');
         }
-    }
+    }    // ...existing code...
+        async createEvent(event) {
+            if (!this.calendar) {
+                throw new Error("Usuário não autenticado!");
+            }
+    
+            // Normaliza o evento para o formato esperado pela API
+            const resource = { ...event };
+            const tz = this.config?.googleCalendar?.timeZone || 'UTC';
+    
+            // Summary padrão
+            if (!resource.summary) resource.summary = 'Sem título';
+    
+            // Normaliza attendees: aceita ['a@b.com'] ou [{ email: 'a@b.com' }, ...]
+            if (Array.isArray(resource.attendees)) {
+                resource.attendees = resource.attendees.map(a => {
+                    if (typeof a === 'string') return { email: a };
+                    if (a && a.email) return a;
+                    return null;
+                }).filter(Boolean);
+            }
+    
+            // Normaliza start
+            if (resource.start) {
+                if (typeof resource.start === 'string') {
+                    resource.start = { dateTime: resource.start, timeZone: tz };
+                } else if (resource.start.date) {
+                    resource.start = { date: resource.start.date }; // all-day
+                } else if (resource.start.dateTime) {
+                    resource.start.timeZone = resource.start.timeZone || tz;
+                }
+            }
+    
+            // Normaliza end
+            if (resource.end) {
+                if (typeof resource.end === 'string') {
+                    resource.end = { dateTime: resource.end, timeZone: tz };
+                } else if (resource.end.date) {
+                    resource.end = { date: resource.end.date }; // all-day
+                } else if (resource.end.dateTime) {
+                    resource.end.timeZone = resource.end.timeZone || tz;
+                }
+            }
+    
+            try {
+                const response = await this.calendar.events.insert({
+                    calendarId: 'primary',
+                    resource,
+                });
+                return response.data;
+            } catch (error) {
+                // Tenta extrair detalhe da resposta da API para facilitar o debug
+                const details = error?.response?.data || error?.errors || error?.message || error;
+                throw new Error(`Não foi possível criar o evento: ${JSON.stringify(details)}`);
+            }
+        }
+    // ...existing code...
 
-    async getEvents(maxResults = 365){
+    async getEvents(maxResults = 10){
         if (!this.calendar) {
             throw new Error("Usuário não autenticado! Autenticar primeiro.");
         }
