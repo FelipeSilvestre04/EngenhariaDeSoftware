@@ -1,6 +1,7 @@
 // client/src/features/auth/GoogleAuth.jsx
 import { useState, useEffect } from 'react';
 import { CalendarView } from '../calendar/CalendarView';
+import { Env } from '../utils/env';
 
 export function GoogleAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -23,7 +24,8 @@ export function GoogleAuth() {
   }, []);
 
   const handleLogin = () => {
-    window.location.href = 'http://localhost:10000/calendar/auth';
+    const backendUrl = Env.getEnvVar('VITE_BACKEND_URL', 'http://localhost:10000');
+    window.location.href = `${backendUrl}/calendar/auth`;
   };
 
   const handleLogout = async () => {

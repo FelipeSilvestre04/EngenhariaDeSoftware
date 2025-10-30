@@ -91,6 +91,6 @@ npm install
 npm start
 
 # Acessar
-http://localhost:10000
+${BACKEND_URL}
 ```
 

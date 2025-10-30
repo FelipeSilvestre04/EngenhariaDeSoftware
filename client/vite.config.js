@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-
+import { Env } from './src/utils/env';
 // https://vite.dev/config/
 // client/vite.config.js
 export default defineConfig({
@@ -8,11 +8,11 @@ export default defineConfig({
   server: {
     proxy: {
       '/llm': { // O que já tínhamos
-        target: 'http://localhost:10000',
+  target: Env.getEnvVar('VITE_BACKEND_URL', 'http://localhost:10000'),
         changeOrigin: true,
       },
       '/calendar': { // Adicione esta parte
-        target: 'http://localhost:10000',
+  target: Env.getEnvVar('VITE_BACKEND_URL', 'http://localhost:10000'),
         changeOrigin: true,
       },
     },
