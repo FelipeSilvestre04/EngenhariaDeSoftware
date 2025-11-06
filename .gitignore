@@ -1,4 +1,4 @@
 node_modules/
 .env
-.client_secret_6035557284-5edobgt8mt4qkdgcee8heo1mmpechp20.apps.googleusercontent.com.json
+client_secret_6035557284-5edobgt8mt4qkdgcee8heo1mmpechp20.apps.googleusercontent.com.json
 src/modules/calendar/storage/tokens-*.json

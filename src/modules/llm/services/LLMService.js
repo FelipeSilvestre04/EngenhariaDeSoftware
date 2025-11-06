@@ -219,9 +219,9 @@ export class LLMService{
     }
 
 
-    async processConsulta(systemPrompt, userPrompt) {
+    async processConsulta(systemPrompt, userPrompt, userName, projectName) {
         try {
-            const response = await this.model.queryWithTools(systemPrompt, userPrompt);
+            const response = await this.model.queryWithTools(systemPrompt, userPrompt, userName, projectName);
             
             return {
                 success: true,
@@ -239,7 +239,7 @@ export class LLMService{
     }
 
     // aqui implementar os serviços que vao utilizar processConsulta.
-    async checaAgenda(name, prompt){
+    async checaAgenda(name, prompt, projectName){
         // Obter data e hora atual
         const now = new Date();
         const dateTimeInfo = {
@@ -273,11 +273,11 @@ Exemplo de formato correto para datas:
 - Fim: "2025-10-21T15:00:00-03:00"`;
 
         const userPrompt = prompt;
-        return await this.processConsulta(systemPrompt, userPrompt);
+        return await this.processConsulta(systemPrompt, userPrompt, name, projectName);
     }
 
     async generateNaturalResponse(contextualPrompt) {
         const systemPrompt = `Você é um assistente pessoal prestativo e conciso. Responda à pergunta do usuário de forma direta, baseado apenas no contexto fornecido. Não use formatação Markdown.`;
-        return await this.processConsulta(systemPrompt, contextualPrompt);
+        return await this.processConsulta(systemPrompt, contextualPrompt, name, projectName);
     }
 }

@@ -13,7 +13,8 @@ export class LLMController{
             // pegando o nome do cara q fez a request.
             const url = new URL(req.url, `http://${req.headers.host}`);
             const name = url.searchParams.get('name') || 'usuário';
-
+            const projectName = url.searchParams.get('project') || 'projeto';
+            
             let body = '';
             req.on('data', chunk => {
                 body += chunk.toString();
@@ -26,7 +27,7 @@ export class LLMController{
                 });
             });
             
-            const result = await this.llmService.checaAgenda(name, prompt);
+            const result = await this.llmService.checaAgenda(name, prompt, projectName);
 
             // cria resposta http
             if (result.success) {
