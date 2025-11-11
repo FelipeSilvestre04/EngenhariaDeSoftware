@@ -56,8 +56,10 @@ export class CalendarController {
             ].join('; ');
 
             // Redireciona de volta para a aplicação React após a autenticação
+            // Usa CLIENT_URL do ambiente ou detecta automaticamente do request
+            const clientUrl = process.env.CLIENT_URL || req.headers.origin || req.headers.referer || '/';
             res.writeHead(302, { 
-                Location: 'http://localhost:5173',
+                Location: clientUrl,
                 'Set-Cookie': cookieOptions
             }); 
             res.end();

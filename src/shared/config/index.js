@@ -14,7 +14,9 @@ if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET){
 
 export const config = {
     server: {
+        host: process.env.HOST || 'http://localhost',
         port: process.env.PORT || 3000,
+        url: process.env.SERVER_URL || `${process.env.HOST || 'http://localhost'}:${process.env.PORT || 3000}`
     },
     llm: {
         apiKey: process.env.GROQ_API_KEY,
@@ -24,7 +26,7 @@ export const config = {
     googleCalendar: {
         clientId: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        redirectUri: process.env.GOOGLE_REDIRECT_URI || `http://localhost:${process.env.PORT || 3000}/calendar/oauth2callback`,
+        redirectUri: process.env.GOOGLE_REDIRECT_URI || `${process.env.SERVER_URL || `${process.env.HOST || 'http://localhost'}:${process.env.PORT || 3000}`}/calendar/oauth2callback`,
         scopes: ['https://www.googleapis.com/auth/calendar']
     }
 };
