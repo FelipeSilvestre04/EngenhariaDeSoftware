@@ -1,0 +1,14 @@
+# Frontend Service (Static Site)
+services:
+  - type: web
+    name: engenharia-frontend
+    env: static
+    region: oregon
+    plan: free
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    # Headers para SPA (Single Page Application)
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
