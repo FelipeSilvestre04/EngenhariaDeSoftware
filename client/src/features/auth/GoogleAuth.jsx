@@ -1,7 +1,7 @@
 // client/src/features/auth/GoogleAuth.jsx
 import { useState, useEffect } from 'react';
 import { CalendarView } from '../calendar/CalendarView';
-import { Env } from '../utils/env';
+import { Env } from '../../utils/env';
 
 export function GoogleAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
