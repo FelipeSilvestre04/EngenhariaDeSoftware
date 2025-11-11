@@ -1,5 +1,6 @@
 // client/src/features/chat/ChatWindow.jsx
 import { useState } from 'react';
+import { api } from '../../utils/api';
 
 export function ChatWindow() {
   // 1. MUDANÇA PRINCIPAL: "messages" agora é um array de objetos.
@@ -26,11 +27,7 @@ export function ChatWindow() {
     setIsLoading(true);
 
     try {
-      const res = await fetch(`/llm/query`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: input }),
-      });
+      const res = await api.post('/llm/query', { prompt: input });
 
       if (!res.ok) throw new Error(`Erro na rede: ${res.statusText}`);
 

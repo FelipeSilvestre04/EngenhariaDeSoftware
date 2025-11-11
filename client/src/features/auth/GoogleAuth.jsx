@@ -1,7 +1,7 @@
 // client/src/features/auth/GoogleAuth.jsx
 import { useState, useEffect } from 'react';
 import { CalendarView } from '../calendar/CalendarView';
-import { Env } from '../../utils/env';
+import { api } from '../../utils/api';
 
 export function GoogleAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -10,7 +10,7 @@ export function GoogleAuth() {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        const res = await fetch('/calendar/check');
+        const res = await api.get('/calendar/check');
         const data = await res.json();
         setIsAuthenticated(data.authenticated);
       } catch (error) {
@@ -24,12 +24,11 @@ export function GoogleAuth() {
   }, []);
 
   const handleLogin = () => {
-    const backendUrl = Env.getEnvVar('VITE_BACKEND_URL', 'http://localhost:10000');
-    window.location.href = `${backendUrl}/calendar/auth`;
+    window.location.href = api.getUrl('/calendar/auth');
   };
 
   const handleLogout = async () => {
-    await fetch('/calendar/logout');
+    await api.get('/calendar/logout');
     window.location.reload();
   };
 

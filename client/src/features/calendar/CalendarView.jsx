@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
+import { api } from '../../utils/api';
 
 export function CalendarView() {
   const [events, setEvents] = useState([]);
@@ -12,7 +13,7 @@ export function CalendarView() {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const res = await fetch('/calendar/events');
+        const res = await api.get('/calendar/events');
         const data = await res.json();
         if (data.success) {
           // Importante: Transformamos as datas em objetos Date aqui

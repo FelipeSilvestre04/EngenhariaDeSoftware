@@ -6,7 +6,7 @@ import { Env } from './env.js';
  */
 export class ApiClient {
     constructor() {
-        this.baseURL = Env.getEnvVar('VITE_API_URL', 'http://localhost:10000');
+        this.baseURL = Env.getEnvVar('VITE_BACKEND_URL', 'http://localhost:10000');
     }
 
     /**
