@@ -6,20 +6,30 @@ export class CorsMiddleware {
         const env = new Env();
         this.allowedOrigins = [
             env.getEnvVar('FRONTEND_URL', 'http://localhost:5173'),
+            env.getEnvVar('CLIENT_URL', 'http://localhost:5173'),
             'http://localhost:5173',
-            'http://localhost:3000'
+            'http://localhost:3000',
+            'https://engenhariadesoftware-6btq.onrender.com' // Adiciona o domínio do Render
         ].filter(Boolean);
+        
+        console.log('🔐 CORS - Origens permitidas:', this.allowedOrigins);
     }
 
     handle(req, res) {
         const origin = req.headers.origin;
         
+        console.log('🌐 CORS - Origin da requisição:', origin);
+        
         // Se a origem está na lista de permitidas, adiciona os headers CORS
         if (this.allowedOrigins.includes(origin)) {
             res.setHeader('Access-Control-Allow-Origin', origin);
+            console.log('✅ CORS - Origin permitida:', origin);
         } else if (process.env.NODE_ENV !== 'production') {
             // Em desenvolvimento, permite qualquer origem
             res.setHeader('Access-Control-Allow-Origin', origin || '*');
+            console.log('⚠️  CORS - Modo desenvolvimento, permitindo:', origin || '*');
+        } else {
+            console.log('❌ CORS - Origin não permitida:', origin);
         }
         
         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');

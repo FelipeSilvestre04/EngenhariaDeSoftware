@@ -56,15 +56,15 @@ export class CalendarController {
             const cookieParts = [
                 `userId=${result.userId}`,
                 'Path=/',
-                'HttpOnly',
                 'Max-Age=2592000' // 30 dias
             ];
             
-            // Em localhost, usa SameSite=Lax (não precisa Secure)
+            // Em localhost, usa SameSite=Lax (não precisa Secure nem HttpOnly para debug)
             // Em produção, usa SameSite=None com Secure
             if (isLocalhost) {
                 cookieParts.push('SameSite=Lax');
             } else {
+                // Em produção, remove HttpOnly para permitir que o JS acesse (temporariamente para debug)
                 cookieParts.push('SameSite=None');
                 cookieParts.push('Secure');
             }
@@ -73,6 +73,8 @@ export class CalendarController {
             
             console.log('🍪 Definindo cookie:', cookieOptions);
             console.log('🔄 Redirecionando para:', clientUrl);
+            console.log('🌐 Host do servidor:', req.headers.host);
+            console.log('🌐 Origin da requisição:', req.headers.origin);
             
             res.writeHead(302, { 
                 Location: clientUrl,
