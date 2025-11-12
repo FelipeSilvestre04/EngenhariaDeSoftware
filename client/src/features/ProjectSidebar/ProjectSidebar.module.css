@@ -1,0 +1,39 @@
+.sidebarContainer {
+  display: flex;
+  flex-direction: column; /* Empilha o título e a lista */
+
+  width: 300px; 
+  height: 80vh; 
+  padding: 2px 24px; 
+
+  background-color: #f7f7f9;
+  border-right: 1px solid #e0e0e0; 
+  
+  box-sizing: border-box; 
+}
+
+.titleBar {
+
+  background-color: #e6e0f0; 
+  color: #4a4063;
+  border-radius: 12px;
+
+  font-size: 14px;
+  font-weight: 400;
+  
+  padding: 0px 15px;
+  margin-bottom: 20px; 
+
+  white-space: nowrap; 
+}
+
+.cardList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px; 
+  flex: 1; 
+  overflow-y: auto;
+  padding-right: 8px;
+
+  min-height: 0;
+}

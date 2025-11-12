@@ -1,0 +1,24 @@
+.headerContainer {
+  display: flex; 
+  justify-content: flex-start; 
+  align-items: center; 
+  
+  width: 100%;
+  padding: 8px 24px; 
+  
+  background-color: #ffffff; 
+  border-bottom: 1px solid #e0e0e0; 
+  
+  box-sizing: border-box; 
+}
+
+.toggleButton {
+  background: none; 
+  border: none; 
+  cursor: pointer; 
+  
+  font-size: 24px;
+  color: #333;
+  padding: 0 8px; 
+  margin: 0; 
+}

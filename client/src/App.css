@@ -134,3 +134,19 @@ body {
     display: flex;
     flex-direction: column;
 }
+
+/*Novo =========================== */
+
+.App-Container {
+  display: flex; 
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 15px;
+  gap: 0px;
+}
+
+.ProjectList-Wrapper {
+  display: flex;
+  flex-direction: column; 
+  gap: 15px; 
+}
