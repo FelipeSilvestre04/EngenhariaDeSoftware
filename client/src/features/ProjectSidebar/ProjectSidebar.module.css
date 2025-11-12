@@ -15,13 +15,13 @@
 
 .open {
   width: 48vh; 
-  padding: 24px;
+  padding: 10px 24px 16px 24px;
   text-align: left;
 }
 
 .collapsed {
   width: 12vh;  
-  padding: 24px 16px;
+  padding: 10px 24px 16px 24px;
   text-align: left; 
 }
 
@@ -75,6 +75,6 @@
   
   font-size: 24px;
   color: #333;
-  padding: 0px 0px 10px 10px; 
+  padding: 0px 0px 10px; 
   margin: 0; 
 }
