@@ -13,25 +13,36 @@ import styles from './ProjectSidebar.module.css';
   { id: 7, title: 'Campanha Tasso Presidente', color: '#2d94d9ff' }
 ];
 
-function ProjectSidebar() {
-  
+function ProjectSidebar({ isOpen, onToggleClick }) {
+
   const [projects, setProjects] = useState(Projects);
 
-  return (
-    <aside className={styles.sidebarContainer}>
-      <div className={styles.titleBar}>
-        <h2>Meus Projetos</h2>
-      </div>
+  const sidebarClass = `${styles.sidebarContainer} ${isOpen ? styles.open : styles.collapsed}`;
 
-      <div className={styles.cardList}>
-        {projects.map(project => (
-          <ProjectCard 
-            key={project.id} 
-            title={project.title} 
-            color={project.color} 
-          />
-        ))}
-      </div>
+  return (
+    <aside className={sidebarClass}>
+      
+      <button onClick={onToggleClick} className={styles.toggleButton}>
+        ☰
+      </button>
+      
+      {isOpen && (
+        <>
+          <div className={styles.titleBar}>
+            <h2>Meus Projetos</h2>
+          </div>
+
+          <div className={styles.cardList}>
+            {projects.map(project => (
+              <ProjectCard 
+                key={project.id} 
+                title={project.title} 
+                color={project.color} 
+              />
+            ))}
+          </div>
+        </>
+      )}
     </aside>
   );
 }

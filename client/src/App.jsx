@@ -13,16 +13,24 @@ function App() {
   };
 
   return (
-    <>
-      <Header onToggleClick={toggleSidebar} /> 
+<div className="App-Wrapper">
+      
+      <ProjectSidebar 
+        isOpen={isSidebarOpen} 
+        onToggleClick={toggleSidebar} 
+      />
 
-      <div className="App-Container">
-        {isSidebarOpen && <ProjectSidebar />}
-        <ChatWindow />
-        <GoogleAuth />
-      </div>
-    </>
+      <main className="Main-Content">
+        <Header />
+        <div className="App-Container"> 
+          <ChatWindow />
+          <GoogleAuth />
+        </div>
+      </main>
+
+    </div>
   );
 }
+
 
 export default App;

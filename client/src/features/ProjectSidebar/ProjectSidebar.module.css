@@ -1,15 +1,43 @@
 .sidebarContainer {
   display: flex;
-  flex-direction: column; /* Empilha o título e a lista */
-
-  width: 300px; 
-  height: 80vh; 
-  padding: 2px 24px; 
-
+  flex-direction: column;
+  height: 100vh; 
   background-color: #f7f7f9;
-  border-right: 1px solid #e0e0e0; 
-  
+  border-right: 1px solid #e0e0e0;
   box-sizing: border-box; 
+  text-align: left;
+  
+  transition: all 0.3s ease-in-out;
+  
+  overflow-x: hidden;
+  white-space: nowrap; 
+}
+
+.open {
+  width: 48vh; 
+  padding: 24px;
+  text-align: left;
+}
+
+.collapsed {
+  width: 12vh;  
+  padding: 24px 16px;
+  text-align: left; 
+}
+
+.toggleButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 24px;
+  color: #333;
+  padding: 0;
+  margin-bottom: 24px;
+}
+
+.collapsed .toggleButton {
+  width: 100%;
+  text-align: left;
 }
 
 .titleBar {
@@ -36,4 +64,17 @@
   padding-right: 8px;
 
   min-height: 0;
+}
+
+.toggleButton {
+  background: none; 
+  border: none; 
+  cursor: pointer; 
+  text-align: left;
+  width: 35px;
+  
+  font-size: 24px;
+  color: #333;
+  padding: 0px 0px 10px 10px; 
+  margin: 0; 
 }
