@@ -46,18 +46,34 @@ export class CalendarController {
 
             const result = await this.service.handleOauthCallback(code);
 
+            // Determina a URL do cliente
+            const clientUrl = process.env.CLIENT_URL || process.env.FRONTEND_URL || req.headers.referer || 'http://localhost:5173';
+            
+            // Verifica se estamos em localhost (desenvolvimento)
+            const isLocalhost = clientUrl.includes('localhost') || clientUrl.includes('127.0.0.1');
+            
             // Define o cookie userId no navegador
-            const cookieOptions = [
+            const cookieParts = [
                 `userId=${result.userId}`,
                 'Path=/',
                 'HttpOnly',
-                'SameSite=Lax',
                 'Max-Age=2592000' // 30 dias
-            ].join('; ');
-
-            // Redireciona de volta para a aplicação React após a autenticação
-            // Usa CLIENT_URL do ambiente ou detecta automaticamente do request
-            const clientUrl = process.env.CLIENT_URL || req.headers.origin || req.headers.referer || '/';
+            ];
+            
+            // Em localhost, usa SameSite=Lax (não precisa Secure)
+            // Em produção, usa SameSite=None com Secure
+            if (isLocalhost) {
+                cookieParts.push('SameSite=Lax');
+            } else {
+                cookieParts.push('SameSite=None');
+                cookieParts.push('Secure');
+            }
+            
+            const cookieOptions = cookieParts.join('; ');
+            
+            console.log('🍪 Definindo cookie:', cookieOptions);
+            console.log('🔄 Redirecionando para:', clientUrl);
+            
             res.writeHead(302, { 
                 Location: clientUrl,
                 'Set-Cookie': cookieOptions
@@ -75,9 +91,8 @@ export class CalendarController {
             const userId = this.getUserIdFromRequest(req);
 
             if(!userId){
-                res.writeHead(302, { Location: '/calendar/auth'});
-                res.end();
-                return;
+                res.writeHead(401, {'Content-Type': 'application/json'});
+                return res.end(JSON.stringify({ success: false, error: 'Usuário não autenticado' }));
             }
 
             // Verifica autenticação com o userId
@@ -101,7 +116,12 @@ export class CalendarController {
     async checkStatus(req, res){
         try{
             const userId = this.getUserIdFromRequest(req);
+            console.log('🔍 Check Status - UserId do cookie:', userId);
+            console.log('🔍 Check Status - Cookies recebidos:', req.headers.cookie);
+            
             const isAuth = userId ? await this.service.checkAuthentication(userId) : false;
+            
+            console.log('✅ Check Status - Autenticado?', isAuth);
 
             res.writeHead(200, {'Content-Type': 'application/json'});
             res.end(JSON.stringify({ authenticated: isAuth }));

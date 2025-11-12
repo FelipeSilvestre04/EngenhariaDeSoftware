@@ -1,10 +1,12 @@
 // src/app.js
 import { LLMRoutes } from "./modules/llm/index.js";
 import { CalendarRoute } from "./modules/calendar/routes/CalendarRoute.js";
+import { CorsMiddleware } from "./shared/middleware/cors.js";
 
 export class AppRouter {
     constructor(config){
         this.config = config;
+        this.corsMiddleware = new CorsMiddleware();
         this.modules = this.initializeModules();
     }
 
@@ -23,6 +25,9 @@ export class AppRouter {
     }
 
     async handle(req, res){
+        // Aplica CORS em todas as requisições
+        const corsHandled = this.corsMiddleware.handle(req, res);
+        if (corsHandled) return; // Se foi OPTIONS, já retornou
         
         var pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
 

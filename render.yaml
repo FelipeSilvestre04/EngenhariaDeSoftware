@@ -1,0 +1,19 @@
+# Backend Service
+services:
+  - type: web
+    name: engenharia-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    # Adicione suas variáveis de ambiente no Render Dashboard:
+    # - GROQ_API_KEY
+    # - GOOGLE_CLIENT_ID
+    # - GOOGLE_CLIENT_SECRET
+    # - REDIRECT_URI
