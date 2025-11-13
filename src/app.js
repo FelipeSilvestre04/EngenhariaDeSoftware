@@ -1,20 +1,28 @@
 // src/app.js
 import { LLMRoutes } from "./modules/llm/index.js";
 import { CalendarRoute } from "./modules/calendar/routes/CalendarRoute.js";
+import { AuthRoute } from "./modules/auth/auth.route.js";
 
 export class AppRouter {
     constructor(config){
         this.config = config;
         this.modules = this.initializeModules();
+        this.routes = {
+            llm: '/llm',
+            calendar: '/calendar',
+            auth: '/auth',
+        };
     }
 
     initializeModules(){
         const calendar = new CalendarRoute(this.config);
         const llm = new LLMRoutes(this.config, calendar.controller.service);
+        const auth = new AuthRoute();
         
         return {
             llm: llm,
             calendar: calendar,
+            auth: auth,
         };
     }
 
@@ -25,7 +33,6 @@ export class AppRouter {
     async handle(req, res){
         
         var pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
-
         // Rota de health check
         if (pathname === '/health') {
             res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -78,6 +85,9 @@ export class AppRouter {
             }
             
             return await this.modules.llm.handle(req, res);
+        }
+        if (pathname.startsWith('/auth')) {
+            return await this.modules.auth.handle(req, res);
         }
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Route not found' }));
