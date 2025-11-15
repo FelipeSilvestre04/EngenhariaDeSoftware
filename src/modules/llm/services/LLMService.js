@@ -1,61 +1,283 @@
-// src/modules/llm/services/LLMService.js
-import { LLMModel } from "../models/LLMModel.js";
+import {LLMModel} from "../models/LLMModel.js"
+import { z } from "zod";
+import { tool } from "@langchain/core/tools";
 
-export class LLMService {
-    constructor(apiKey) {
+// o serviço é o que vai ser usado pelo controller. ele executará o modelo 
+// e irá usá-lo para entregar um serviço específico.
+
+export class LLMService{
+    constructor(apiKey, calendarService){
         this.model = new LLMModel(apiKey);
+        this.calendarService = calendarService;
+        this.tools = [];
     }
 
-    createModel(temperature, modelName) {
-        this.model.initialize(modelName, temperature);
+    async createModel(temperature, modelName){
+        await this._createTools();
+        this.model.initialize(modelName, temperature, this.tools);
     }
 
-    async processConsulta(systemPrompt, userPrompt) {
-        try {
-            const response = await this.model.query(systemPrompt, userPrompt);
-            let content = response.content;
-            if (content.includes('</think>')) {
-                content = content.split('</think>')[1].trim();
+    async _createTools(){
+        const getCalendarEventsTool = tool(
+            async ({maxResults = 10}) => {
+                try {
+                    const events = await this.calendarService.listEvents(maxResults);
+
+                    if (!events || events.length === 0) {
+                        return "Nenhum evento encontrado no calendário.";
+                    }
+
+                    const formattedEvents = events.map((event, index) => {
+                        // Os eventos já vêm processados com start e end como strings
+                        const startDateTime = event.start;
+                        const endDateTime = event.end;
+                        
+                        // Formata as datas de forma legível
+                        let dateInfo = 'Horário: Não especificado';
+                        if (startDateTime) {
+                            const startDate = new Date(startDateTime);
+                            const endDate = endDateTime ? new Date(endDateTime) : null;
+                            
+                            // Verifica se tem horário (se tem 'T' na string, tem horário)
+                            const hasTime = startDateTime.includes('T');
+                            
+                            if (!hasTime) {
+                                // Evento de dia inteiro
+                                dateInfo = `Data: ${startDate.toLocaleDateString('pt-BR')} (dia inteiro)`;
+                            } else {
+                                // Evento com horário específico
+                                const dateStr = startDate.toLocaleDateString('pt-BR');
+                                const timeStr = startDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                                
+                                if (endDate && hasTime) {
+                                    const endTimeStr = endDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                                    dateInfo = `Data: ${dateStr} | Horário: ${timeStr} - ${endTimeStr}`;
+                                } else {
+                                    dateInfo = `Data: ${dateStr} | Horário: ${timeStr}`;
+                                }
+                            }
+                        }
+                        
+                        // Monta a informação do evento de forma estruturada
+                        let eventInfo = `${index + 1}. **${event.summary || 'Sem título'}**\n   ${dateInfo}`;
+                        
+                        if (event.description && event.description.trim()) {
+                            eventInfo += `\n   Descrição: ${event.description}`;
+                        }
+                        
+                        if (event.location && event.location.trim()) {
+                            eventInfo += `\n   Local: ${event.location}`;
+                        }
+                        
+                        return eventInfo;
+                    }).join('\n\n');
+
+                    return `Encontrei ${events.length} evento(s) no calendário:\n\n${formattedEvents}`;
+                } catch (error) {
+                    return `Erro ao buscar eventos: ${error.message}`;
+                }
+            },
+            {
+                name: "get_calendar_events",
+                description: "Busca eventos do calendário Google do usuário. Use esta ferramenta quando precisar verificar a agenda, compromissos ou eventos marcados. Retorna informações detalhadas incluindo datas, horários, descrições e locais.",
+                schema: z.object({
+                    maxResults: z.number().optional().default(10).describe("Número máximo de eventos a retornar")
+                }),
             }
-            return { success: true, content: content };
-        } catch (error) {
-            return { success: false, error: error.message };
+        );
+
+        const createEventTool = tool(
+            async ({summary, description, location, startDateTime, endDateTime}) => {
+                try {
+                    const event = await this.calendarService.createEvent({
+                        summary,
+                        description,
+                        location,
+                        startDateTime,
+                        endDateTime
+                    });
+                    return `Evento criado com sucesso: ${event.summary} em ${event.start}`;
+                } catch (error) {
+                    return `Erro ao criar evento: ${error.message}`;
+                }
+            },
+            {
+                name: "create_calendar_event",
+                description: "Cria um novo evento no calendário Google do usuário. Use esta ferramenta para agendar compromissos, reuniões ou lembretes.",
+                schema: z.object({
+                    summary: z.string().describe("Título do evento"),
+                    description: z.string().optional().describe("Descrição do evento"),
+                    location: z.string().optional().describe("Local do evento"),
+                    startDateTime: z.string().describe("Data e hora de início no formato ISO 8601"),
+                    endDateTime: z.string().describe("Data e hora de término no formato ISO 8601")
+                }),
+            }
+        );
+
+        this.tools.push(getCalendarEventsTool, createEventTool);
+    }
+
+
+    async _createTools(){
+        const getCalendarEventsTool = tool(
+            async ({maxResults = 10}) => {
+                try {
+                    const events = await this.calendarService.listEvents(maxResults);
+
+                    if (!events || events.length === 0) {
+                        return "Nenhum evento encontrado no calendário.";
+                    }
+
+                    const formattedEvents = events.map((event, index) => {
+                        // Os eventos já vêm processados com start e end como strings
+                        const startDateTime = event.start;
+                        const endDateTime = event.end;
+                        
+                        // Formata as datas de forma legível
+                        let dateInfo = 'Horário: Não especificado';
+                        if (startDateTime) {
+                            const startDate = new Date(startDateTime);
+                            const endDate = endDateTime ? new Date(endDateTime) : null;
+                            
+                            // Verifica se tem horário (se tem 'T' na string, tem horário)
+                            const hasTime = startDateTime.includes('T');
+                            
+                            if (!hasTime) {
+                                // Evento de dia inteiro
+                                dateInfo = `Data: ${startDate.toLocaleDateString('pt-BR')} (dia inteiro)`;
+                            } else {
+                                // Evento com horário específico
+                                const dateStr = startDate.toLocaleDateString('pt-BR');
+                                const timeStr = startDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                                
+                                if (endDate && hasTime) {
+                                    const endTimeStr = endDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                                    dateInfo = `Data: ${dateStr} | Horário: ${timeStr} - ${endTimeStr}`;
+                                } else {
+                                    dateInfo = `Data: ${dateStr} | Horário: ${timeStr}`;
+                                }
+                            }
+                        }
+                        
+                        // Monta a informação do evento de forma estruturada
+                        let eventInfo = `${index + 1}. **${event.summary || 'Sem título'}**\n   ${dateInfo}`;
+                        
+                        if (event.description && event.description.trim()) {
+                            eventInfo += `\n   Descrição: ${event.description}`;
+                        }
+                        
+                        if (event.location && event.location.trim()) {
+                            eventInfo += `\n   Local: ${event.location}`;
+                        }
+                        
+                        return eventInfo;
+                    }).join('\n\n');
+
+                    return `Encontrei ${events.length} evento(s) no calendário:\n\n${formattedEvents}`;
+                } catch (error) {
+                    return `Erro ao buscar eventos: ${error.message}`;
+                }
+            },
+            {
+                name: "get_calendar_events",
+                description: "Busca eventos do calendário Google do usuário. Use esta ferramenta quando precisar verificar a agenda, compromissos ou eventos marcados. Retorna informações detalhadas incluindo datas, horários, descrições e locais.",
+                schema: z.object({
+                    maxResults: z.number().optional().default(10).describe("Número máximo de eventos a retornar")
+                }),
+            }
+        );
+
+        const createEventTool = tool(
+            async ({summary, description, location, startDateTime, endDateTime}) => {
+                try {
+                    const event = await this.calendarService.createEvent({
+                        summary,
+                        description,
+                        location,
+                        startDateTime,
+                        endDateTime
+                    });
+                    return `Evento criado com sucesso: ${event.summary} em ${event.start}`;
+                } catch (error) {
+                    return `Erro ao criar evento: ${error.message}`;
+                }
+            },
+            {
+                name: "create_calendar_event",
+                description: "Cria um novo evento no calendário Google do usuário. Use esta ferramenta para agendar compromissos, reuniões ou lembretes.",
+                schema: z.object({
+                    summary: z.string().describe("Título do evento"),
+                    description: z.string().optional().describe("Descrição do evento"),
+                    location: z.string().optional().describe("Local do evento"),
+                    startDateTime: z.string().describe("Data e hora de início no formato ISO 8601"),
+                    endDateTime: z.string().describe("Data e hora de término no formato ISO 8601")
+                }),
+            }
+        );
+
+        this.tools.push(getCalendarEventsTool, createEventTool);
+    }
+
+
+    async processConsulta(systemPrompt, userPrompt, userName, projectName) {
+        try {
+            const response = await this.model.queryWithTools(systemPrompt, userPrompt, userName, projectName);
+            
+            return {
+                success: true,
+                content: response.content,
+                metaData: {
+                    timeStamp: new Date().toISOString()
+                }
+            };
+        } catch (error){
+            return {
+                success: false,
+                error: error.message
+            }
         }
     }
 
-    async analyzeIntent(userPrompt) {
-        const currentDate = new Date().toISOString();
-        const currentYear = new Date().getFullYear();
+    // aqui implementar os serviços que vao utilizar processConsulta.
+    async checaAgenda(name, prompt, projectName){
+        // Obter data e hora atual
+        const now = new Date();
+        const dateTimeInfo = {
+            dataCompleta: now.toLocaleString('pt-BR', { 
+                timeZone: 'America/Sao_Paulo',
+                dateStyle: 'full',
+                timeStyle: 'long'
+            }),
+            dataISO: now.toISOString(),
+            diaSemana: now.toLocaleDateString('pt-BR', { weekday: 'long' }),
+            timestamp: now.getTime()
+        };
 
-        // PROMPT FINAL COM AJUSTE DE FUSO HORÁRIO
-        const systemPrompt = `
-            Você é um especialista em analisar texto para extrair intenções e dados estruturados.
-            A data de hoje é \${currentDate}. O ano atual é \${currentYear}.
-            O fuso horário do usuário é 'America/Sao_Paulo' (UTC-3).
+        const systemPrompt = `Você é um assistente que ajuda os usuários a gerenciar e consultar seus calendários do Google Calendar. 
 
-            Responda SEMPRE e APENAS com um objeto JSON válido. Não adicione nenhum texto ou explicação fora do JSON.
+INFORMAÇÕES DE DATA E HORA ATUAL:
+- Data e hora completa: ${dateTimeInfo.dataCompleta}
+- Data ISO 8601: ${dateTimeInfo.dataISO}
+- Dia da semana: ${dateTimeInfo.diaSemana}
 
-            As intenções possíveis são: 'CRIAR_EVENTO' ou 'RESPONDER_PERGUNTA'.
+INSTRUÇÕES IMPORTANTES:
+1. Use estas informações para calcular datas relativas (amanhã, próxima semana, etc)
+2. Ao criar eventos, SEMPRE use o formato ISO 8601 para startDateTime e endDateTime
+3. Se o usuário não especificar hora, use um horário padrão (ex: 09:00)
+4. Se o usuário não especificar duração, use 1 hora de duração padrão
+5. Utilize as ferramentas disponíveis para buscar eventos e criar novos eventos
+6. Se você adicionar um novo evento, confirme os detalhes ao usuário
 
-            1.  Se a intenção for 'CRIAR_EVENTO':
-                - Extraia 'summary' (título do evento).
-                - **IMPORTANTE**: Interprete os horários fornecidos pelo usuário como se estivessem no fuso 'America/Sao_Paulo'. Converta esses horários para o formato ISO 8601 em UTC (com 'Z' no final) para a resposta JSON.
-                - Se o ano for omitido, use o ano atual (\${currentYear}). Se a data resultante já passou, use o próximo ano.
-                - Se a hora de término for omitida, adicione 1 hora à hora de início.
+Exemplo de formato correto para datas:
+- Início: "2025-10-21T14:00:00-03:00"
+- Fim: "2025-10-21T15:00:00-03:00"`;
 
-            2.  Se for uma pergunta geral, use a intenção 'RESPONDER_PERGUNTA'.
-
-            Exemplos de como você deve responder:
-            - Usuário: "adicione dia 24/10 aniversário do gui, das 12h ate 19h" -> {"action":"CRIAR_EVENTO","details":{"summary":"Aniversário do Gui","start_time":"\${currentYear}-10-24T15:00:00.000Z","end_time":"\${currentYear}-10-24T22:00:00.000Z"}}
-            - Usuário: "Reunião de equipe amanhã às 9h" -> {"action":"CRIAR_EVENTO","details":{"summary":"Reunião de equipe","start_time":"[data de amanhã]T12:00:00.000Z","end_time":"[data de amanhã]T13:00:00.000Z"}}
-            - Usuário: "tem algo na agenda hoje?" -> {"action":"RESPONDER_PERGUNTA"}
-        `;
-        
-        return await this.processConsulta(systemPrompt, userPrompt);
+        const userPrompt = prompt;
+        return await this.processConsulta(systemPrompt, userPrompt, name, projectName);
     }
 
     async generateNaturalResponse(contextualPrompt) {
         const systemPrompt = `Você é um assistente pessoal prestativo e conciso. Responda à pergunta do usuário de forma direta, baseado apenas no contexto fornecido. Não use formatação Markdown.`;
-        return await this.processConsulta(systemPrompt, contextualPrompt);
+        return await this.processConsulta(systemPrompt, contextualPrompt, name, projectName);
     }
 }

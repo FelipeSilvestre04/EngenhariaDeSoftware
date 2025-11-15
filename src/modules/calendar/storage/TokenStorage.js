@@ -10,9 +10,10 @@ export class TokenStorage {
         this.defaultUserId = 'default';
     }
 
-    async saveTokens(tokens, userId = this.defaultUserId){
+    async saveTokens(userId = this.defaultUserId, tokens){
         const TOKEN_PATH = path.join(__dirname, `tokens-${userId}.json`);
         await fs.writeFile(TOKEN_PATH, JSON.stringify(tokens, null, 2));
+        console.log(`✅ Tokens salvos para usuário: ${userId}`);
     }
 
     async loadTokens(userId = this.defaultUserId) {
@@ -37,13 +38,13 @@ export class TokenStorage {
         }
     }
 
-    // Dentro da classe TokenStorage
-    async deleteTokens(userId = this.defaultUserId){ // ADICIONADO (userId = this.defaultUserId)
+    async deleteTokens(userId = this.defaultUserId){
         const TOKEN_PATH = path.join(__dirname, `tokens-${userId}.json`);
 
-        if (await this.hasTokens(userId)){ // Passando userId aqui também
+        if (await this.hasTokens(userId)){
             try{
-                await fs.rm(TOKEN_PATH);
+                await fs.unlink(TOKEN_PATH);
+                console.log(`✅ Tokens removidos para usuário: ${userId}`);
             } catch (error) {
                 throw new Error(`Não foi possível deletar tokens. Erro: ${error.message}`);
             }

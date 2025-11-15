@@ -4,8 +4,27 @@ import { CalendarService } from "../services/CalendarService.js";
 export class CalendarController {
     constructor(config){
         this.service = new CalendarService(config);
-        // A inicialização foi removida daqui para evitar problemas de concorrência.
-        // O próprio serviço agora garante que está inicializado antes de cada ação.
+    }
+
+    // Helper para extrair cookies
+    parseCookies(cookieHeader) {
+        if (!cookieHeader) return {};
+        
+        return cookieHeader.split(';').reduce((cookies, cookie) => {
+            const [name, value] = cookie.trim().split('=');
+            cookies[name] = value;
+            return cookies;
+        }, {});
+    }
+
+    // Helper para pegar userId da sessão
+    getUserIdFromRequest(req) {
+        const cookies = this.parseCookies(req.headers.cookie);
+        
+        // Agora pegamos o userId diretamente do cookie (não mais sessionId)
+        const userId = cookies.userId;
+        
+        return userId || null;
     }
 
     async initiateAuth(req, res){
@@ -25,10 +44,22 @@ export class CalendarController {
             const code = url.searchParams.get('code');
             if (!code) throw new Error("Código de autorização não encontrado.");
 
-            await this.service.handleOauthCallback(code);
+            const result = await this.service.handleOauthCallback(code);
+
+            // Define o cookie userId no navegador
+            const cookieOptions = [
+                `userId=${result.userId}`,
+                'Path=/',
+                'HttpOnly',
+                'SameSite=Lax',
+                'Max-Age=2592000' // 30 dias
+            ].join('; ');
 
             // Redireciona de volta para a aplicação React após a autenticação
-            res.writeHead(302, { Location: 'http://localhost:5173' }); 
+            res.writeHead(302, { 
+                Location: 'http://localhost:5173',
+                'Set-Cookie': cookieOptions
+            }); 
             res.end();
             
         } catch (error) {
@@ -39,7 +70,16 @@ export class CalendarController {
 
     async listEvents(req, res){
         try{
-            const isAuth = await this.service.checkAuthentication();
+            const userId = this.getUserIdFromRequest(req);
+
+            if(!userId){
+                res.writeHead(302, { Location: '/calendar/auth'});
+                res.end();
+                return;
+            }
+
+            // Verifica autenticação com o userId
+            const isAuth = await this.service.checkAuthentication(userId);
 
             if(!isAuth){
                 res.writeHead(401, {'Content-Type': 'application/json'});
@@ -58,7 +98,8 @@ export class CalendarController {
 
     async checkStatus(req, res){
         try{
-            const isAuth = await this.service.checkAuthentication();
+            const userId = this.getUserIdFromRequest(req);
+            const isAuth = userId ? await this.service.checkAuthentication(userId) : false;
 
             res.writeHead(200, {'Content-Type': 'application/json'});
             res.end(JSON.stringify({ authenticated: isAuth }));
@@ -70,13 +111,33 @@ export class CalendarController {
 
     async logout(req, res) {
         try {
-            await this.service.logout();
+            const userId = this.getUserIdFromRequest(req);
             
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ success: true, message: 'Logout realizado com sucesso' }));
+            if (!userId) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                return res.end(JSON.stringify({ 
+                    success: false,
+                    error: 'Nenhum usuário autenticado' 
+                }));
+            }
+
+            await this.service.logout(userId);
+            
+            // Remove o cookie userId
+            res.writeHead(200, { 
+                'Content-Type': 'application/json',
+                'Set-Cookie': 'userId=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT'
+            });
+            res.end(JSON.stringify({ 
+                success: true,
+                message: 'Logout realizado com sucesso' 
+            }));
         } catch (error) {
             res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: error.message }));
+            res.end(JSON.stringify({ 
+                success: false,
+                error: error.message 
+            }));
         }
     }
 }

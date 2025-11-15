@@ -18,8 +18,9 @@ export const config = {
     },
     llm: {
         apiKey: process.env.GROQ_API_KEY,
-        defaultModel: 'qwen/qwen3-32b',
-        defaultTemperature: 0.3,
+        defaultModel: 'openai/gpt-oss-120b',
+        defaultTemperature: 0.1,
+        hfToken: process.env.hf_token || ''
     },
     googleCalendar: {
         clientId: process.env.GOOGLE_CLIENT_ID,

@@ -1,8 +1,8 @@
 import { LLMController } from '../controllers/LLMController.js';
 
 export class LLMRoutes {
-    constructor(config) {
-        this.llmController = new LLMController(config);
+    constructor(config, calendarService) {
+        this.llmController = new LLMController(config, calendarService);
     }
 
     async handle(req, res) {
@@ -10,11 +10,13 @@ export class LLMRoutes {
         const pathname = url.pathname;
         const method = req.method;
 
-        if (pathname === '/llm/query' && method === 'POST') {
-            return await this.llmController.handleQuery(req, res);
+        // Aceita tanto /llm/consulta quanto /llm/query
+        if ((pathname === '/llm/consulta' || pathname === '/llm/query') && method === 'POST'){
+            return await this.llmController.handleConsulta(req, res);
         }
         
         res.writeHead(404, {'Content-Type': 'application/json'});
         res.end(JSON.stringify({error: 'Route not found'}));
     }
+
 }

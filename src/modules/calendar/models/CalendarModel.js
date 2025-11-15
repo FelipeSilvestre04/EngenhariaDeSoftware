@@ -1,10 +1,11 @@
 import { google } from 'googleapis';
+import { config } from '../../../shared/config/index.js';
 import { TokenStorage } from '../storage/TokenStorage.js';
-
+import crypto from 'crypto';
 
 // funcoes basicas do calendar tool
 export class CalendarModel {
-    constructor(config){
+    constructor(){
         // criar storage?
         this.tokenStorage = new TokenStorage();
         this.oauth2Client = new google.auth.OAuth2(
@@ -13,71 +14,76 @@ export class CalendarModel {
             config.googleCalendar.redirectUri
         );
         this.calendar = null;
-        this.config = config;
+        this.currentUserId = null; // ← Armazena o userId atual
     }
 
     getAuthUrl(){
         return this.oauth2Client.generateAuthUrl({
-            acess_type: 'offline',
-            scope: this.config.googleCalendar.scopes,
-            prompt: 'consent',
+            access_type: 'offline',
+            scope: [
+                ...config.googleCalendar.scopes,
+            ],
+            prompt: 'consent'
         });
     }
 
-    async isAutheticated(){
-        return await this.tokenStorage.hasTokens();
+    async isAuthenticated(userId = 'default'){
+        return await this.tokenStorage.hasTokens(userId);
     }
 
     async authenticateWithCode(code){
         try{
             const { tokens } = await this.oauth2Client.getToken(code);
-            await this.tokenStorage.saveTokens(tokens);
             this.oauth2Client.setCredentials(tokens);
+
+            // Buscar email do usuário
+            const oauth2 = google.oauth2({ version: 'v2', auth: this.oauth2Client });
+
+
+            // Usar email como userId
+            const userId = crypto.randomUUID();
+            this.currentUserId = userId;
+            await this.tokenStorage.saveTokens(userId, tokens);
+            
             this.calendar = google.calendar({
                 version: 'v3',
                 auth: this.oauth2Client
             });
-            return tokens;
-
+                        
+            return { tokens, userId: userId };
         } catch (error) {
             throw new Error(`Erro ao autenticar: ${error.message}`);
         }
     }
 
-    async initialize(){
-        try {
-            const tokens = await this.tokenStorage.loadTokens();
-
-            if (tokens){
-                this.oauth2Client.setCredentials(tokens);
-                this.calendar = google.calendar({
-                    version: 'v3',
-                    auth: this.oauth2Client
-                });
-
-                if (tokens.expiry_date && tokens.expiry_date < Date.now()){
-                    await this.refreshToken();
-                }
-
-                return true;
+    async initialize(userId = 'default') {
+        const tokens = await this.tokenStorage.loadTokens(userId);
+        
+        if (tokens) {
+            this.currentUserId = userId;
+            this.oauth2Client.setCredentials(tokens);
+            this.calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
+            
+            console.log(`✅ Tokens carregados para usuário: ${userId}`);
+            
+            if (tokens.expiry_date && tokens.expiry_date < Date.now()) {
+                console.log('⚠️  Token expirado, renovando...');
+                await this.refreshToken(userId);
             }
-
-            return false;
-        } catch (error) {
-            console.log('⚠️ Não foi possível carregar tokens:', error.message);
-            return false;
+            
+            return true;
         }
+        
+        console.log('⚠️  Nenhum token encontrado. Usuário precisa autenticar.');
+        return false;
     }
 
-    async refreshToken(){
+    async refreshToken(userId) {
         try {
             const { credentials } = await this.oauth2Client.refreshAccessToken();
-            await this.tokenStorage.saveTokens(credentials);
+            await this.tokenStorage.saveTokens(userId, credentials);
             this.oauth2Client.setCredentials(credentials);
-            console.log(" Token renovado! ");
-
-        } catch (error){
-            console.error('Erro ao renovar token:', error.message);
+        } catch (error) {
             throw new Error('Token expirado. Faça login novamente.');
         }
     }    // ...existing code...
@@ -172,11 +178,41 @@ export class CalendarModel {
         }
     }
 
-    async logout(){
-        await this.tokenStorage.deleteTokens();
+    async insertEvent({summary, description, location, startDateTime, endDateTime}){
+        if (!this.calendar) {
+            throw new Error("Usuário não autenticado! Autenticar primeiro.");
+        }
+        try {
+            const event = {
+                summary: summary,
+                description: description
+                , location: location,
+                start: {
+                    dateTime: startDateTime,
+                    timeZone: 'America/Sao_Paulo'
+                },
+                end: {
+                    dateTime: endDateTime,
+                    timeZone: 'America/Sao_Paulo'
+                }
+            };
+            const response = await this.calendar.events.insert({
+                calendarId: 'primary',
+                resource: event
+            });
+            return response.data;
+        } catch (error) {
+            throw new Error(`Não foi possível criar o evento! Erro: ${error.message}`);
+        }
+    }
+
+    async logout(userId = 'default'){
+        await this.tokenStorage.deleteTokens(userId);
         this.oauth2Client.setCredentials({});
         this.calendar = null;
+        this.currentUserId = null;
     }
+    
     async createEvent(event) {
     if (!this.calendar) {
         throw new Error("Usuário não autenticado!");
