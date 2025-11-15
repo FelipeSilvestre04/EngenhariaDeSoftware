@@ -23,7 +23,7 @@ export function GoogleAuth() {
   }, []);
 
   const handleLogin = () => {
-    window.location.href = 'http://localhost:10000/calendar/auth';
+    window.location.href = '/calendar/auth';
   };
 
   const handleLogout = async () => {
