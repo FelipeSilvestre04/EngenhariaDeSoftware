@@ -1,27 +1,31 @@
 # Imagem base Node
-# ATUALIZAÇÃO 1: Mudando para Node 20 para atender aos requisitos do LangChain e Vite
 FROM node:20-alpine
 
 # Diretório da aplicação
 WORKDIR /app
 
-# --- ETAPA 1: INSTALAÇÃO DE DEPENDÊNCIAS DO BACKEND ---
+# --- ETAPA 1: INSTALAÇÃO DE DEPENDÊNCIAS (CACHE) ---
+# Copia SÓ os package.json primeiro para otimizar o cache do Docker
 COPY package*.json ./
-# Usando --legacy-peer-deps para resolver o erro ERESOLVE
+COPY client/package*.json ./client/
+
+# Instala dependências do backend
 RUN npm install --legacy-peer-deps
 
-# --- ETAPA 2: INSTALAÇÃO E BUILD DO FRONTEND (Vite) ---
+# Instala dependências do frontend (em /app/client)
 WORKDIR /app/client
-COPY client/package*.json ./
-# CORREÇÃO CRÍTICA: Instalar dependências do cliente (incluindo 'vite')
 RUN npm install --legacy-peer-deps
-
-# Faz o build do React (Vite), gerando a pasta 'dist'
-RUN npm run build
 WORKDIR /app
 
-# Copiar o restante do código (incluindo a pasta 'dist' recém-criada em client/)
+# --- ETAPA 2: BUILD DO FRONTEND (COM CÓDIGO-FONTE) ---
+# AGORA sim, copia todo o código-fonte (backend e frontend)
 COPY . .
+
+# Entra na pasta do cliente, que agora tem o código-fonte
+WORKDIR /app/client
+# Executa o build (agora o Vite vai encontrar o index.html)
+RUN npm run build
+WORKDIR /app
 
 # Expor porta (Render define $PORT)
 ENV PORT=10000
