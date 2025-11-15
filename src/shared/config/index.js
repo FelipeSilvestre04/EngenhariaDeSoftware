@@ -20,7 +20,9 @@ export const config = {
         apiKey: process.env.GROQ_API_KEY,
         defaultModel: 'openai/gpt-oss-120b',
         defaultTemperature: 0.1,
-        hfToken: process.env.hf_token || ''
+        hfToken: process.env.hf_token || '',
+        // CORREÇÃO: Linha adicionada para o modelo de embeddings do HuggingFace
+        modelHf: process.env.modelHf || 'sentence-transformers/all-MiniLM-L6-v2'
     },
     googleCalendar: {
         clientId: process.env.GOOGLE_CLIENT_ID,
