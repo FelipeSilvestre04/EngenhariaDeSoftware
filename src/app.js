@@ -33,8 +33,9 @@ export class AppRouter {
     async handle(req, res){
         
         var pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
-        // Rota de health check
-        if (pathname === '/health') {
+        
+        // Rota de health check (sem /api)
+        if (pathname === '/health' || pathname === '/api/health') {
             res.writeHead(200, { 'Content-Type': 'application/json' });
             return res.end(JSON.stringify({ 
                 status: 'ok', 
@@ -43,15 +44,48 @@ export class AppRouter {
             }));
         }
 
-        if (pathname === '/' || pathname === '') {
-            res.writeHead(302, { Location: 'calendar'});
-            return res.end();
+        // EXCEÇÃO: Permite rotas de OAuth direto na porta 10000 (com ou sem /api)
+        if (pathname === '/calendar/oauth2callback' || pathname === '/calendar/auth' ||
+            pathname === '/api/calendar/oauth2callback' || pathname === '/api/calendar/auth') {
+            // Remove /api se presente para passar para o módulo
+            if (pathname.startsWith('/api')) {
+                req.url = pathname.substring(4) + new URL(req.url, `http://${req.headers.host}`).search;
+            }
+            return await this.modules.calendar.handle(req, res);
         }
 
-        if (pathname.startsWith('/calendar')) {
+        // Raiz redireciona para o frontend (será servido pelo nginx)
+        if (pathname === '/' || pathname === '') {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ 
+                error: 'Not found',
+                message: 'API routes should start with /api'
+            }));
+        }
+
+        // Remove o prefixo /api se presente
+        let apiPath = pathname;
+        if (pathname.startsWith('/api')) {
+            apiPath = pathname.substring(4); // Remove '/api'
+        } else {
+            // Se não começar com /api, retorna 404
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ 
+                error: 'Not found',
+                message: 'API routes should start with /api'
+            }));
+        }
+
+        // Modifica req.url para remover o prefixo /api antes de passar para os módulos
+        if (pathname.startsWith('/api')) {
+            const url = new URL(req.url, `http://${req.headers.host}`);
+            req.url = url.pathname.substring(4) + url.search; // Remove '/api' mas mantém query string
+        }
+
+        if (apiPath.startsWith('/calendar')) {
             // Rotas públicas (não precisam de inicialização)
             const publicRoutes = ['/calendar/auth', '/calendar/oauth2callback'];
-            const isPublicRoute = publicRoutes.some(route => pathname === route);
+            const isPublicRoute = publicRoutes.some(route => apiPath === route);
 
             if (!isPublicRoute) {
                 // Rotas protegidas - inicializa calendar
@@ -72,7 +106,7 @@ export class AppRouter {
 
             return await this.modules.calendar.handle(req, res);
         }
-        if (pathname.startsWith('/llm')) {
+        if (apiPath.startsWith('/llm')) {
             // Inicializa calendar para o LLM poder usar
             const userId = this.getUserIdFromCookie(req);
             if (userId) {
@@ -86,7 +120,7 @@ export class AppRouter {
             
             return await this.modules.llm.handle(req, res);
         }
-        if (pathname.startsWith('/auth')) {
+        if (apiPath.startsWith('/auth')) {
             return await this.modules.auth.handle(req, res);
         }
         res.writeHead(404, { 'Content-Type': 'application/json' });
