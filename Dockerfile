@@ -1,6 +1,6 @@
 # Imagem base Node
-# ATUALIZAÇÃO 1: Mudando para Node 20 para atender aos requisitos do LangChain
-FROM node:18-alpine
+# ATUALIZAÇÃO 1: Mudando para Node 20 para atender aos requisitos do LangChain e Vite
+FROM node:20-alpine
 
 # Diretório da aplicação
 WORKDIR /app
