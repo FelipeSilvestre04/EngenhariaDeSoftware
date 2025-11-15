@@ -56,10 +56,11 @@ export class CalendarController {
             ].join('; ');
 
             // Redireciona de volta para a aplicação React após a autenticação
+// Redireciona de volta para a aplicação React após a autenticação
             res.writeHead(302, { 
-                Location: 'http://localhost:5173',
+                Location: '/', // <-- CORRIGIDO: Redireciona para a raiz do site atual
                 'Set-Cookie': cookieOptions
-            }); 
+            });
             res.end();
             
         } catch (error) {

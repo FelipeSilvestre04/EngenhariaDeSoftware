@@ -43,10 +43,10 @@ export class AppRouter {
             }));
         }
 
-        if (pathname === '/' || pathname === '') {
-            res.writeHead(302, { Location: 'calendar'});
-            return res.end();
-        }
+        // if (pathname === '/' || pathname === '') {
+        //     res.writeHead(302, { Location: 'calendar'});
+        //     return res.end();
+        // }
 
         if (pathname.startsWith('/calendar')) {
             // Rotas públicas (não precisam de inicialização)
