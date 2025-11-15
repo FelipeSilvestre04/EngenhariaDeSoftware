@@ -12,6 +12,10 @@ if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET){
     throw new Error('Google Calendar credentials are required!')
 }
 
+if (!process.env.HFTOKEN){
+    throw new Error('HFTOKEN is required for embeddings!')
+}
+
 export const config = {
     server: {
         port: process.env.PORT || 3000,
@@ -20,7 +24,8 @@ export const config = {
         apiKey: process.env.GROQ_API_KEY,
         defaultModel: 'openai/gpt-oss-120b',
         defaultTemperature: 0.1,
-        hfToken: process.env.hf_token || ''
+        hfToken: process.env.HFTOKEN,
+        modelHf: process.env.MODELHF || 'sentence-transformers/all-MiniLM-L6-v2'
     },
     googleCalendar: {
         clientId: process.env.GOOGLE_CLIENT_ID,
