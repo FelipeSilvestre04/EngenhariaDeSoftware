@@ -1,20 +1,21 @@
 # Imagem base Node
+# ATUALIZAÇÃO 1: Mudando para Node 20 para atender aos requisitos do LangChain
 FROM node:18-alpine
 
 # Diretório da aplicação
 WORKDIR /app
 
-# --- ETAPA 1: INSTALAÇÃO DE DEPENDÊNCIAS GERAIS E DO BACKEND ---
-# Copiar os arquivos de dependência de ambos os módulos
+# --- ETAPA 1: INSTALAÇÃO DE DEPENDÊNCIAS DO BACKEND ---
 COPY package*.json ./
-COPY client/package*.json ./client/
-
-# CORREÇÃO CRÍTICA: Instalar dependências usando --legacy-peer-deps para resolver o erro ERESOLVE
-# Usamos 'install' e não 'ci' para maior tolerância a conflitos
+# Usando --legacy-peer-deps para resolver o erro ERESOLVE
 RUN npm install --legacy-peer-deps
 
-# --- ETAPA 2: BUILD DO FRONTEND (Vite) ---
+# --- ETAPA 2: INSTALAÇÃO E BUILD DO FRONTEND (Vite) ---
 WORKDIR /app/client
+COPY client/package*.json ./
+# CORREÇÃO CRÍTICA: Instalar dependências do cliente (incluindo 'vite')
+RUN npm install --legacy-peer-deps
+
 # Faz o build do React (Vite), gerando a pasta 'dist'
 RUN npm run build
 WORKDIR /app
