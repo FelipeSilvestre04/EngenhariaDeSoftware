@@ -41,7 +41,9 @@ export class AuthService {
 
     async generateTokenPair(payload) {
         try {
-            delete payload.password;
+            if (payload.password) {
+                delete payload.password;
+            }
             
             const accessToken = await this.generateToken(payload, '15m');
             const refreshToken = await this.generateRefreshToken(payload, '7d');

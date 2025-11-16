@@ -1,8 +1,60 @@
 // fazer bearer token jwt
-
+import crypto from 'crypto';
 export class AuthController {
     constructor(authService) {
         this.authService = authService;
+    }
+
+    async initiateAuth(req, res) {
+        try{
+            const authUrl = this.authService.getAuthenticationUrl();
+            res.writeHead(302, { Location: authUrl });
+            res.end();
+        } catch(error) {
+            res.writeHead(500, {'Content-Type': 'application/json'});
+            res.end(JSON.stringify({ error: "Erro ao iniciar autenticação", message: error.message }));
+        }
+    }
+    
+    async handleCallback(req, res) {
+        try {
+            const url = new URL(req.url, `http://${req.headers.host}`);
+            const code = url.searchParams.get('code');
+
+            if (!code) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Código de autorização não fornecido' }));
+                return;
+            }
+
+            const response = await this.authService.handleOauthCallback(code);
+            if (!response.success){
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Falha na autenticação' }));
+                return;
+            }
+
+            const userId = crypto.randomUUID();
+            const tokens = await this.authService.generateTokenPair({ userId });
+
+            // Define o cookie com o userId 
+            const cookieOptions = [
+                `token=${tokens.accessToken}`,
+                'Path=/',
+                'HttpOnly',
+                'SameSite=Lax',
+                'Max-Age=2592000' // 30 dias
+            ].join('; ');
+
+            // Redireciona de volta para a aplicação React após a autenticação
+            res.writeHead(200, { 'Content-Type': 'application/json' , 'Set-Cookie': cookieOptions });
+            res.end(JSON.stringify(tokens));
+                
+            
+        } catch (error) {
+            res.writeHead(500, { 'Content-Type': 'text/html' });
+            res.end(`<h1>Erro na autenticação</h1><p>${error.message}</p>`);
+        }
     }
 
     async authenticate(req, res) {
@@ -31,7 +83,36 @@ export class AuthController {
             res.end(JSON.stringify({ error: 'Erro interno do servidor' }));
         }
     }
-    
+
+    async generateTokenPair(req, res) {
+        try {
+            let body = '';
+            req.on('data', chunk => {
+                body += chunk.toString();
+            });
+
+            req.on('end', async () => {
+                try {
+                    const data = JSON.parse(body);
+                    const payload = data.payload || {};
+
+                    const tokens = await this.authService.generateTokenPair(payload);
+
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify(tokens));
+                } catch (error) {
+                    console.error("Erro ao gerar par de tokens:", error);
+                    res.writeHead(500, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: 'Erro ao gerar par de tokens' }));
+                }
+            });
+        } catch (error) {
+            console.error("Erro no servidor:", error);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Erro interno do servidor' }));
+        }
+    }
+
     async generateToken(req, res) {
         try {
             let body = '';

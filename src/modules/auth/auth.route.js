@@ -1,8 +1,10 @@
 import { AuthController } from './auth.controller.js';
+import { AuthService } from './auth.service.js';
 
 export class AuthRoute {
     constructor() {
-        this.controller = new AuthController();
+        this.authService = new AuthService();
+        this.controller = new AuthController(this.authService);
     }
     
     async handle(req, res) {

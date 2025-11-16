@@ -33,7 +33,6 @@ export class LLMModel {
         const embeddingsObject = {
             embedQuery: this.embeddings,
             embedDocuments: async (documents) => {
-                // Processar múltiplos documentos
                 return await Promise.all(
                     documents.map(doc => this.embeddings(doc))
                 );
