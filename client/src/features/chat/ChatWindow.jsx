@@ -3,11 +3,9 @@ import { useState, useEffect, useRef } from 'react';
 import sendpath from '../../assets/send.svg';
 
 export function ChatWindow( {theme} ) {
-  // 1. MUDANÇA PRINCIPAL: "messages" agora é um array de objetos.
-  // Começamos com a mensagem inicial da IA.
-  const [messages, setMessages] = useState([
-    { id: 1, text: 'Olá! Sou sua assistente de IA. Faça uma pergunta sobre sua agenda.', sender: 'ai' }
-  ]);
+
+  const [messages, setMessages] = useState([]);
+
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -17,7 +15,6 @@ export function ChatWindow( {theme} ) {
   const handleSubmit = async () => {
     if (!input) return; // Não faz nada se o input estiver vazio
 
-    // 2. ADICIONA A MENSAGEM DO USUÁRIO NA TELA IMEDIATAMENTE
     const userMessage = {
       id: Date.now(),
       text: input,
@@ -25,7 +22,6 @@ export function ChatWindow( {theme} ) {
     };
     setMessages(prevMessages => [...prevMessages, userMessage]);
 
-    // 3. LIMPA O INPUT
     setInput('');
     setIsLoading(true);
 
@@ -40,9 +36,8 @@ export function ChatWindow( {theme} ) {
 
       const data = await res.json();
 
-      // 4. ADICIONA A RESPOSTA DA IA NA TELA
       const aiMessage = {
-        id: Date.now() + 1, // id ligeiramente diferente para evitar colisões
+        id: Date.now() + 1, 
         text: data.answer,
         sender: 'ai'
       };
@@ -69,39 +64,58 @@ export function ChatWindow( {theme} ) {
     scrollToBottom();
   }, [messages]); 
 
-  return (
-      <div className="chat-window-container">
-        {/* 5. CONECTE A REF à sua área de mensagens */}
-        <div className="messages-area" ref={messagesAreaRef}>
-          {messages.map(message => (
-            <div
-              key={message.id}
-              className={`message ${message.sender === 'ai' ? 'ai-message' : 'user-message'}`}
-              style={{ color: message.isError ? 'red' : 'inherit' }}
-            >
-              {message.text}
-            </div>
-          ))}
-          {isLoading && <div className="ai-message">...</div>}
-          
-          {/* 6. ADICIONE O 'div' VAZIO NO FINAL */}
-          {/* Este é o "marcador" para o qual a tela irá rolar */}
-          <div ref={messagesEndRef} />
+return (
+    // O container principal do chat
+    <div className="chat-window-container">
+
+      {/* 4. LÓGICA DE EXIBIÇÃO:
+          Verifica se o array de 'messages' está vazio 
+      */}
+      {messages.length === 0 ? (
+
+        /* --- ESTADO VAZIO (o que você quer) --- */
+        <div className="empty-chat-container">
+          <h2 className="empty-chat-title">Por onde começamos?</h2>
         </div>
 
-        <div className="input-area">
-          <input
-            type="text"
-            placeholder="Pergunte sobre sua agenda..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-            disabled={isLoading}
-          />
-          <button onClick={handleSubmit} disabled={isLoading}>
-            {isLoading ? '...' : <img className="send-button-img" src={sendpath} alt="Enviar"></img>}
-          </button>
-        </div>
+        ) : (
+
+        <>
+          <div className="messages-area" ref={messagesAreaRef}>
+            {messages.map(message => (
+              <div
+                key={message.id}
+                className={`message ${message.sender === 'ai' ? 'ai-message' : 'user-message'}`}
+                style={{ color: message.isError ? 'red' : 'inherit' }}
+              >
+                {message.text}
+              </div>
+            ))}
+            {isLoading && <div className="ai-message">...</div>}
+            <div ref={messagesEndRef} /> {/* O marcador de rolagem */}
+          </div>
+        </>
+      )}
+
+      {/* A ÁREA DE INPUT fica sempre no final, independente do estado */}
+      <div className="input-area">
+        <input
+          type="text"
+          placeholder="Pergunte sobre sua agenda..."
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+          disabled={isLoading}
+        />
+        <button onClick={handleSubmit} disabled={isLoading}>
+          {isLoading ? '...' : <img className={`send-button-img ${theme === 'dark' ? 'invert' : ''}`}
+                                    src={sendpath} 
+                                    alt="Enviar"
+            />
+            }
+        </button>
       </div>
-    );
-  }
+
+    </div>
+  );
+}
