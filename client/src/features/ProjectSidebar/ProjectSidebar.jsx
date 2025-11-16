@@ -7,10 +7,10 @@ import styles from './ProjectSidebar.module.css';
   { id: 1, title: 'Projeto App Mobile', color: '#cf50f2' },
   { id: 2, title: 'Campanha de Marketing QA', color: '#b180f3' },
   { id: 3, title: 'Desenvolvimento Web', color: '#836af2' },
-  { id: 4, title: 'Jornal da verdade', color: '#ff1e1aff' },
-  { id: 5, title: 'Liberdade Gibis', color: '#d9d62dff' },
-  { id: 6, title: 'Projeto Sanderson', color: '#2dd952ff' },
-  { id: 7, title: 'Campanha Tasso Presidente', color: '#2d94d9ff' }
+  { id: 4, title: 'Jornal da verdade', color: '#c56968ff' },
+  { id: 5, title: 'Liberdade Gibis', color: '#cbca74ff' },
+  { id: 6, title: 'Projeto Sanderson', color: '#71be82ff' },
+  { id: 7, title: 'Campanha Tasso Presidente', color: '#6494b4ff' }
 ];
 
 function ProjectSidebar({ isOpen, onToggleClick }) {
