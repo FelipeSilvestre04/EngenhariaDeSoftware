@@ -12,6 +12,16 @@ export function ChatWindow( {theme} ) {
   const messagesAreaRef = useRef(null);
   const messagesEndRef = useRef(null);
 
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    
+    e.currentTarget.style.setProperty('--mouse-x', `${x}%`);
+    e.currentTarget.style.setProperty('--mouse-y', `${y}%`);
+  };
+
   const handleSubmit = async () => {
     if (!input) return; // Não faz nada se o input estiver vazio
 
@@ -65,17 +75,14 @@ export function ChatWindow( {theme} ) {
   }, [messages]); 
 
 return (
-    // O container principal do chat
     <div className="chat-window-container">
 
-      {/* 4. LÓGICA DE EXIBIÇÃO:
-          Verifica se o array de 'messages' está vazio 
-      */}
       {messages.length === 0 ? (
 
-        /* --- ESTADO VAZIO (o que você quer) --- */
         <div className="empty-chat-container">
-          <h2 className="empty-chat-title">Por onde começamos?</h2>
+          <h2 
+            className="empty-chat-title"
+            onMouseMove={handleMouseMove}>Por onde começamos?</h2>
         </div>
 
         ) : (
@@ -92,12 +99,11 @@ return (
               </div>
             ))}
             {isLoading && <div className="ai-message">...</div>}
-            <div ref={messagesEndRef} /> {/* O marcador de rolagem */}
+            <div ref={messagesEndRef} /> 
           </div>
         </>
       )}
 
-      {/* A ÁREA DE INPUT fica sempre no final, independente do estado */}
       <div className="input-area">
         <input
           type="text"

@@ -284,3 +284,27 @@ body {
   width: 100%;
   color: var(--text-primary); 
 }
+
+.empty-chat-title {
+  font-size: 2.2rem; 
+  font-weight: 600;
+
+  /* 1. REMOVA a cor de texto antiga */
+  /* color: var(--text-primary); */
+
+  /* 2. ADICIONE O GRADIENTE RADIAL
+     Ele cria um círculo de cor na posição do mouse
+     'var(--mouse-x, 50%)' usa 50% (centro) como padrão
+     antes que o mouse se mova pela primeira vez.
+  */
+  background-image: radial-gradient(
+    circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+    #cf50f2,  /* Cor 1 (centro) */
+    #553b7a   /* Cor 2 (borda) */
+  );
+
+  /* 3. ADICIONE AS PROPRIEDADES DE "CORTE" */
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent; /* Deixa o texto "vazado" */
+}
