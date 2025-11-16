@@ -48,7 +48,7 @@ export function GoogleAuth() {
         <div>
           <h3>Conectar Calendário</h3>
           <p>Conecte sua conta para ver seus eventos.</p>
-          <button onClick={handleLogin}>Conectar com Google</button>
+          <button className="google-login-button" onClick={handleLogin}>Conectar com Google</button>
         </div>
       )}
     </div>
