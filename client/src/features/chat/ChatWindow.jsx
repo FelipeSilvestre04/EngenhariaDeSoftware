@@ -1,5 +1,5 @@
 // client/src/features/chat/ChatWindow.jsx
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import sendpath from '../../assets/send.svg';
 
 export function ChatWindow( {theme} ) {
@@ -10,6 +10,9 @@ export function ChatWindow( {theme} ) {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const messagesAreaRef = useRef(null);
+  const messagesEndRef = useRef(null);
 
   const handleSubmit = async () => {
     if (!input) return; // Não faz nada se o input estiver vazio
@@ -58,38 +61,47 @@ export function ChatWindow( {theme} ) {
     }
   };
 
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]); 
+
   return (
-    <div className="chat-window-container">
-      <div className="messages-area">
-        {/* 5. RENDERIZA TODAS AS MENSAGENS DO ARRAY */}
-        {messages.map(message => (
-          <div
-            key={message.id}
-            className={`message ${message.sender === 'ai' ? 'ai-message' : 'user-message'}`}
-            style={{ color: message.isError ? 'red' : 'inherit' }}
-          >
-            {message.text}
-          </div>
-        ))}
-        {/* Mostra um indicador de "digitando..." */}
-        {isLoading && <div className="ai-message">...</div>}
+      <div className="chat-window-container">
+        {/* 5. CONECTE A REF à sua área de mensagens */}
+        <div className="messages-area" ref={messagesAreaRef}>
+          {messages.map(message => (
+            <div
+              key={message.id}
+              className={`message ${message.sender === 'ai' ? 'ai-message' : 'user-message'}`}
+              style={{ color: message.isError ? 'red' : 'inherit' }}
+            >
+              {message.text}
+            </div>
+          ))}
+          {isLoading && <div className="ai-message">...</div>}
+          
+          {/* 6. ADICIONE O 'div' VAZIO NO FINAL */}
+          {/* Este é o "marcador" para o qual a tela irá rolar */}
+          <div ref={messagesEndRef} />
+        </div>
+
+        <div className="input-area">
+          <input
+            type="text"
+            placeholder="Pergunte sobre sua agenda..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+            disabled={isLoading}
+          />
+          <button onClick={handleSubmit} disabled={isLoading}>
+            {isLoading ? '...' : <img className="send-button-img" src={sendpath} alt="Enviar"></img>}
+          </button>
+        </div>
       </div>
-      <div className="input-area">
-        <input
-          type="text"
-          placeholder="Pergunte sobre sua agenda..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          // Permite enviar com a tecla Enter
-          onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-          disabled={isLoading}
-        />
-        <button onClick={handleSubmit} disabled={isLoading}>
-          {isLoading ? '...' : <img className={`${"send-button-img"} ${theme === 'dark' ? "invert" : ''}`} 
-                                    src={sendpath} 
-                                    alt="Enviar"></img>}
-        </button>
-      </div>
-    </div>
-  );
-}
+    );
+  }
