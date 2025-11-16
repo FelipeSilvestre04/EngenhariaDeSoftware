@@ -8,12 +8,18 @@ import './App.css';
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
+  const [theme, setTheme] = useState('light');
+
   const toggleSidebar = () => {
     setIsSidebarOpen( !isSidebarOpen ); 
   };
 
+  const toggleTheme = () => {
+    setTheme(currentTheme => (currentTheme === 'light' ? 'dark' : 'light'));
+  };
+
   return (
-<div className="App-Wrapper">
+  <div className={`App-Wrapper ${theme}`}>
       
       <ProjectSidebar 
         isOpen={isSidebarOpen} 
@@ -21,9 +27,9 @@ function App() {
       />
 
       <main className="Main-Content">
-        <Header />
+        <Header onThemeToggle={toggleTheme} theme={theme} />
         <div className="App-Container"> 
-          <ChatWindow />
+          <ChatWindow theme={theme}/>
           <div className="calendar-view-container">
             <GoogleAuth />
           </div>

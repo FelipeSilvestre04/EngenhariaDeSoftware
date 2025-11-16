@@ -1,8 +1,8 @@
 // client/src/features/chat/ChatWindow.jsx
 import { useState } from 'react';
-import sendpath from '../../assets/send.png';
+import sendpath from '../../assets/send.svg';
 
-export function ChatWindow() {
+export function ChatWindow( {theme} ) {
   // 1. MUDANÇA PRINCIPAL: "messages" agora é um array de objetos.
   // Começamos com a mensagem inicial da IA.
   const [messages, setMessages] = useState([
@@ -85,7 +85,9 @@ export function ChatWindow() {
           disabled={isLoading}
         />
         <button onClick={handleSubmit} disabled={isLoading}>
-          {isLoading ? '...' : <img className="send-button-img" src={sendpath} alt="Enviar"></img>}
+          {isLoading ? '...' : <img className={`${"send-button-img"} ${theme === 'dark' ? "invert" : ''}`} 
+                                    src={sendpath} 
+                                    alt="Enviar"></img>}
         </button>
       </div>
     </div>

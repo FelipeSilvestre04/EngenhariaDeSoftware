@@ -1,43 +1,50 @@
 
-import React from 'react';
 import styles from './header.module.css'; 
-import logoSia from '../../assets/SecretarIA_cut.png';
-import imgpath from '../../assets/settings.png';
-import userpath from '../../assets/user.png';
-import themepath from '../../assets/night-mode.png';
 
-function Header({ onToggleClick }) { 
+import themeIconPath from '../../assets/night-mode.svg';
+import userIconPath from '../../assets/user.svg';
+import settingsIconPath from '../../assets/settings.svg';
+
+function Header({ onThemeToggle, theme }) { 
   return (
-
     <header className={styles.headerContainer}>
 
-      <img src={logoSia} alt="Logo SecretarIA" className={styles.logo} />
       <p className={styles.headerTitle}>SecretarIA</p>
       
       <div className={styles.Wrapper}>
 
-        <div title="Tema escuro">
-          <button className={styles.theme}>
-            <img src={themepath} alt="Tema escuro"></img>
+        <div title="Mudar tema">
+          <button className={styles.iconButton} onClick={onThemeToggle}>
+            <img 
+              src={themeIconPath} 
+              alt="Tema" 
+              className={`${styles.iconImage} ${theme === 'dark' ? styles.invert : ''}`}
+            />
           </button>
         </div>
 
-      <div title="Sua conta">
-          <button className={styles.account}>
-            <img src={userpath} alt="Sua conta"></img>
+        <div title="Sua conta">
+          <button className={styles.iconButton}>
+            <img 
+              src={userIconPath} 
+              alt="Sua conta" 
+              className={`${styles.iconImage} ${theme === 'dark' ? styles.invert : ''}`}
+            />
           </button>
         </div>
 
         <div title="Configurações">
-          <button className={styles.Settings}>
-            <img src={imgpath} alt="Configurações"></img>
+          <button className={styles.iconButton}>
+            <img 
+              src={settingsIconPath} 
+              alt="Configurações" 
+              className={`${styles.iconImage} ${theme === 'dark' ? styles.invert : ''}`}
+            />
           </button>
         </div>
 
       </div>
-
     </header>
-    
   );
 }
 
