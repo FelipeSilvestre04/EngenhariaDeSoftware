@@ -22,3 +22,95 @@
   font-weight: 700;
   color: #333;
 }
+
+.Wrapper {
+  margin-left: auto; 
+  display: flex; 
+  justify-content: flex-start; 
+  align-items: center; 
+  gap: 5px;
+}
+
+.Settings {
+  height: 32px; 
+  width: 32px;
+
+  border: 1px solid #7c7c7c;
+  background-color: #ffffff;
+  border-radius: 6px;
+
+  padding: 5px;
+  cursor: pointer;
+  
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease-in-out;
+}
+
+.Settings img {
+  height: 100%; 
+  width: 100%;  
+ 
+  object-fit: contain; 
+}
+
+.Settings:hover {
+  background-color: hsl(0, 0%, 66%);
+}
+
+.account {
+  height: 32px; 
+  width: 32px;
+
+  border: 1px solid #7c7c7c;
+  background-color: #ffffff;
+  border-radius: 6px;
+
+  padding: 5px;
+  cursor: pointer;
+  
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease-in-out;
+}
+
+.account img {
+  height: 100%; 
+  width: 100%;  
+ 
+  object-fit: contain; 
+}
+
+.account:hover {
+  background-color: hsl(0, 0%, 66%);
+}
+
+.theme {
+  height: 32px; 
+  width: 32px;
+
+  border: 1px solid #7c7c7c;
+  background-color: #ffffff;
+  border-radius: 6px;
+
+  padding: 5px;
+  cursor: pointer;
+  
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease-in-out;
+}
+
+.theme img {
+  height: 100%; 
+  width: 100%;  
+ 
+  object-fit: contain; 
+}
+
+.theme:hover {
+  background-color: hsl(0, 0%, 66%);
+}

@@ -7,7 +7,7 @@
   box-sizing: border-box; 
   text-align: left;
   
-  transition: all 0.3s ease-in-out;
+  transition: all 0.2s ease-in-out;
   
   overflow-x: hidden;
   white-space: nowrap; 
@@ -15,24 +15,29 @@
 
 .open {
   width: 48vh; 
-  padding: 10px 24px 16px 24px;
+  padding: 8px 24px 16px 24px;
   text-align: left;
 }
 
 .collapsed {
-  width: 12vh;  
-  padding: 10px 24px 16px 24px;
+  width: 8vh;  
+  padding: 8px 24px 16px 1rem;
   text-align: left; 
 }
 
 .toggleButton {
-  background: none;
-  border: none;
-  cursor: pointer;
+  background: none; 
+  border: none; 
+  cursor: pointer; 
+  text-align: left;
+  width: 35px;
+  
   font-size: 24px;
-  color: #333;
-  padding: 0;
-  margin-bottom: 24px;
+  font-weight: 500;
+  color: #000000;
+  padding: 0px 0px 10px; 
+  margin: 0;
+   
 }
 
 .collapsed .toggleButton {
@@ -46,7 +51,7 @@
   color: #4a4063;
   border-radius: 12px;
 
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 400;
   
   padding: 0px 15px;
@@ -64,17 +69,4 @@
   padding-right: 8px;
 
   min-height: 0;
-}
-
-.toggleButton {
-  background: none; 
-  border: none; 
-  cursor: pointer; 
-  text-align: left;
-  width: 35px;
-  
-  font-size: 24px;
-  color: #333;
-  padding: 0px 0px 10px; 
-  margin: 0; 
 }

@@ -24,7 +24,9 @@ function App() {
         <Header />
         <div className="App-Container"> 
           <ChatWindow />
-          <GoogleAuth />
+          <div className="calendar-view-container">
+            <GoogleAuth />
+          </div>
         </div>
       </main>
 

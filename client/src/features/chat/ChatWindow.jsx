@@ -1,5 +1,6 @@
 // client/src/features/chat/ChatWindow.jsx
 import { useState } from 'react';
+import sendpath from '../../assets/send.png';
 
 export function ChatWindow() {
   // 1. MUDANÇA PRINCIPAL: "messages" agora é um array de objetos.
@@ -59,7 +60,6 @@ export function ChatWindow() {
 
   return (
     <div className="chat-window-container">
-      <h2>Chat com IA</h2>
       <div className="messages-area">
         {/* 5. RENDERIZA TODAS AS MENSAGENS DO ARRAY */}
         {messages.map(message => (
@@ -85,7 +85,7 @@ export function ChatWindow() {
           disabled={isLoading}
         />
         <button onClick={handleSubmit} disabled={isLoading}>
-          {isLoading ? '...' : '▶'}
+          {isLoading ? '...' : <img className="send-button-img" src={sendpath} alt="Enviar"></img>}
         </button>
       </div>
     </div>
