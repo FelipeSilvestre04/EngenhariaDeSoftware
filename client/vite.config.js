@@ -11,7 +11,12 @@ export default defineConfig({
         target: 'http://localhost:10000',
         changeOrigin: true,
       },
-      '/calendar': { // Adicione esta parte
+      '/calendar': { // O que já tínhamos
+        target: 'http://localhost:10000',
+        changeOrigin: true,
+      },
+      // CORREÇÃO: Adicionando a rota /auth
+      '/auth': { 
         target: 'http://localhost:10000',
         changeOrigin: true,
       },
