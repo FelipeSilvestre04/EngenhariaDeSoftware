@@ -1,19 +1,30 @@
 // client/src/features/chat/ChatWindow.jsx
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import sendpath from '../../assets/send.svg';
 
-export function ChatWindow() {
-  // 1. MUDANÇA PRINCIPAL: "messages" agora é um array de objetos.
-  // Começamos com a mensagem inicial da IA.
-  const [messages, setMessages] = useState([
-    { id: 1, text: 'Olá! Sou sua assistente de IA. Faça uma pergunta sobre sua agenda.', sender: 'ai' }
-  ]);
+export function ChatWindow( {theme} ) {
+
+  const [messages, setMessages] = useState([]);
+
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const messagesAreaRef = useRef(null);
+  const messagesEndRef = useRef(null);
+
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    
+    e.currentTarget.style.setProperty('--mouse-x', `${x}%`);
+    e.currentTarget.style.setProperty('--mouse-y', `${y}%`);
+  };
 
   const handleSubmit = async () => {
     if (!input) return; // Não faz nada se o input estiver vazio
 
-    // 2. ADICIONA A MENSAGEM DO USUÁRIO NA TELA IMEDIATAMENTE
     const userMessage = {
       id: Date.now(),
       text: input,
@@ -21,7 +32,6 @@ export function ChatWindow() {
     };
     setMessages(prevMessages => [...prevMessages, userMessage]);
 
-    // 3. LIMPA O INPUT
     setInput('');
     setIsLoading(true);
 
@@ -36,9 +46,8 @@ export function ChatWindow() {
 
       const data = await res.json();
 
-      // 4. ADICIONA A RESPOSTA DA IA NA TELA
       const aiMessage = {
-        id: Date.now() + 1, // id ligeiramente diferente para evitar colisões
+        id: Date.now() + 1, 
         text: data.answer,
         sender: 'ai'
       };
@@ -57,37 +66,62 @@ export function ChatWindow() {
     }
   };
 
-  return (
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]); 
+
+return (
     <div className="chat-window-container">
-      <h2>Chat com IA</h2>
-      <div className="messages-area">
-        {/* 5. RENDERIZA TODAS AS MENSAGENS DO ARRAY */}
-        {messages.map(message => (
-          <div
-            key={message.id}
-            className={`message ${message.sender === 'ai' ? 'ai-message' : 'user-message'}`}
-            style={{ color: message.isError ? 'red' : 'inherit' }}
-          >
-            {message.text}
+
+      {messages.length === 0 ? (
+
+        <div className="empty-chat-container">
+          <h2 
+            className="empty-chat-title"
+            onMouseMove={handleMouseMove}>Por onde começamos?</h2>
+        </div>
+
+        ) : (
+
+        <>
+          <div className="messages-area" ref={messagesAreaRef}>
+            {messages.map(message => (
+              <div
+                key={message.id}
+                className={`message ${message.sender === 'ai' ? 'ai-message' : 'user-message'}`}
+                style={{ color: message.isError ? 'red' : 'inherit' }}
+              >
+                {message.text}
+              </div>
+            ))}
+            {isLoading && <div className="ai-message">...</div>}
+            <div ref={messagesEndRef} /> 
           </div>
-        ))}
-        {/* Mostra um indicador de "digitando..." */}
-        {isLoading && <div className="ai-message">...</div>}
-      </div>
+        </>
+      )}
+
       <div className="input-area">
         <input
           type="text"
           placeholder="Pergunte sobre sua agenda..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          // Permite enviar com a tecla Enter
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
           disabled={isLoading}
         />
         <button onClick={handleSubmit} disabled={isLoading}>
-          {isLoading ? '...' : '▶'}
+          {isLoading ? '...' : <img className={`send-button-img ${theme === 'dark' ? 'invert' : ''}`}
+                                    src={sendpath} 
+                                    alt="Enviar"
+            />
+            }
         </button>
       </div>
+
     </div>
   );
 }
