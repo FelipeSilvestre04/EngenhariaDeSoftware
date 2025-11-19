@@ -21,19 +21,28 @@ export class LLMModel {
         this.messageState = z.object({
             messages: z.array(z.any())
         });
-        this.hfClient = new InferenceClient({
-            apiKey: config.llm.hfToken
-        });
-        this.embeddings =async (input) => {
+        this.hfClient = new InferenceClient(config.llm.hfToken);
+        this.embeddings = async (input) => {
             const res = await this.hfClient.featureExtraction({
                 model: config.llm.modelHf,
                 inputs: input
             });
             return Array.isArray(res[0]) ? res[0] : res;
         };
+        
+        const embeddingsObject = {
+            embedQuery: this.embeddings,
+            embedDocuments: async (documents) => {
+                // Processar múltiplos documentos
+                return await Promise.all(
+                    documents.map(doc => this.embeddings(doc))
+                );
+            }
+        };
+        
         this.store = new InMemoryStore({
             index: {
-                embeddings: this.embeddings,
+                embeddings: embeddingsObject,
                 dims: 384
             }
         });
@@ -72,17 +81,19 @@ export class LLMModel {
 
 
         // futuramente salvar em um bd
-        const related = this.store.search(['memories', userName], {
+        const related = await this.store.search(['memories', userName], {
             query: userPrompt,
             k: 3,
         });
         
         let contextText = '';
-        for await (const item of related){
-            contextText += `Memory: ${item.pageContent}\n`;
+        for (const item of related){
+            contextText += `Memory: ${item.value.text}\n`;
         }
         
-        userPrompt = `Here are some of your previous memories:\n${contextText}\nBased on these, respond to the following:\n${userPrompt}`;
+        if (contextText.trim()) {
+            userPrompt = `Here are some of your previous memories:\n${contextText}\nBased on these, respond to the following:\n${userPrompt}`;
+        }
         const response = await this.agent.invoke({
             messages: [
                 new SystemMessage(systemPrompt),

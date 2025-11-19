@@ -9,40 +9,42 @@ export class LLMController{
 
     async handleConsulta(req, res){
         try {
+            console.log('🔵 [LLMController] Recebendo requisição...');
+            
             // aqui é uma extração de dados qualquer da requisição. nesse caso 
             // pegando o nome do cara q fez a request.
             const url = new URL(req.url, `http://${req.headers.host}`);
             const name = url.searchParams.get('name') || 'usuário';
             const projectName = url.searchParams.get('project') || 'projeto';
             
-            let body = '';
-            req.on('data', chunk => {
-                body += chunk.toString();
-            });
+            // O Express já parseou o body, então usamos req.body diretamente
+            const prompt = req.body.prompt;
+            console.log('📝 [LLMController] Prompt recebido:', prompt);
             
-            const prompt = await new Promise((resolve) => {
-                req.on('end', () => {
-                    const data = JSON.parse(body);
-                    resolve(data.prompt);
-                });
-            });
+            if (!prompt) {
+                throw new Error('Prompt não fornecido');
+            }
             
+            console.log('⏳ [LLMController] Processando com LLM...');
             const result = await this.llmService.checaAgenda(name, prompt, projectName);
+            console.log('✅ [LLMController] Resposta do LLM:', result);
 
             // cria resposta http
             if (result.success) {
+                console.log('📤 [LLMController] Enviando resposta de sucesso');
                 res.writeHead(200, { 'Content-Type': 'application/json'});
                 res.end(JSON.stringify({
                     question: `${prompt}`,
                     answer: result.content
                 }));
             } else {
+                console.log('❌ [LLMController] Erro no processamento:', result.error);
                 res.writeHead(500, { 'Content-Type': 'application/json'});
                 res.end(JSON.stringify({error: result.error}));
             }
 
         } catch (error) {
-            console.error("Erro detalhado no handleQuery:", error);
+            console.error("❌ [LLMController] Erro detalhado no handleQuery:", error);
             res.writeHead(500, {'Content-Type': 'application/json'});
             res.end(JSON.stringify({ error: `Desculpe, algo deu errado: ${error.message}` }));
         }
