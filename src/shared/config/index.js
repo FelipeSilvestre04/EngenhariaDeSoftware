@@ -28,6 +28,10 @@ export const config = {
         clientId: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
         redirectUri: process.env.GOOGLE_REDIRECT_URI || `http://localhost:${process.env.PORT || 3000}/calendar/oauth2callback`,
-        scopes: ['https://www.googleapis.com/auth/calendar']
+        scopes: [
+            'https://www.googleapis.com/auth/calendar',
+            'https://www.googleapis.com/auth/userinfo.profile',
+            'https://www.googleapis.com/auth/userinfo.email'
+        ]
     }
 };

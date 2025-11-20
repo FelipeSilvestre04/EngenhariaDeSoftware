@@ -49,5 +49,8 @@ export class TokenStorage {
                 throw new Error(`Não foi possível deletar tokens. Erro: ${error.message}`);
             }
         }
+        else {
+            throw new Error("Nenhum token encontrado para o usuário");
+        }
     }
 }
