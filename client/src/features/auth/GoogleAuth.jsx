@@ -9,7 +9,7 @@ export function GoogleAuth() {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        const res = await fetch('/calendar/check');
+        const res = await fetch('/api/calendar/check');
         const data = await res.json();
         setIsAuthenticated(data.authenticated);
       } catch (error) {
@@ -27,7 +27,7 @@ export function GoogleAuth() {
   };
 
   const handleLogout = async () => {
-    await fetch('/calendar/logout');
+    await fetch('/api/calendar/logout');
     window.location.reload();
   };
 

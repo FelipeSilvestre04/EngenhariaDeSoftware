@@ -134,6 +134,8 @@ export class LLMService{
                 }
             };
         } catch (error){
+            console.error("Erro em processConsulta:", error);
+            console.error("Stack trace:", error.stack);
             return {
                 success: false,
                 error: error.message

@@ -24,12 +24,14 @@ jobs:
         cache: 'npm'
     
     - name: Install dependencies
-      run: npm install
+      run: npm install --legacy-peer-deps
     
     - name: Run tests
       run: npm test
       env:
         GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        HFTOKEN: ${{ secrets.HFTOKEN }}
+        MODELHF: ${{ secrets.MODELHF }}
         GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
         GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         GOOGLE_REDIRECT_URI: ${{ secrets.GOOGLE_REDIRECT_URI }}

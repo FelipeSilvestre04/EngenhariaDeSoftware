@@ -12,6 +12,10 @@ if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET){
     throw new Error('Google Calendar credentials are required!')
 }
 
+if (!process.env.HFTOKEN){
+    throw new Error('HFTOKEN is required for embeddings!')
+}
+
 export const config = {
     server: {
         port: process.env.PORT || 3000,

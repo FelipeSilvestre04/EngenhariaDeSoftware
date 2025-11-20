@@ -47,6 +47,7 @@ export class CalendarController {
             const result = await this.service.handleOauthCallback(code);
 
             // Define o cookie userId no navegador
+            const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
             const cookieOptions = [
                 `userId=${result.userId}`,
                 'Path=/',

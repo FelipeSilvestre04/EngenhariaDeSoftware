@@ -1,0 +1,56 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend
+    ports:
+      - "${PORT:-10000}:${PORT:-10000}"
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=${PORT:-10000}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
+      - HFTOKEN=${HFTOKEN}
+      - MODELHF=${MODELHF:-sentence-transformers/all-MiniLM-L6-v2}
+      - HOST=${HOST:-http://localhost}
+      - SERVER_URL=${SERVER_URL:-http://localhost:10000}
+      - CLIENT_URL=${CLIENT_URL:-http://localhost:5173}
+    volumes:
+      - ./src/modules/calendar/storage:/app/src/modules/calendar/storage
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:${PORT:-10000}/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        - VITE_BACKEND_URL=${VITE_BACKEND_URL:-http://localhost:10000}
+    container_name: frontend
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    environment:
+      - VITE_BACKEND_URL=${VITE_BACKEND_URL:-http://localhost:10000}
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  calendar-storage:
