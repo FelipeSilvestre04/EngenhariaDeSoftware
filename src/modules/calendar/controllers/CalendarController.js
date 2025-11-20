@@ -57,10 +57,11 @@ export class CalendarController {
             ].join('; ');
 
             // Redireciona de volta para a aplicação React após a autenticação
+            const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
             res.writeHead(302, { 
                 Location: clientUrl,
                 'Set-Cookie': cookieOptions
-            }); 
+            });
             res.end();
             
         } catch (error) {

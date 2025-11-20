@@ -1,17 +1,44 @@
-// client/src/App.jsx
-import { ProjectList } from './features/projects/ProjectList';
+import React, { useState } from 'react'; 
+import ProjectSidebar from './features/ProjectSidebar/ProjectSidebar';
+import Header from './features/header/header'; 
 import { ChatWindow } from './features/chat/ChatWindow';
-import { GoogleAuth } from './features/auth/GoogleAuth'; // Vamos usar o componente de autenticação aqui
+import { GoogleAuth } from './features/auth/GoogleAuth'; 
 import './App.css';
 
 function App() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const [theme, setTheme] = useState('light');
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen( !isSidebarOpen ); 
+  };
+
+  const toggleTheme = () => {
+    setTheme(currentTheme => (currentTheme === 'light' ? 'dark' : 'light'));
+  };
+
   return (
-    <div className="main-container">
-      <ProjectList />
-      <ChatWindow />
-      <GoogleAuth />
+  <div className={`App-Wrapper ${theme}`}>
+      
+      <ProjectSidebar 
+        isOpen={isSidebarOpen} 
+        onToggleClick={toggleSidebar} 
+      />
+
+      <main className="Main-Content">
+        <Header onThemeToggle={toggleTheme} theme={theme} />
+        <div className="App-Container"> 
+          <ChatWindow theme={theme}/>
+          <div className="calendar-view-container">
+            <GoogleAuth />
+          </div>
+        </div>
+      </main>
+
     </div>
   );
 }
+
 
 export default App;
