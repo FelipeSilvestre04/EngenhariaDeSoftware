@@ -13,7 +13,7 @@ import styles from './ProjectSidebar.module.css';
   { id: 7, title: 'Campanha Tasso Presidente', color: '#6494b4ff' }
 ];
 
-function ProjectSidebar({ isOpen, onToggleClick }) {
+function ProjectSidebar({ isOpen, onToggleClick, onProjectSelect }) {
 
   const [projects, setProjects] = useState(Projects);
 
@@ -37,7 +37,8 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
               <ProjectCard 
                 key={project.id} 
                 title={project.title} 
-                color={project.color} 
+                color={project.color}
+                onClick={() => onProjectSelect && onProjectSelect(project)}
               />
             ))}
           </div>
