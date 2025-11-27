@@ -9,8 +9,12 @@ RUN apk add --no-cache python3 make g++
 COPY client/ ./
 
 # Instala dependências do frontend e faz o build
+# Força instalação de devDependencies (vite etc.) durante o build
+ENV NODE_ENV=development
 RUN npm ci --legacy-peer-deps
-RUN npm run build
+# Tenta o script npm (se existir) ou chama vite diretamente como fallback
+RUN (npm run build) || (npx --yes vite build)
+ENV NODE_ENV=production
 
 FROM node:18-alpine
 WORKDIR /app
