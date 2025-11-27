@@ -78,6 +78,7 @@ body {
 
   
   color: var(--text-primary);
+  scroll-behavior: smooth;
 }
 .input-area {
   margin-top: 1rem;

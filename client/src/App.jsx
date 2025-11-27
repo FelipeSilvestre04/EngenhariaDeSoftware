@@ -38,9 +38,7 @@ function App() {
             </div>
           ) : (
             <>
-              <div style={{width: 260}} />
-
-              <div style={{flex: 1, minWidth: 420}}>
+              <div style={{flex: 1, minWidth: 420, display: 'flex', flexDirection: 'column', minHeight: 0}}>
                 <ChatWindow theme={theme}/>
               </div>
 

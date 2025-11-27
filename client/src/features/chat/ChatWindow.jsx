@@ -67,7 +67,18 @@ export function ChatWindow( {theme} ) {
   };
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Prefer explicit scroll on the messages container to avoid issues
+    const container = messagesAreaRef.current;
+    if (container) {
+      try {
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+      } catch (e) {
+        // fallback
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   useEffect(() => {

@@ -7,22 +7,17 @@ WORKDIR /app
 # --- ETAPA 1: INSTALAÇÃO DE DEPENDÊNCIAS (CACHE) ---
 # Copia SÓ os package.json primeiro para otimizar o cache do Docker
 COPY package*.json ./
-COPY client/package*.json ./client/
 
 # Instala dependências do backend
 RUN npm install --legacy-peer-deps
-
-# Instala dependências do frontend (em /app/client)
-WORKDIR /app/client
-RUN npm install --legacy-peer-deps
-WORKDIR /app
 
 # --- ETAPA 2: BUILD DO FRONTEND (COM CÓDIGO-FONTE) ---
 # AGORA sim, copia todo o código-fonte (backend e frontend)
 COPY . .
 
-# Entra na pasta do cliente, que agora tem o código-fonte
+# Entra na pasta do cliente, instala dependências e executa o build
 WORKDIR /app/client
+RUN npm install --legacy-peer-deps
 # Executa o build (agora o Vite vai encontrar o index.html)
 RUN npm run build
 WORKDIR /app
