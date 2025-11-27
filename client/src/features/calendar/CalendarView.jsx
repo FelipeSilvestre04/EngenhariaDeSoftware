@@ -62,6 +62,7 @@ export function CalendarView() {
         onChange={setSelectedDate}
         value={selectedDate}
         tileContent={tileContent}
+        className={"CalendarComponent"}
       />
 
       <div style={{ marginTop: '1rem' }}>

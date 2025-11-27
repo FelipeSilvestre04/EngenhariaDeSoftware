@@ -134,6 +134,7 @@ body {
   color: var(--text-primary);
 }
 
+
 /* A CLASSE QUE VAI SERVIR DE "TELA" PARA O CALENDÁRIO */
 .calendar-wrapper {
   flex-grow: 0; /* Faz esta div esticar e ocupar todo o espaço vertical */
@@ -149,25 +150,109 @@ body {
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s;
+
 }
-.rbc-toolbar button:hover { background-color: #e6e6e6; }
+.rbc-toolbar button:hover { 
+  background-color: var(--bg-secondary);
+}
 .rbc-toolbar .rbc-active {
-  background-color: #e0e0e0;
+  background-color: var(--bg-secondary);
   box-shadow: inset 0 3px 5px rgba(0,0,0,.125);
 }
 
-/* Adicione no final de client/src/App.css */
+/* --- Estilos para o React Calendar --- */
+.CalendarComponent.react-calendar {
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+  border: var(--scrollbar-thumb) 2px solid;
+  border-radius: 8px;
+  font-family: inherit; /* Garante a mesma fonte do app */
+}
+
+/* 2. Navegação (Mês/Ano e Setas) - São botões, precisam herdar a cor explicitamente */
+.react-calendar__navigation button {
+  color: var(--text-primary);
+  min-width: 44px;
+  background: none;
+}
+
+/* Estado de Hover/Focus na navegação */
+.react-calendar__navigation button:enabled:hover,
+.react-calendar__navigation button:enabled:focus {
+  background-color: var(--bg-sidebar);
+}
+
+/* 3. Dias da Semana (SEG, TER, QUA...) */
+.react-calendar__month-view__weekdays {
+  color: var(--text-primary);
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 0.75em;
+}
+
+/* Remove o sublinhado padrão que alguns navegadores colocam nas siglas */
+.react-calendar__month-view__weekdays abbr {
+  text-decoration: none;
+  cursor: default;
+}
+
+/* 4. Os dias numéricos (Tiles) - O principal problema */
+.react-calendar__tile {
+  color: var(--text-primary);
+  background: none;
+}
+
+/* Quando passar o mouse sobre um dia */
+.react-calendar__tile:enabled:hover,
+.react-calendar__tile:enabled:focus {
+  background-color: var(--bg-sidebar); /* Ou sua cor de destaque */
+  color: var(--text-primary);
+  border-radius: 6px;
+}
+
+/* 5. Dia selecionado (O quadrado azul na sua imagem) */
+.react-calendar__tile--active {
+  background: var(--input-button-bg) !important;
+  color: var(--bg-primary) !important; /* Texto branco para contraste com o roxo/azul */
+  border-radius: 6px;
+}
+
+/* 6. Dia de "Hoje" (Geralmente tem um fundo amarelo claro padrão) */
+.react-calendar__tile--now {
+  background: #cf50f2 !important; 
+  
+  /* Importante: Texto preto para dar leitura no fundo amarelo brilhante */
+  color: #1a1a1a !important; 
+  
+  border-radius: 6px;
+  font-weight: bold; /* Opcional: deixa o número mais gordinho */
+}
+
+/* Efeito ao passar o mouse especificamente no dia de hoje */
+.react-calendar__tile--now:enabled:hover,
+.react-calendar__tile--now:enabled:focus {
+  background: hsla(287, 86%, 63%, 0.67) !important; 
+  color: #1a1a1a !important;
+}
+
+.react-calendar__tile--now.react-calendar__tile--active {
+  background: var(--input-button-bg) !important;
+  color: #ffffff !important;
+}
+
+/* 7. Dias de meses vizinhos (os cinzas que aparecem antes/depois do mês atual) */
+.react-calendar__month-view__days__day--neighboringMonth {
+  opacity: 0.35; /* Deixa o texto com 35% de visibilidade (bem apagado) */
+}
 
 /* --- Estilo para o ponto de evento no calendário --- */
 .event-dot {
   height: 8px;
   width: 8px;
-  background-color: #FEBE10; /* Nosso amarelo */
+  background-color: var(--card-title-bg); /* Nosso amarelo */
   border-radius: 50%;
   margin: 2px auto 0; /* Centraliza o ponto abaixo do número */
 }
-
-/* Adicione no final de client/src/App.css */
 
 /* --- Estilos para as bolhas de chat --- */
 .message {
@@ -272,13 +357,14 @@ body {
   display: flex;
   justify-content: flex-end;
   text-align: center;
-  padding: 4rem 2rem 2rem 2rem;
+  padding: 8rem 2rem 2rem 2rem;
   color: var(--text-primary); 
 }
 
 .empty-chat-title {
   font-size: 2.2rem; 
   font-weight: 600;
+  margin-top: 3rem;
   margin-bottom: 1.5rem;
 
   width: 100%;
@@ -288,6 +374,7 @@ body {
 .empty-chat-title {
   font-size: 2.2rem; 
   font-weight: 600;
+  margin-top: 3rem;
 
   /* 1. REMOVA a cor de texto antiga */
   /* color: var(--text-primary); */

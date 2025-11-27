@@ -60,3 +60,151 @@
 .iconButton:hover {
   opacity: 0.7;
 }
+
+/* O Menu Flutuante em si */
+.userPopover {
+    position: absolute;
+    top: 50px;       /* Distância do topo */
+    right: -10px;    /* Alinhado levemente à direita */
+    width: 300px;
+    
+    background-color: #202124; /* Fundo escuro estilo Google */
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    padding: 20px;
+    z-index: 1000;   /* Garante que fique por cima de tudo */
+    
+    display: flex;
+    flex-direction: column;
+    
+    /* Animação suave de entrada */
+    animation: slideIn 0.2s ease-out;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.popoverContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #e8eaed;
+}
+
+/* Botão de Fechar (X) */
+.closeBtn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: none;
+    border: none;
+    color: #9aa0a6;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+/* O Anel Colorido Grande */
+.avatarRingLarge {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    
+    /* 1. Remova ou comente a linha do background gradient */
+    /* background: linear-gradient(135deg, #4285F4, #DB4437, #F4B400, #0F9D58); */
+    background: transparent; /* Deixe transparente */
+
+    /* 2. Remova o padding (é ele que dá a espessura da borda) */
+    padding: 0; 
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.avatarRingLarge img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 4px solid #202124; /* Borda interna para separar foto do anel */
+    object-fit: cover;
+    background-color: #202124;
+}
+
+/* Anel Pequeno (no header quando ativo) */
+.avatarRingSmall {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: transparent;
+    padding: 2px;
+}
+.avatarRingSmall img {
+    background-color: var(--bg-primary);
+    border-radius: 50%;
+    width: 100%;
+    height: 100%;
+}
+
+/* Textos */
+.userName {
+    margin: 5px 0 0 0;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+.userEmail {
+    margin: 2px 0 20px 0;
+    font-size: 0.9rem;
+    color: #9aa0a6;
+}
+
+/* Botão de Gerenciar Conta */
+.manageAccountBtn {
+    background: transparent;
+    color: #e8eaed;
+    border: 1px solid #5f6368;
+    padding: 8px 20px;
+    border-radius: 100px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.manageAccountBtn:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.userAvatar {
+    width: 32px;  /* Tamanho levemente maior que os outros ícones */
+    height: 32px;
+    border-radius: 50%; /* Faz ficar redondo */
+    overflow: hidden;   /* Corta a imagem se ela for quadrada */
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    /* Cor de fundo para caso a imagem seja transparente (opcional) */
+    background-color: var(--bg-primary, #f0f0f0); 
+    
+    transition: transform 0.2s ease;
+}
+
+/* A imagem dentro da bolinha */
+.avatarImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Garante que a foto preencha todo o círculo sem esticar */
+}
+
+/* Efeito de hover opcional para dar feedback visual */
+.userAvatar:hover {
+    opacity: 0.8;
+}
