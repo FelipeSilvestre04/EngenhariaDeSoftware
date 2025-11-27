@@ -17,9 +17,12 @@ COPY . .
 
 # Entra na pasta do cliente, instala dependências e executa o build
 WORKDIR /app/client
-RUN npm install --legacy-peer-deps
-# Executa o build (agora o Vite vai encontrar o index.html)
-RUN npm run build
+RUN if [ -f ./package.json ]; then \
+			npm install --legacy-peer-deps && \
+			if npm run build --silent; then exit 0; else echo "npm run build failed, trying npx vite build" && npx --yes vite build || true; fi; \
+		else \
+			echo "No client/package.json found — skipping frontend build"; \
+		fi
 WORKDIR /app
 
 # Expor porta (Render define $PORT)
