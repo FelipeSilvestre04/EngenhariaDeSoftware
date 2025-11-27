@@ -4,9 +4,12 @@
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app/client
 RUN apk add --no-cache python3 make g++
-COPY client/package*.json ./
-RUN npm ci --legacy-peer-deps
+
+# Copia todo o diretório client para garantir que os arquivos existam no contexto de build
 COPY client/ ./
+
+# Instala dependências do frontend e faz o build
+RUN npm ci --legacy-peer-deps
 RUN npm run build
 
 FROM node:18-alpine
