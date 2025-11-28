@@ -13,7 +13,7 @@ export class AppRouter {
     initializeModules(){
         const calendar = new CalendarRoute(this.config);
         const llm = new LLMRoutes(this.config, calendar.controller.service);
-        const auth = new AuthRoute();
+        const auth = new AuthRoute(this.config);
         
         return {
             llm: llm,

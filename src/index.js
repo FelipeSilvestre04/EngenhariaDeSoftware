@@ -4,6 +4,7 @@ import { config } from './shared/config/index.js';
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import cookieParser from 'cookie-parser';
 
 // Configurações de diretório para servir arquivos estáticos
 const __filename = fileURLToPath(import.meta.url);
@@ -16,6 +17,7 @@ const appRouter = new AppRouter(config);
 // Middlewares do Express para parsear JSON
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // --- 1. Configurar rotas da API (DEVE VIR PRIMEIRO) ---
 appRouter.setupRoutes(app);
