@@ -9,8 +9,9 @@ export function GoogleAuth() {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        const res = await fetch('/calendar/check');
+        const res = await fetch('/auth/check');
         const data = await res.json();
+        console.log("Status de autenticação:", data);
         setIsAuthenticated(data.authenticated);
       } catch (error) {
         console.error("Erro ao verificar autenticação:", error);
@@ -23,11 +24,11 @@ export function GoogleAuth() {
   }, []);
 
   const handleLogin = () => {
-    window.location.href = 'http://localhost:10000/calendar/auth';
+    window.location.href = '/auth/login';
   };
 
   const handleLogout = async () => {
-    await fetch('/calendar/logout');
+    await fetch('/auth/logout');
     window.location.reload();
   };
 

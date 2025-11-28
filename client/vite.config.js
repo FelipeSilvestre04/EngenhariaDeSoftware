@@ -7,11 +7,21 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
+      // Proxy client API requests under /api to backend
+      '/api': {
+        target: 'http://localhost:10000',
+        changeOrigin: true,
+      },
       '/llm': { // O que já tínhamos
         target: 'http://localhost:10000',
         changeOrigin: true,
       },
-      '/calendar': { // Adicione esta parte
+      '/calendar': { // O que já tínhamos
+        target: 'http://localhost:10000',
+        changeOrigin: true,
+      },
+      // CORREÇÃO: Adicionando a rota /auth
+      '/auth': { 
         target: 'http://localhost:10000',
         changeOrigin: true,
       },

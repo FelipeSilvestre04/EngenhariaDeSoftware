@@ -1,3 +1,4 @@
+// src/modules/calendar/models/CalendarModel.js
 import { google } from 'googleapis';
 import { config } from '../../../shared/config/index.js';
 import { TokenStorage } from '../storage/TokenStorage.js';
@@ -86,9 +87,9 @@ export class CalendarModel {
         } catch (error) {
             throw new Error('Token expirado. Faça login novamente.');
         }
-    }
+    }    
 
-    async getEvents(maxResults = 365){
+    async getEvents(maxResults = 10){
         if (!this.calendar) {
             throw new Error("Usuário não autenticado! Autenticar primeiro.");
         }
@@ -157,18 +158,5 @@ export class CalendarModel {
         this.currentUserId = null;
     }
     
-    async createEvent(event) {
-    if (!this.calendar) {
-        throw new Error("Usuário não autenticado!");
-    }
-    try {
-        const response = await this.calendar.events.insert({
-            calendarId: 'primary',
-            resource: event,
-        });
-        return response.data;
-    } catch (error) {
-        throw new Error(`Não foi possível criar o evento: ${error.message}`);
-    }
-}
+    // CORRIGIDO: A função duplicada 'createEvent' que estava aqui foi removida.
 }

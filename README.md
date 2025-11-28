@@ -14,6 +14,8 @@ Stefani Lumy Miyahara RA:169 235
 
 Tasso Eliézer Daflon Cicarino Canellas RA:169 247
 
+Abner Augusto Pereira Diniz RA: 168 476
+
 ---
 
 ## 🚀 Deploy no Render

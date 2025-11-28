@@ -1,17 +1,16 @@
+import express from 'express';
 import { CalendarController } from "../controllers/CalendarController.js";
 
 export class CalendarRoute {
     constructor (config){
         this.controller = new CalendarController(config);
+        this.router = express.Router();
+        this.setupRoutes();
     }
 
-    async handle(req, res){
-        const url = new URL(req.url, `http://${req.headers.host}`);
-        const pathname = url.pathname;
-        const method = req.method;
-
-        // Rota padrão do calendário - redireciona para auth se não autenticado
-        if (pathname === '/calendar' && method === 'GET') {
+    setupRoutes() {
+        // Rota padrão do calendário
+        this.router.get('/', async (req, res) => {
             const userId = this.controller.getUserIdFromRequest(req);
             console.log(`🔍 CalendarRoute - UserId: ${userId}`);
             
@@ -20,13 +19,11 @@ export class CalendarRoute {
             
             if (!isAuth) {
                 console.log(`❌ Não autenticado, redirecionando para /calendar/auth`);
-                res.writeHead(302, { Location: '/calendar/auth' });
-                return res.end();
+                return res.redirect('/calendar/auth');
             }
-            // Se autenticado, mostra informações do calendário
+            
             console.log(`✅ Autenticado! Mostrando menu`);
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            return res.end(JSON.stringify({ 
+            res.json({ 
                 status: 'authenticated',
                 message: 'Calendar API ready',
                 userId: userId,
@@ -35,31 +32,17 @@ export class CalendarRoute {
                     'GET /calendar/check - Verifica status',
                     'GET /calendar/logout - Faz logout'
                 ]
-            }));
-        }
+            });
+        });
 
-        if (pathname === '/calendar/auth' && method === 'GET') {
-            return await this.controller.initiateAuth(req, res);
-        }
+        this.router.get('/auth', (req, res) => this.controller.initiateAuth(req, res));
+        this.router.get('/oauth2callback', (req, res) => this.controller.handleCallback(req, res));
+        this.router.get('/events', (req, res) => this.controller.listEvents(req, res));
+        this.router.get('/check', (req, res) => this.controller.checkStatus(req, res));
+        this.router.get('/logout', (req, res) => this.controller.logout(req, res));
+    }
 
-        if (pathname === '/calendar/oauth2callback' && method === 'GET'){
-            return await this.controller.handleCallback(req, res);
-        }
-
-        if (pathname === '/calendar/events' && method === 'GET') {
-            return await this.controller.listEvents(req, res);
-        }
-
-        if (pathname === '/calendar/check' && method === 'GET') {
-            return await this.controller.checkStatus(req, res);
-        }
-
-        if (pathname === '/calendar/logout' && method === 'GET') {
-            return await this.controller.logout(req, res)
-        }
-
-        // Rota não encontrada
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: `Calendar route not found ${pathname}` }));
+    getRouter() {
+        return this.router;
     }
 }

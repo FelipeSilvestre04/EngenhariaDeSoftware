@@ -12,6 +12,10 @@ if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET){
     throw new Error('Google Calendar credentials are required!')
 }
 
+if (!process.env.HFTOKEN){
+    throw new Error('HFTOKEN is required for embeddings!')
+}
+
 export const config = {
     server: {
         port: process.env.PORT || 3000,
@@ -20,12 +24,18 @@ export const config = {
         apiKey: process.env.GROQ_API_KEY,
         defaultModel: 'openai/gpt-oss-120b',
         defaultTemperature: 0.1,
-        hfToken: process.env.hf_token || ''
+        hfToken: process.env.HFTOKEN || '',
+        // CORREÇÃO: Linha adicionada para o modelo de embeddings do HuggingFace
+        modelHf: process.env.MODELHF || 'sentence-transformers/all-MiniLM-L6-v2'
     },
     googleCalendar: {
         clientId: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        redirectUri: process.env.GOOGLE_REDIRECT_URI || `http://localhost:${process.env.PORT || 3000}/calendar/oauth2callback`,
-        scopes: ['https://www.googleapis.com/auth/calendar']
+        redirectUri: process.env.GOOGLE_REDIRECT_URI || `http://localhost:${process.env.PORT || 3000}/auth/callback`,
+        scopes: [
+            'https://www.googleapis.com/auth/calendar',
+            'https://www.googleapis.com/auth/userinfo.profile',
+            'https://www.googleapis.com/auth/userinfo.email'
+        ]
     }
 };

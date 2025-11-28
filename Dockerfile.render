@@ -1,0 +1,71 @@
+# ===================================
+# DOCKERFILE PARA RENDER (PRODUÇÃO)
+# ===================================
+FROM node:20-alpine AS frontend-builder
+WORKDIR /app/client
+RUN apk add --no-cache python3 make g++
+COPY client/package*.json ./
+RUN npm ci --legacy-peer-deps
+COPY client/ ./
+RUN npm run build
+
+FROM node:18-alpine
+WORKDIR /app
+RUN apk add --no-cache nginx
+COPY package*.json ./
+RUN npm ci --production --ignore-scripts --legacy-peer-deps
+COPY src/ ./src/
+COPY --from=frontend-builder /app/client/dist /usr/share/nginx/html
+
+# Criar configuração nginx para produção (localhost em vez de backend)
+RUN sed 's/backend:10000/localhost:10000/g' > /tmp/nginx.conf << 'EOF' && \
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+    location / {
+        proxy_pass http://localhost:10000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_cache_bypass \$http_upgrade;
+        proxy_read_timeout 300s;
+        proxy_connect_timeout 75s;
+    }
+    location ~ ^/(calendar/auth|calendar/oauth2callback)\$ {
+        proxy_pass http://localhost:10000;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)\$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+    location = /index.html {
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+    }
+    location / {
+        try_files \$uri \$uri/ /index.html;
+    }
+}
+EOF
+RUN mv /tmp/nginx.conf /etc/nginx/http.d/default.conf
+
+RUN mkdir -p /app/src/modules/calendar/storage
+RUN echo '#!/bin/sh' > /app/start.sh && \
+    echo 'nginx &' >> /app/start.sh && \
+    echo 'node src/index.js' >> /app/start.sh && \
+    chmod +x /app/start.sh
+
+EXPOSE 80
+CMD ["/app/start.sh"]
