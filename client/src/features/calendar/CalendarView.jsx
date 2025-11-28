@@ -12,7 +12,7 @@ export function CalendarView() {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const res = await fetch('/api/calendar/events');
+        const res = await fetch('/calendar/events');
         const data = await res.json();
         if (data.success) {
           // Importante: Transformamos as datas em objetos Date aqui

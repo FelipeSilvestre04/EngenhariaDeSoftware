@@ -77,7 +77,7 @@ export class AuthController {
         if (!decode) {
             return { valid: false, error: 'Token inválido ou expirado' };
         }
-        return { valid: true, decoded: decode };
+        return { authenticated: true, decoded: decode };
     }
 
     async decodeToken(req, res) {

@@ -19,6 +19,20 @@ export class AuthRoute {
             await this.controller.handleCallback(req, res);
         });
 
+        // Verifica se o usuário está autenticado baseado nos cookies (accessToken)
+        this.router.get('/check', async (req, res) => {
+            try {
+                const result = await this.controller.verifyTokenRequest(req, res);
+                if (result && result.authenticated) {
+                    return res.status(200).json({ authenticated: true, decoded: result.decoded || null });
+                } else {
+                    return res.status(200).json({ authenticated: false, error: result && result.error ? result.error : 'Not authenticated' });
+                }
+            } catch (error) {
+                return res.status(500).json({ error: 'Erro ao verificar autenticação', message: error.message });
+            }
+        });
+
         this.router.post('/verify-token', async (req, res) => {
             await this.controller.verifyToken(req, res);
         });

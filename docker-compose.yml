@@ -22,7 +22,7 @@ services:
       - ./src/modules/calendar/storage:/app/src/modules/calendar/storage
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:${PORT:-10000}/api/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:${PORT:-10000}/health"]
       interval: 30s
       timeout: 10s
       retries: 3

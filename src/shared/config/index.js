@@ -31,7 +31,7 @@ export const config = {
     googleCalendar: {
         clientId: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        redirectUri: process.env.GOOGLE_REDIRECT_URI || `http://localhost:${process.env.PORT || 3000}/calendar/oauth2callback`,
+        redirectUri: process.env.GOOGLE_REDIRECT_URI || `http://localhost:${process.env.PORT || 3000}/auth/callback`,
         scopes: [
             'https://www.googleapis.com/auth/calendar',
             'https://www.googleapis.com/auth/userinfo.profile',

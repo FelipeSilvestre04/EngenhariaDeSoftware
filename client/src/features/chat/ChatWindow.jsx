@@ -36,7 +36,7 @@ export function ChatWindow( {theme} ) {
     setIsLoading(true);
 
     try {
-      const res = await fetch(`/api/llm/query`, {
+      const res = await fetch(`/llm/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: input }),
