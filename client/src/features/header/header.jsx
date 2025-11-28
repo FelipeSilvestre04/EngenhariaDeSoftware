@@ -33,7 +33,6 @@ function Header({ onThemeToggle, theme }) {
             className={`${styles.iconButton} ${isUserMenuOpen ? styles.active : ''}`} 
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
           >
-            {/* Adicionamos uma borda colorida opcional se o menu estiver aberto */}
             <div className={styles.userAvatar}>
                 <img 
                   src={userIconPath} 
@@ -46,7 +45,6 @@ function Header({ onThemeToggle, theme }) {
             </div>
           </button>
 
-          {/* O Menu Flutuante (Renderização Condicional) */}
           {isUserMenuOpen && (
             <div className={styles.userPopover}>
                 {/* Botão de Fechar */}
@@ -55,9 +53,7 @@ function Header({ onThemeToggle, theme }) {
                 </button>
 
                 <div className={styles.popoverContent}>
-                    {/* Anel Grande com Foto */}
                     <div className={styles.avatarRingLarge}>
-                        {/* Usando userIconPath como placeholder, mas idealmente seria a foto do user */}
                         <img 
                             src={userIconPath} 
                             alt="User Profile" 
@@ -69,7 +65,7 @@ function Header({ onThemeToggle, theme }) {
                     <p className={styles.userEmail}>user@email.com</p>
 
                     <button className={styles.manageAccountBtn}>
-                        Manage your Account
+                        Sair da Conta
                     </button>
                 </div>
             </div>
