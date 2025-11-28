@@ -10,26 +10,31 @@ export function CalendarView() {
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   useEffect(() => {
+    let isMounted = true;
     const fetchEvents = async () => {
       try {
         const res = await fetch('/calendar/events');
         const data = await res.json();
         if (data.success) {
-          // Importante: Transformamos as datas em objetos Date aqui
           const formattedEvents = data.events.map(event => ({
             ...event,
             start: new Date(event.start),
             end: new Date(event.end)
           }));
-          setEvents(formattedEvents);
+          if (isMounted) setEvents(formattedEvents);
         }
       } catch (error) {
         console.error("Erro ao buscar eventos:", error);
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
     fetchEvents();
+    const interval = setInterval(fetchEvents, 10000); // Atualiza a cada 10 segundos
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   // 2. Filtra a lista de eventos para mostrar apenas os do dia selecionado

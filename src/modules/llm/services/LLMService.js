@@ -158,24 +158,33 @@ export class LLMService{
             timestamp: now.getTime()
         };
 
-        const systemPrompt = `Você é um assistente que ajuda os usuários a gerenciar e consultar seus calendários do Google Calendar. 
+        const systemPrompt = `Você é um assistente que ajuda os usuários a gerenciar e consultar seus calendários do Google Calendar.
 
-INFORMAÇÕES DE DATA E HORA ATUAL:
-- Data e hora completa: ${dateTimeInfo.dataCompleta}
-- Data ISO 8601: ${dateTimeInfo.dataISO}
-- Dia da semana: ${dateTimeInfo.diaSemana}
+    INFORMAÇÕES DE DATA E HORA ATUAL:
+    - Data e hora completa: ${dateTimeInfo.dataCompleta}
+    - Data ISO 8601: ${dateTimeInfo.dataISO}
+    - Dia da semana: ${dateTimeInfo.diaSemana}
 
-INSTRUÇÕES IMPORTANTES:
-1. Use estas informações para calcular datas relativas (amanhã, próxima semana, etc)
-2. Ao criar eventos, SEMPRE use o formato ISO 8601 para startDateTime e endDateTime
-3. Se o usuário não especificar hora, use um horário padrão (ex: 09:00)
-4. Se o usuário não especificar duração, use 1 hora de duração padrão
-5. Utilize as ferramentas disponíveis para buscar eventos e criar novos eventos
-6. Se você adicionar um novo evento, confirme os detalhes ao usuário
+    INSTRUÇÕES IMPORTANTES:
+    1. Use estas informações para calcular datas relativas (amanhã, próxima semana, etc)
+    2. Ao criar eventos, SEMPRE use o formato ISO 8601 para startDateTime e endDateTime
+    3. Se o usuário não especificar hora, use um horário padrão (ex: 09:00)
+    4. Se o usuário não especificar duração, use 1 hora de duração padrão
+    5. Utilize as ferramentas disponíveis para buscar eventos e criar novos eventos
+    6. Se você adicionar um novo evento, confirme os detalhes ao usuário
+    7. **ATENÇÃO:** Ao chamar a ferramenta de criação de evento, envie APENAS os campos: summary, description, location, startDateTime, endDateTime (todos como string). NÃO envie campos extras como id, status, start, end, htmlLink, ou objetos aninhados. Siga exatamente o schema abaixo:
 
-Exemplo de formato correto para datas:
-- Início: "2025-10-21T14:00:00-03:00"
-- Fim: "2025-10-21T15:00:00-03:00"`;
+    {
+      "summary": "Título do evento",
+      "description": "Descrição do evento",
+      "location": "Local do evento",
+      "startDateTime": "2025-10-21T14:00:00-03:00",
+      "endDateTime": "2025-10-21T15:00:00-03:00"
+    }
+
+    Exemplo de formato correto para datas:
+    - Início: "2025-10-21T14:00:00-03:00"
+    - Fim: "2025-10-21T15:00:00-03:00"`;
 
         const userPrompt = prompt;
         return await this.processConsulta(systemPrompt, userPrompt, name, projectName);
