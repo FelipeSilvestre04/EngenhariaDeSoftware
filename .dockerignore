@@ -9,7 +9,6 @@ test/
 commitlint.config.js
 .client_secret_6035557284-5edobgt8mt4qkdgcee8heo1mmpechp20.apps.googleusercontent.com.json
 src/modules/calendar/storage/tokens-*.json
-client/
 docker-compose.yml
 Dockerfile
 .dockerignore
