@@ -27,7 +27,7 @@
     "husky": "^9.1.7"
   },
   "dependencies": {
-    "@huggingface/inference": "^4.13.1",
+    "@huggingface/inference": "^4.13.4",
     "@langchain/community": "^1.0.0",
     "@langchain/core": "^0.3.75",
     "@langchain/groq": "^0.2.3",
