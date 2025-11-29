@@ -36,10 +36,10 @@
 
     background-image: linear-gradient(
         to right, 
-        #cf50f2, /* Roxo inicial */
-        #b180f3, /* Roxo claro */
-        #9b59b6, /* Um tom intermediário */
-        #cf50f2  /* Volta ao roxo inicial */
+        #ffffff, /* Roxo inicial */
+        #898989, /* Roxo claro */
+        #6b6b6b, /* Um tom intermediário */
+        #ffffff  /* Volta ao roxo inicial */
     );
 
     background-size: 300% auto;

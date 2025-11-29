@@ -3,7 +3,7 @@ import styles from './login-page.module.css';
 import Particles from "react-tsparticles";
 import { loadSlim } from "tsparticles-slim";
 
-import SecretarIAIconPath from '../../assets/SecretarIA_cut2.png';
+import SecretarIAIconPath from '../../assets/SecretarIA-new-logo2.png';
 
 export function LoginPage() {
 
@@ -35,10 +35,11 @@ export function LoginPage() {
           fpsLimit: 120,
           particles: {
             color: {
-              value: "#cf50f2", 
+              value: "#85DE6E", 
+              value: "#E0BD38",
             },
             links: {
-              color: "#cf50f2", 
+              color: "#85DE6E", 
               distance: 150,
               enable: true,
               opacity: 0.3,
@@ -79,7 +80,8 @@ export function LoginPage() {
             left: 0,
             width: '100%',
             height: '100%',
-            zIndex: 0 
+            zIndex: 0,
+            filter: 'blur(4px)'
         }}
       />
 
