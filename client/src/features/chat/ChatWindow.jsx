@@ -77,6 +77,12 @@ export function ChatWindow( {theme, projectName} ) {
     scrollToBottom();
   }, [messages]); 
 
+  // When projectName changes, clear the current chat messages so the UI loads fresh context
+  useEffect(() => {
+    setMessages([]);
+    setIsLoading(false);
+  }, [projectName]);
+
 return (
     <div className="chat-window-container">
 

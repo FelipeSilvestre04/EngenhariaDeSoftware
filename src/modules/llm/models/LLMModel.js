@@ -80,8 +80,12 @@ export class LLMModel {
         }
 
 
-        // futuramente salvar em um bd
-        const related = await this.store.search(['memories', userName], {
+        // Use project-specific key path to simulate separate vector stores per project.
+        // If projectName is not provided, fall back to the user's general memories.
+        const keyPath = projectName ? ['memories', userName, projectName] : ['memories', userName];
+
+        // fututamente salvar em um bd
+        const related = await this.store.search(keyPath, {
             query: userPrompt,
             k: 3,
         });
@@ -92,7 +96,7 @@ export class LLMModel {
         }
         
         if (contextText.trim()) {
-            userPrompt = `Here are some of your previous memories:\n${contextText}\nBased on these, respond to the following:\n${userPrompt}`;
+            userPrompt = `Here are some of your previous memories related to this project:\n${contextText}\nBased on these, respond to the following:\n${userPrompt}`;
         }
         const response = await this.agent.invoke({
             messages: [
@@ -104,7 +108,8 @@ export class LLMModel {
         const messages = response.messages;
         const lastMessage = messages[messages.length - 1];
 
-        await this.store.put(['memories', userName], projectName, {
+        const messageKey = Date.now().toString();
+        await this.store.put(keyPath, messageKey, {
             text: lastMessage.content,
             metadata: {
                 date: new Date(),
