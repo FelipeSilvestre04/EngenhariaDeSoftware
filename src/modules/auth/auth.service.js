@@ -67,6 +67,7 @@ export class AuthService {
                 userId: userId,
                 email: data.email,
                 name: data.name,
+                picture: data.picture,
             }
 
             const jwtTokens = await this.generateTokenPair(payload);

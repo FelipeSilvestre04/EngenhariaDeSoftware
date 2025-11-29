@@ -7,8 +7,23 @@ import themeIconPath from '../../assets/night-mode.svg';
 import userIconPath from '../../assets/user.svg';
 import settingsIconPath from '../../assets/settings.svg';
 
-function Header({ onThemeToggle, theme }) { 
+function Header({ onThemeToggle, theme, onLogout, user }) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  const profileImage = user?.picture || userIconPath;
+  const getFirstName = () => {
+      if (!user?.name) return "Usuário"; // Fallback se não tiver nome
+
+      // 1. Pega apenas o primeiro nome (divide pelos espaços e pega o item 0)
+      const firstName = user.name.split(' ')[0]; 
+      
+      // 2. Formata: Primeira letra Maiúscula + resto minúscula
+      // Ex: "ABNER" vira "Abner"
+      return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+    };
+
+    const displayName = getFirstName();
+  const userEmail = user?.email || "email@exemplo.com";
 
   return (
     <header className={styles.headerContainer}>
@@ -35,19 +50,17 @@ function Header({ onThemeToggle, theme }) {
           >
             <div className={styles.userAvatar}>
                 <img 
-                  src={userIconPath} 
+                  src={profileImage}
                   alt="Sua conta" 
-                  /* Nota: Se for uma foto real, remova o 'styles.invert'. 
-                     Se continuar usando o ícone SVG preto, mantenha a lógica do invert.
-                  */
-                  className={`${styles.avatarImage} ${theme === 'dark' ? styles.invert : ''}`}
+                  className={`${styles.avatarImage} ${
+                    theme === 'dark' && !user?.picture ? styles.invert : ''
+                  }`}
                 />
             </div>
           </button>
 
           {isUserMenuOpen && (
             <div className={styles.userPopover}>
-                {/* Botão de Fechar */}
                 <button className={styles.closeBtn} onClick={() => setIsUserMenuOpen(false)}>
                     &times;
                 </button>
@@ -55,18 +68,25 @@ function Header({ onThemeToggle, theme }) {
                 <div className={styles.popoverContent}>
                     <div className={styles.avatarRingLarge}>
                         <img 
-                            src={userIconPath} 
-                            alt="User Profile" 
-                            className={theme === 'dark' ? styles.invert : ''}
+                          src={profileImage} // 3. Usa a imagem dinâmica aqui também
+                          alt="User Profile" 
+                          referrerPolicy="no-referrer" 
+                          className={`${styles.avatarImage} ${
+                          theme === 'dark' && !user?.picture ? styles.invert : ''
+                        }`}
                         />
                     </div>
 
-                    <h3 className={styles.userName}>Hi, User!</h3>
-                    <p className={styles.userEmail}>user@email.com</p>
+                    <h3 className={styles.userName}>
+                        Olá, {displayName}!
+                    </h3>
+                    <p className={styles.userEmail}>{userEmail}</p>
 
-                    <button className={styles.manageAccountBtn}>
-                        Sair da Conta
-                    </button>
+                  <button 
+                    className={styles.manageAccountBtn} 
+                    onClick={onLogout}>
+                    Sair da Conta
+                </button>
                 </div>
             </div>
           )}

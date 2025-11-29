@@ -176,8 +176,8 @@
 }
 
 .userAvatar {
-    width: 32px;  /* Tamanho levemente maior que os outros ícones */
-    height: 32px;
+    width: 22px;  /* Tamanho levemente maior que os outros ícones */
+    height: 22px;
     border-radius: 50%; /* Faz ficar redondo */
     overflow: hidden;   /* Corta a imagem se ela for quadrada */
     

@@ -10,10 +10,12 @@
   --border-color: #e0e0e0;     
   --card-title-bg: #e6e0f0;  
 
-  --input-button-bg: hsla(266, 88%, 80%, 0.9);
+  --input-button-bg: #c69ff9e6;
 
   --scrollbar-track: #f1f1f1; 
-  --scrollbar-thumb: #c1c1c1; 
+  --scrollbar-thumb: #c1c1c1;
+  
+  --event-dot-color: #525217;
 }
 
 .dark {
@@ -30,6 +32,8 @@
 
   --scrollbar-track: hsl(0, 0%, 6%);  
   --scrollbar-thumb: #555555;  
+
+  --event-dot-color: #F9FA76;
 }
 
 body {
@@ -249,7 +253,7 @@ body {
 .event-dot {
   height: 8px;
   width: 8px;
-  background-color: var(--card-title-bg); /* Nosso amarelo */
+  background-color: var(--event-dot-color); /* Nosso amarelo */
   border-radius: 50%;
   margin: 2px auto 0; /* Centraliza o ponto abaixo do número */
 }
