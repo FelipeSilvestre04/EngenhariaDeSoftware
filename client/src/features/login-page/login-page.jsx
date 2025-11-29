@@ -92,7 +92,7 @@ export function LoginPage() {
         </div>
 
         <h2 className={styles.title}>SecretarIA</h2>
-        <p className={styles.subtitle}>Faça login para gerenciar seus projetos</p>
+        <p className={styles.subtitle}>Onde seus projetos se integram com IA</p>
         
         <button onClick={handleGoogleLogin} className={styles.googleBtn}>
             <svg className={styles.googleIcon} viewBox="0 0 24 24">
