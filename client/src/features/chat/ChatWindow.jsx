@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import styles from './ChatWindow.module.css';
 import sendpath from '../../assets/send.svg';
 
-export function ChatWindow( {theme} ) {
+export function ChatWindow( {theme, projectName} ) {
 
   const [messages, setMessages] = useState([]);
 
@@ -37,7 +37,9 @@ export function ChatWindow( {theme} ) {
     setIsLoading(true);
 
     try {
-      const res = await fetch(`/llm/query`, {
+      // If projectName is provided, include it as query param so backend can scope context
+      const query = projectName ? `?project=${encodeURIComponent(projectName)}` : '';
+      const res = await fetch(`/llm/query${query}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: input }),
