@@ -1,0 +1,20 @@
+/* Animação dos três pontos para o loading do chat */
+.dot-typing {
+  display: inline-block;
+}
+.dot-typing span {
+  opacity: 0.3;
+  animation: blink 1.4s infinite both;
+  font-size: 4em;
+  margin: 0 1px;
+}
+.dot-typing span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.dot-typing span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+@keyframes blink {
+  0%, 80%, 100% { opacity: 0.2; }
+  40% { opacity: 1; }
+}

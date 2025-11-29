@@ -1,5 +1,6 @@
 // client/src/features/chat/ChatWindow.jsx
 import { useState, useEffect, useRef } from 'react';
+import styles from './ChatWindow.module.css';
 import sendpath from '../../assets/send.svg';
 
 export function ChatWindow( {theme} ) {
@@ -98,7 +99,14 @@ return (
                 {message.text}
               </div>
             ))}
-            {isLoading && <div className="ai-message">...</div>}
+            {isLoading && (
+              <div>
+                <span className={styles['dot-typing']}>
+                  <span>.</span><span>.</span><span>.</span>
+                </span>
+              </div>
+            )}
+
             <div ref={messagesEndRef} /> 
           </div>
         </>
