@@ -1,22 +1,98 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import styles from './login-page.module.css';
+import Particles from "react-tsparticles";
+import { loadSlim } from "tsparticles-slim";
+
+import SecretarIAIconPath from '../../assets/SecretarIA_cut2.png';
 
 export function LoginPage() {
 
   const handleGoogleLogin = () => {
-    // Redireciona o navegador para a rota do seu backend que inicia a auth.
-    // IMPORTANTE: Ajuste '/auth/login' se a sua rota no backend for diferente (ex: '/api/auth/login')
     window.location.href = '/auth/login'; 
   };
 
+  const particlesInit = useCallback(async engine => {
+    await loadSlim(engine);
+  }, []);
+
+  const particlesLoaded = useCallback(async container => {
+    // console.log(container);
+  }, []);
+
   return (
     <div className={styles.loginContainer}>
+
+        <Particles
+        id="tsparticles"
+        init={particlesInit}
+        loaded={particlesLoaded}
+        options={{
+          background: {
+            color: {
+              value: "transparent", 
+            },
+          },
+          fpsLimit: 120,
+          particles: {
+            color: {
+              value: "#cf50f2", 
+            },
+            links: {
+              color: "#cf50f2", 
+              distance: 150,
+              enable: true,
+              opacity: 0.3,
+              width: 1,
+            },
+            move: {
+              direction: "none",
+              enable: true,
+              outModes: {
+                default: "bounce",
+              },
+              random: false,
+              speed: 1.5, 
+              straight: false,
+            },
+            number: {
+              density: {
+                enable: true,
+                area: 800,
+              },
+              value: 60, 
+            },
+            opacity: {
+              value: 0.5,
+            },
+            shape: {
+              type: "circle",
+            },
+            size: {
+              value: { min: 1, max: 3 },
+            },
+          },
+          detectRetina: true,
+        }}
+        style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            zIndex: 0 
+        }}
+      />
+
       <div className={styles.loginCard}>
+
+        <div className={styles.logoWrapper}>
+             <img src={SecretarIAIconPath} alt="SecretarIA Logo" className={styles.logoImage} />
+        </div>
+
         <h2 className={styles.title}>SecretarIA</h2>
         <p className={styles.subtitle}>Faça login para gerenciar seus projetos</p>
         
         <button onClick={handleGoogleLogin} className={styles.googleBtn}>
-            {/* Ícone simples do Google (SVG) */}
             <svg className={styles.googleIcon} viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>

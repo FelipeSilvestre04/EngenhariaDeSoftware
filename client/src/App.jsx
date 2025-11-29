@@ -36,14 +36,11 @@ function App() {
   const [isLoading, setIsLoading] = useState(true); 
   const [theme, setTheme] = useState('light');
 
-  // Verifica sessão ao iniciar o App
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const res = await fetch('/auth/check'); 
         const data = await res.json();
-
-        console.log("Dados recebidos do backend:", data);
 
         if (data.authenticated) {
           setIsAuthenticated(true);

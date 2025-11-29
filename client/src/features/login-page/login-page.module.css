@@ -8,6 +8,10 @@
     align-items: center;
     background-color: #0D0D0D; 
     color: #f0f0f0;
+    
+    /* Importante para o posicionamento absoluto das partículas funcionar em relação à tela */
+    position: relative; 
+    overflow: hidden; /* Garante que scrollbars não apareçam */
 }
 
 .loginCard {
@@ -21,15 +25,39 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+
+    position: relative; 
+    z-index: 10;       
 }
 
 .title {
     margin: 0 0 0.5rem 0;
     font-size: 2rem;
-    background-image: linear-gradient(45deg, #cf50f2, #b180f3);
+
+    background-image: linear-gradient(
+        to right, 
+        #cf50f2, /* Roxo inicial */
+        #b180f3, /* Roxo claro */
+        #9b59b6, /* Um tom intermediário */
+        #cf50f2  /* Volta ao roxo inicial */
+    );
+
+    background-size: 300% auto;
+
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+
+    animation: gradient-shift 8s ease-in-out infinite alternate;
+}
+
+@keyframes gradient-shift {
+    0% {
+        background-position: 0% center;
+    }
+    100% {
+        background-position: 100% center;
+    }
 }
 
 .subtitle {
@@ -57,7 +85,7 @@
 }
 
 .googleBtn:hover {
-    background-color: #f7f8f8;
+    background-color: hsla(180, 7%, 97%, 0.765);
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
@@ -66,3 +94,30 @@
     height: 18px;
     margin-right: 12px;
 }
+
+.logoWrapper {
+    width: 120px;  /* Tamanho menor como pedido */
+    height: 120px; /* Ajuste conforme a proporção do seu logo */
+    margin: 1rem;
+    position: relative; /* Necessário para o ::after se posicionar */
+    overflow: hidden;   /* O brilho só aparece DENTRO do quadrado do logo */
+    border-radius: 20px; /* Opcional: Arredonda os cantos do container */
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
+}
+
+/* 2. A Imagem se ajusta ao Wrapper */
+.logoImage {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Garante que o logo não distorça */
+    display: block;
+    
+    /* DICA DE COR: 
+       Como é PNG, 'fill' não funciona. 
+       Se o seu PNG for preto e você quiser roxo, tente descomentar isso:
+       filter: sepia(100%) saturate(300%) hue-rotate(250deg) brightness(90%);
+       
+       Mas o ideal é salvar o PNG já na cor certa (#cf50f2).
+    */
+}
+

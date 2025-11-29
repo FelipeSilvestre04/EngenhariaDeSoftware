@@ -12,13 +12,10 @@ function Header({ onThemeToggle, theme, onLogout, user }) {
 
   const profileImage = user?.picture || userIconPath;
   const getFirstName = () => {
-      if (!user?.name) return "Usuário"; // Fallback se não tiver nome
+      if (!user?.name) return "Usuário";
 
-      // 1. Pega apenas o primeiro nome (divide pelos espaços e pega o item 0)
       const firstName = user.name.split(' ')[0]; 
       
-      // 2. Formata: Primeira letra Maiúscula + resto minúscula
-      // Ex: "ABNER" vira "Abner"
       return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
     };
 
@@ -68,7 +65,7 @@ function Header({ onThemeToggle, theme, onLogout, user }) {
                 <div className={styles.popoverContent}>
                     <div className={styles.avatarRingLarge}>
                         <img 
-                          src={profileImage} // 3. Usa a imagem dinâmica aqui também
+                          src={profileImage} 
                           alt="User Profile" 
                           referrerPolicy="no-referrer" 
                           className={`${styles.avatarImage} ${
