@@ -1,6 +1,5 @@
 /* client/src/App.css */
 :root {
-  /* Cor de fundo */
   --bg-primary: #ffffff;      
   --bg-secondary: #f8f9fa;    
   --bg-sidebar: #f7f7f9;
@@ -68,17 +67,17 @@ body {
 }
 .chat-window-container h2 { margin-top: 0; }
 .messages-area {
-  flex-grow: 1;         /* Deixa o container crescer */
-  background-color: none; /* (Aliás, 'none' é inválido, use 'transparent' ou var(--bg-secondary)) */
+  flex-grow: 1;        
+  background-color: transparent; 
   border: none;
   border-radius: 8px;
   padding: 1rem;
-  overflow-y: auto;     /* Cria a barra de rolagem interna */
+  overflow-y: auto;     
 
-  min-height: 0;        /* A CORREÇÃO MÁGICA: Força o flex a obedecer o overflow */
+  min-height: 0;        
    
-  display: flex;        /* (Propriedade da segunda definição, agora mesclada) */
-  flex-direction: column; /* (Propriedade da segunda definição, agora mesclada) */
+  display: flex;       
+  flex-direction: column; 
 
   
   color: var(--text-primary);
@@ -127,9 +126,9 @@ body {
 
 /* --- Coluna do Calendário --- */
 .calendar-view-container {
-  flex-grow: 0;     /* 1. Não deve crescer */
-  flex-shrink: 0;   /* 2. Não deve encolher */
-  flex-basis: 40vh; /* 3. Tenha uma largura fixa de 350px (ajuste este valor) */
+  flex-grow: 0;     
+  flex-shrink: 0;   
+  flex-basis: 40vh; 
 
   padding: 1rem;
   display: flex;
@@ -139,10 +138,9 @@ body {
 }
 
 
-/* A CLASSE QUE VAI SERVIR DE "TELA" PARA O CALENDÁRIO */
 .calendar-wrapper {
-  flex-grow: 0; /* Faz esta div esticar e ocupar todo o espaço vertical */
-  position: relative; /* Necessário para o filho se posicionar corretamente */
+  flex-grow: 0; 
+  position: relative; 
   
 }
 
@@ -164,29 +162,25 @@ body {
   box-shadow: inset 0 3px 5px rgba(0,0,0,.125);
 }
 
-/* --- Estilos para o React Calendar --- */
 .CalendarComponent.react-calendar {
   color: var(--text-primary);
   background-color: var(--bg-secondary);
   border: var(--scrollbar-thumb) 2px solid;
   border-radius: 8px;
-  font-family: inherit; /* Garante a mesma fonte do app */
+  font-family: inherit; 
 }
 
-/* 2. Navegação (Mês/Ano e Setas) - São botões, precisam herdar a cor explicitamente */
 .react-calendar__navigation button {
   color: var(--text-primary);
   min-width: 44px;
   background: none;
 }
 
-/* Estado de Hover/Focus na navegação */
 .react-calendar__navigation button:enabled:hover,
 .react-calendar__navigation button:enabled:focus {
   background-color: var(--bg-sidebar);
 }
 
-/* 3. Dias da Semana (SEG, TER, QUA...) */
 .react-calendar__month-view__weekdays {
   color: var(--text-primary);
   text-transform: uppercase;
@@ -194,45 +188,38 @@ body {
   font-size: 0.75em;
 }
 
-/* Remove o sublinhado padrão que alguns navegadores colocam nas siglas */
 .react-calendar__month-view__weekdays abbr {
   text-decoration: none;
   cursor: default;
 }
 
-/* 4. Os dias numéricos (Tiles) - O principal problema */
 .react-calendar__tile {
   color: var(--text-primary);
   background: none;
 }
 
-/* Quando passar o mouse sobre um dia */
 .react-calendar__tile:enabled:hover,
 .react-calendar__tile:enabled:focus {
-  background-color: var(--bg-sidebar); /* Ou sua cor de destaque */
+  background-color: var(--bg-sidebar); 
   color: var(--text-primary);
   border-radius: 6px;
 }
 
-/* 5. Dia selecionado (O quadrado azul na sua imagem) */
 .react-calendar__tile--active {
   background: var(--input-button-bg) !important;
-  color: var(--bg-primary) !important; /* Texto branco para contraste com o roxo/azul */
+  color: var(--bg-primary) !important; 
   border-radius: 6px;
 }
 
-/* 6. Dia de "Hoje" (Geralmente tem um fundo amarelo claro padrão) */
 .react-calendar__tile--now {
   background: #cf50f2 !important; 
   
-  /* Importante: Texto preto para dar leitura no fundo amarelo brilhante */
   color: #1a1a1a !important; 
   
   border-radius: 6px;
-  font-weight: bold; /* Opcional: deixa o número mais gordinho */
+  font-weight: bold; 
 }
 
-/* Efeito ao passar o mouse especificamente no dia de hoje */
 .react-calendar__tile--now:enabled:hover,
 .react-calendar__tile--now:enabled:focus {
   background: hsla(287, 86%, 63%, 0.67) !important; 
@@ -244,21 +231,18 @@ body {
   color: #ffffff !important;
 }
 
-/* 7. Dias de meses vizinhos (os cinzas que aparecem antes/depois do mês atual) */
 .react-calendar__month-view__days__day--neighboringMonth {
-  opacity: 0.35; /* Deixa o texto com 35% de visibilidade (bem apagado) */
+  opacity: 0.35;
 }
 
-/* --- Estilo para o ponto de evento no calendário --- */
 .event-dot {
   height: 8px;
   width: 8px;
-  background-color: var(--event-dot-color); /* Nosso amarelo */
+  background-color: var(--event-dot-color); 
   border-radius: 50%;
-  margin: 2px auto 0; /* Centraliza o ponto abaixo do número */
+  margin: 2px auto 0; 
 }
 
-/* --- Estilos para as bolhas de chat --- */
 .message {
   padding: 0.8rem 1rem;
   border-radius: 18px;
@@ -271,13 +255,13 @@ body {
 
 .ai-message {
   background-color: var(--bg-chat-bubble);
-  align-self: flex-start; /* Alinha à esquerda */
+  align-self: flex-start; 
   border-bottom-left-radius: 4px;
 }
 
 .user-message {
-  background-color: var(--input-button-bg); /* Um azul para diferenciar */
-  align-self: flex-end; /* Alinha à direita */
+  background-color: var(--input-button-bg); 
+  align-self: flex-end; 
   border-bottom-right-radius: 4px;
 
   transition: all 0.2s ease-in-out;
@@ -380,22 +364,13 @@ body {
   font-weight: 600;
   margin-top: 3rem;
 
-  /* 1. REMOVA a cor de texto antiga */
-  /* color: var(--text-primary); */
-
-  /* 2. ADICIONE O GRADIENTE RADIAL
-     Ele cria um círculo de cor na posição do mouse
-     'var(--mouse-x, 50%)' usa 50% (centro) como padrão
-     antes que o mouse se mova pela primeira vez.
-  */
   background-image: radial-gradient(
     circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-    #cf50f2,  /* Cor 1 (centro) */
-    #553b7a   /* Cor 2 (borda) */
+    #cf50f2,  
+    #553b7a   
   );
 
-  /* 3. ADICIONE AS PROPRIEDADES DE "CORTE" */
   -webkit-background-clip: text;
   background-clip: text;
-  color: transparent; /* Deixa o texto "vazado" */
+  color: transparent; 
 }

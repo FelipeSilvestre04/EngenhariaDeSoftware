@@ -1,4 +1,3 @@
-/* ... (mantenha loginContainer, loginCard, title, subtitle como estavam) ... */
 
 .loginContainer {
     height: 100vh;
@@ -9,9 +8,8 @@
     background-color: #0D0D0D; 
     color: #f0f0f0;
     
-    /* Importante para o posicionamento absoluto das partículas funcionar em relação à tela */
     position: relative; 
-    overflow: hidden; /* Garante que scrollbars não apareçam */
+    overflow: hidden; 
 }
 
 .loginCard {
@@ -66,7 +64,6 @@
     font-size: 0.95rem;
 }
 
-/* Novo botão estilo Google */
 .googleBtn {
     display: flex;
     align-items: center;
@@ -76,7 +73,7 @@
     border: 1px solid #dadce0;
     border-radius: 4px;
     padding: 10px 24px;
-    font-family: 'Roboto', sans-serif; /* Se tiver Roboto, senão usa padrão */
+    font-family: 'Roboto', sans-serif; 
     font-weight: 500;
     font-size: 16px;
     cursor: pointer;
@@ -96,28 +93,20 @@
 }
 
 .logoWrapper {
-    width: 120px;  /* Tamanho menor como pedido */
-    height: 120px; /* Ajuste conforme a proporção do seu logo */
+    width: 120px;  
+    height: 120px; 
     margin: 1rem;
-    position: relative; /* Necessário para o ::after se posicionar */
-    overflow: hidden;   /* O brilho só aparece DENTRO do quadrado do logo */
-    border-radius: 20px; /* Opcional: Arredonda os cantos do container */
+    position: relative;
+    overflow: hidden;   
+    border-radius: 20px; 
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
 }
 
-/* 2. A Imagem se ajusta ao Wrapper */
 .logoImage {
     width: 100%;
     height: 100%;
-    object-fit: contain; /* Garante que o logo não distorça */
+    object-fit: contain; 
     display: block;
     
-    /* DICA DE COR: 
-       Como é PNG, 'fill' não funciona. 
-       Se o seu PNG for preto e você quiser roxo, tente descomentar isso:
-       filter: sepia(100%) saturate(300%) hue-rotate(250deg) brightness(90%);
-       
-       Mas o ideal é salvar o PNG já na cor certa (#cf50f2).
-    */
 }
 
