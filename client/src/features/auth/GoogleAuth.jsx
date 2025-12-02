@@ -39,9 +39,6 @@ export function GoogleAuth() {
       {!isLoading && isAuthenticated && (
         <>
           <CalendarView />
-          <button onClick={handleLogout} style={{ marginTop: 'auto', width: '100%' }}>
-            Desconectar do Google
-          </button>
         </>
       )}
 

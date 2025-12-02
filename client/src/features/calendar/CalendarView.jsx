@@ -6,7 +6,6 @@ import 'react-calendar/dist/Calendar.css';
 export function CalendarView() {
   const [events, setEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  // 1. Novo estado para guardar a data que o usuário selecionou
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   useEffect(() => {
@@ -37,21 +36,17 @@ export function CalendarView() {
     };
   }, []);
 
-  // 2. Filtra a lista de eventos para mostrar apenas os do dia selecionado
   const filteredEvents = events.filter(event =>
     event.start.toDateString() === selectedDate.toDateString()
   );
 
-  // 3. Função que o calendário usa para renderizar conteúdo extra em cada dia
   const tileContent = ({ date, view }) => {
-    // Se estiver na visão de "mês"
     if (view === 'month') {
-      // Verifica se existe algum evento para esta data
+  
       const hasEvent = events.some(event => 
         event.start.toDateString() === date.toDateString()
       );
 
-      // Se tiver evento, retorna o "ponto amarelo"
       return hasEvent ? <div className="event-dot"></div> : null;
     }
   };
@@ -63,10 +58,10 @@ export function CalendarView() {
   return (
     <div>
       <Calendar
-        // 4. Conecta as funções e o estado ao componente
         onChange={setSelectedDate}
         value={selectedDate}
         tileContent={tileContent}
+        className={"CalendarComponent"}
       />
 
       <div style={{ marginTop: '1rem' }}>

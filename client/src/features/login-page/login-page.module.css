@@ -1,0 +1,112 @@
+
+.loginContainer {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #0D0D0D; 
+    color: #f0f0f0;
+    
+    position: relative; 
+    overflow: hidden; 
+}
+
+.loginCard {
+    background-color: #202124;
+    padding: 3rem 2rem;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    position: relative; 
+    z-index: 10;       
+}
+
+.title {
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+
+    background-image: linear-gradient(
+        to right, 
+        #ffffff, 
+        #898989, 
+        #6b6b6b, 
+        #ffffff  
+    );
+
+    background-size: 300% auto;
+
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+
+    animation: gradient-shift 8s ease-in-out infinite alternate;
+}
+
+@keyframes gradient-shift {
+    0% {
+        background-position: 0% center;
+    }
+    100% {
+        background-position: 100% center;
+    }
+}
+
+.subtitle {
+    color: #9aa0a6;
+    margin-bottom: 2.5rem;
+    font-size: 0.95rem;
+}
+
+.googleBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    color: #3c4043;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    padding: 10px 24px;
+    font-family: 'Roboto', sans-serif; 
+    font-weight: 500;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+}
+
+.googleBtn:hover {
+    background-color: hsla(180, 7%, 97%, 0.765);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.googleIcon {
+    width: 18px;
+    height: 18px;
+    margin-right: 12px;
+}
+
+.logoWrapper {
+    width: 120px;  
+    height: 120px; 
+    margin: 1rem;
+    position: relative;
+    overflow: hidden;   
+    border-radius: 20px; 
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
+}
+
+.logoImage {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; 
+    display: block;
+    
+}
+
