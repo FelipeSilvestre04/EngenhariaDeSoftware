@@ -6,7 +6,7 @@ import ProjectSidebar from './features/ProjectSidebar/ProjectSidebar';
 import Header from './features/header/header'; 
 import { ChatWindow } from './features/chat/ChatWindow';
 import { GoogleAuth } from './features/auth/GoogleAuth'; 
-import { Routes, Route } from 'react-router-dom'
+// Note: `Routes` and `Route` are already imported above; duplicate import removed
 import ProjectPage from './features/ProjectPage/ProjectPage'
 import './App.css';
 
