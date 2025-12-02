@@ -71,12 +71,12 @@ export class CalendarController {
 
     async listEvents(req, res){
         try{
-            const userId = this.getUserIdFromRequest(req);
+            // Usa req.userId populado pelo middleware de autenticação, ou fallback para cookie
+            const userId = req.userId || this.getUserIdFromRequest(req);
 
             if(!userId){
-                res.writeHead(302, { Location: '/calendar/auth'});
-                res.end();
-                return;
+                res.writeHead(401, {'Content-Type': 'application/json'});
+                return res.end(JSON.stringify({ success: false, error: 'Usuário não autenticado' }));
             }
 
             // Verifica autenticação com o userId
@@ -84,7 +84,7 @@ export class CalendarController {
 
             if(!isAuth){
                 res.writeHead(401, {'Content-Type': 'application/json'});
-                return res.end(JSON.stringify({ success: false, error: 'Usuário não autenticado' }));
+                return res.end(JSON.stringify({ success: false, error: 'Usuário não autenticado no Google' }));
             }
 
             const events = await this.service.listEvents(400);
@@ -99,11 +99,12 @@ export class CalendarController {
 
     async checkStatus(req, res){
         try{
-            const userId = this.getUserIdFromRequest(req);
+            // Usa req.userId populado pelo middleware de autenticação, ou fallback para cookie
+            const userId = req.userId || this.getUserIdFromRequest(req);
             const isAuth = userId ? await this.service.checkAuthentication(userId) : false;
 
             res.writeHead(200, {'Content-Type': 'application/json'});
-            res.end(JSON.stringify({ authenticated: isAuth }));
+            res.end(JSON.stringify({ authenticated: isAuth, userId: userId || null }));
         } catch (error) {
             res.writeHead(500, { 'Content-Type': 'application/json'});
             res.end(JSON.stringify({ error: error.message }));
@@ -112,10 +113,11 @@ export class CalendarController {
 
     async logout(req, res) {
         try {
-            const userId = this.getUserIdFromRequest(req);
+            // Usa req.userId populado pelo middleware de autenticação, ou fallback para cookie
+            const userId = req.userId || this.getUserIdFromRequest(req);
             
             if (!userId) {
-                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.writeHead(401, { 'Content-Type': 'application/json' });
                 return res.end(JSON.stringify({ 
                     success: false,
                     error: 'Nenhum usuário autenticado' 
@@ -124,10 +126,16 @@ export class CalendarController {
 
             await this.service.logout(userId);
             
-            // Remove o cookie userId
+            // Remove os cookies de autenticação
+            const expiredCookies = [
+                'userId=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT',
+                'accessToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT',
+                'refreshToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT'
+            ];
+            
             res.writeHead(200, { 
                 'Content-Type': 'application/json',
-                'Set-Cookie': 'userId=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT'
+                'Set-Cookie': expiredCookies
             });
             res.end(JSON.stringify({ 
                 success: true,

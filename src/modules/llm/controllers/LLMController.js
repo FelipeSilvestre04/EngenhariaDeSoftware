@@ -11,11 +11,16 @@ export class LLMController{
         try {
             console.log('🔵 [LLMController] Recebendo requisição...');
             
-            // aqui é uma extração de dados qualquer da requisição. nesse caso 
-            // pegando o nome do cara q fez a request.
+            // Usa dados do usuário autenticado pelo middleware
+            const user = req.user || {};
+            const userId = req.userId;
+            
+            // Pega o nome do usuário autenticado ou fallback para query param
             const url = new URL(req.url, `http://${req.headers.host}`);
-            const name = url.searchParams.get('name') || 'usuário';
+            const name = user.name || url.searchParams.get('name') || 'usuário';
             const projectName = url.searchParams.get('project') || 'projeto';
+            
+            console.log(`👤 [LLMController] Usuário autenticado: ${name} (${userId})`);
             
             // O Express já parseou o body, então usamos req.body diretamente
             const prompt = req.body.prompt;
@@ -35,7 +40,8 @@ export class LLMController{
                 res.writeHead(200, { 'Content-Type': 'application/json'});
                 res.end(JSON.stringify({
                     question: `${prompt}`,
-                    answer: result.content
+                    answer: result.content,
+                    user: { name: name, userId: userId }
                 }));
             } else {
                 console.log('❌ [LLMController] Erro no processamento:', result.error);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'; 
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 
 import { LoginPage } from './features/login-page/login-page';
 import ProjectSidebar from './features/ProjectSidebar/ProjectSidebar';
@@ -23,7 +23,7 @@ function DashboardLayout({ onLogout, theme, toggleTheme, user }) {
         <Header onThemeToggle={toggleTheme} theme={theme} onLogout={onLogout} user={user}/>
         <div className="App-Container"> 
           <Routes>
-            <Route path="/" element={
+            <Route index element={
               <>
                 <ChatWindow theme={theme}/>
                 <div className="calendar-view-container">
@@ -31,7 +31,7 @@ function DashboardLayout({ onLogout, theme, toggleTheme, user }) {
                 </div>
               </>
             }/>
-            <Route path="/project/:projectId" element={<ProjectPage theme={theme}/>} />
+            <Route path="project/:projectId" element={<ProjectPage theme={theme}/>} />
           </Routes>
         </div>
       </main>
@@ -90,7 +90,6 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
       <Routes>
         <Route 
           path="/login" 
@@ -98,7 +97,7 @@ function App() {
         />
 
         <Route 
-          path="/" 
+          path="/*" 
           element={
             isAuthenticated ? (
               <DashboardLayout 
@@ -113,7 +112,6 @@ function App() {
           } 
         />
       </Routes>
-    </BrowserRouter>
   );
 }
 
