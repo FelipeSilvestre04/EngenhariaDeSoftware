@@ -94,14 +94,17 @@ export class CalendarModel {
             throw new Error("Usuário não autenticado! Autenticar primeiro.");
         }
 
-        try {
-            const response = await this.calendar.events.list({
-              calendarId: 'primary',
-              timeMin: new Date().toISOString(),
-              maxResults: maxResults,
-              singleEvents: true,
-              orderBy: 'startTime',  
-            });
+                try {
+                        // Buscar eventos a partir do início do mês atual
+                        const now = new Date();
+                        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+                        const response = await this.calendar.events.list({
+                            calendarId: 'primary',
+                            timeMin: startOfMonth.toISOString(),
+                            maxResults: maxResults,
+                            singleEvents: true,
+                            orderBy: 'startTime',  
+                        });
 
             const events = response.data.items || [];
             

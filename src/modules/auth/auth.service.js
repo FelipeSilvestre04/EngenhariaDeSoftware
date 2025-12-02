@@ -140,7 +140,7 @@ export class AuthService {
         }
     }
 
-    async generateToken(payload, expiresIn = '15m') {
+    async generateToken(payload, expiresIn = '3d') {
         try {
             const token = await this.jwtLibrary.sign(payload, process.env.JWT_SECRET, { expiresIn });
             return token;
@@ -150,7 +150,7 @@ export class AuthService {
         }
     }
 
-    async generateRefreshToken(payload, expiresIn = '7d') {
+    async generateRefreshToken(payload, expiresIn = '15d') {
         try {
             const refreshToken = await this.jwtLibrary.sign({...payload, type: 'refresh'},
                 process.env.JWT_REFRESH_SECRET,

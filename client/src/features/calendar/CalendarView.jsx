@@ -9,6 +9,7 @@ export function CalendarView() {
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   useEffect(() => {
+    let isMounted = true;
     const fetchEvents = async () => {
       try {
         const res = await fetch('/calendar/events');
@@ -19,15 +20,20 @@ export function CalendarView() {
             start: new Date(event.start),
             end: new Date(event.end)
           }));
-          setEvents(formattedEvents);
+          if (isMounted) setEvents(formattedEvents);
         }
       } catch (error) {
         console.error("Erro ao buscar eventos:", error);
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
     fetchEvents();
+    const interval = setInterval(fetchEvents, 10000); // Atualiza a cada 10 segundos
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   const filteredEvents = events.filter(event =>

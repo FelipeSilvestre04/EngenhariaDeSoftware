@@ -1,17 +1,9 @@
 
 import React, {useState} from 'react'; 
 import ProjectCard from '../ProjectCard/ProjectCard';
+import { Link } from 'react-router-dom';
 import styles from './ProjectSidebar.module.css'; 
-
-  const Projects = [
-  { id: 1, title: 'Projeto App Mobile', color: '#cf50f2' },
-  { id: 2, title: 'Campanha de Marketing QA', color: '#b180f3' },
-  { id: 3, title: 'Desenvolvimento Web', color: '#836af2' },
-  { id: 4, title: 'Jornal da verdade', color: '#c56968ff' },
-  { id: 5, title: 'Liberdade Gibis', color: '#cbca74ff' },
-  { id: 6, title: 'Projeto Sanderson', color: '#71be82ff' },
-  { id: 7, title: 'Campanha Tasso Presidente', color: '#6494b4ff' }
-];
+import Projects from '../projects-data'
 
 function ProjectSidebar({ isOpen, onToggleClick }) {
 
@@ -26,20 +18,36 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
         ☰
       </button>
       
+      {/* topActions moved inside projects card to keep the background unified */}
       {isOpen && (
         <>
-          <div className={styles.titleBar}>
-            <h2>Meus Projetos</h2>
-          </div>
+          <div className={styles.projectsCard}>
+            <div className={styles.projectsCardHeader}>
+                <div className={styles.headerLeft}>
+                  <svg className={styles.homeIcon} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18" aria-hidden="true">
+                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+                  </svg>
+                  <h2>Meus Projetos</h2>
+                </div>
+                <div className={styles.headerRight}>
+                  <Link to="/" className={styles.homeButton} aria-label="Ir para tela inicial">
+                    <span className={styles.homeText}>Início</span>
+                  </Link>
+                </div>
+              </div>
 
-          <div className={styles.cardList}>
-            {projects.map(project => (
-              <ProjectCard 
-                key={project.id} 
-                title={project.title} 
-                color={project.color} 
-              />
-            ))}
+            <div className={styles.projectsCardBody}>
+              <div className={styles.cardList}>
+                {projects.map(project => (
+                  <ProjectCard 
+                    key={project.id} 
+                    id={project.id}
+                    title={project.title} 
+                    color={project.color} 
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         </>
       )}

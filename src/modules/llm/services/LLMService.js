@@ -1,6 +1,7 @@
 import {LLMModel} from "../models/LLMModel.js"
 import { z } from "zod";
 import { tool } from "@langchain/core/tools";
+import { ProjectsService } from "../../projects/projects.service.js";
 
 // o serviço é o que vai ser usado pelo controller. ele executará o modelo 
 // e irá usá-lo para entregar um serviço específico.
@@ -9,6 +10,7 @@ export class LLMService{
     constructor(apiKey, calendarService){
         this.model = new LLMModel(apiKey);
         this.calendarService = calendarService;
+        this.projectService = new ProjectsService();
         this.tools = [];
     }
 
@@ -117,7 +119,22 @@ export class LLMService{
             }
         );
 
-        this.tools.push(getCalendarEventsTool, createEventTool);
+        const createProjectTool = tool(
+            async ({projectName}) => {
+                // Simula a criação de um projeto
+                const newProject = await this.projectService.createProject(projectName);
+                return `Projeto criado com sucesso: ID ${newProject.id}, Nome: ${newProject.title}`;
+            },
+            {
+                name: "create_project",
+                description: "Cria um novo projeto com o nome fornecido.",
+                schema: z.object({
+                    projectName: z.string().describe("Nome do projeto a ser criado")
+                }),
+            }
+        );
+
+        this.tools.push(getCalendarEventsTool, createEventTool, createProjectTool);
     }
 
     // CORREÇÃO: A função duplicada _createTools que estava aqui foi removida.
@@ -158,30 +175,43 @@ export class LLMService{
             timestamp: now.getTime()
         };
 
-        const systemPrompt = `Você é um assistente que ajuda os usuários a gerenciar e consultar seus calendários do Google Calendar. 
+        const systemPrompt = `Você é um assistente que ajuda os usuários a gerenciar e consultar seus calendários do Google Calendar. Você também
+    pode criar novos projetos quando solicitado. Utilize as ferramentas disponíveis para buscar eventos e criar novos eventos ou projetos conforme necessário.
 
-INFORMAÇÕES DE DATA E HORA ATUAL:
-- Data e hora completa: ${dateTimeInfo.dataCompleta}
-- Data ISO 8601: ${dateTimeInfo.dataISO}
-- Dia da semana: ${dateTimeInfo.diaSemana}
+    INFORMAÇÕES DE DATA E HORA ATUAL:
+    - Data e hora completa: ${dateTimeInfo.dataCompleta}
+    - Data ISO 8601: ${dateTimeInfo.dataISO}
+    - Dia da semana: ${dateTimeInfo.diaSemana}
 
-INSTRUÇÕES IMPORTANTES:
-1. Use estas informações para calcular datas relativas (amanhã, próxima semana, etc)
-2. Ao criar eventos, SEMPRE use o formato ISO 8601 para startDateTime e endDateTime
-3. Se o usuário não especificar hora, use um horário padrão (ex: 09:00)
-4. Se o usuário não especificar duração, use 1 hora de duração padrão
-5. Utilize as ferramentas disponíveis para buscar eventos e criar novos eventos
-6. Se você adicionar um novo evento, confirme os detalhes ao usuário
+    PROJETO: ${projectName}
 
-Exemplo de formato correto para datas:
-- Início: "2025-10-21T14:00:00-03:00"
-- Fim: "2025-10-21T15:00:00-03:00"`;
+    INSTRUÇÕES IMPORTANTES:
+    1. Use estas informações para calcular datas relativas (amanhã, próxima semana, etc)
+    2. Ao criar eventos, SEMPRE use o formato ISO 8601 para startDateTime e endDateTime
+    3. Se o usuário não especificar hora, use um horário padrão (ex: 09:00)
+    4. Se o usuário não especificar duração, use 1 hora de duração padrão
+    5. Utilize as ferramentas disponíveis para buscar eventos e criar novos eventos
+    6. Se você adicionar um novo evento, confirme os detalhes ao usuário
+    7. **ATENÇÃO:** Ao chamar a ferramenta de criação de evento, envie APENAS os campos: summary, description, location, startDateTime, endDateTime (todos como string). NÃO envie campos extras como id, status, start, end, htmlLink, ou objetos aninhados. Siga exatamente o schema abaixo:
+
+    {
+      "summary": "Título do evento",
+      "description": "Descrição do evento",
+      "location": "Local do evento",
+      "startDateTime": "2025-10-21T14:00:00-03:00",
+      "endDateTime": "2025-10-21T15:00:00-03:00"
+    }
+
+    Exemplo de formato correto para datas:
+    - Início: "2025-10-21T14:00:00-03:00"
+    - Fim: "2025-10-21T15:00:00-03:00"`;
 
         const userPrompt = prompt;
         return await this.processConsulta(systemPrompt, userPrompt, name, projectName);
     }
 
-    async generateNaturalResponse(contextualPrompt) {
+    // generateNaturalResponse now accepts name and optional projectName to scope the context
+    async generateNaturalResponse(contextualPrompt, name = 'usuário', projectName = null) {
         const systemPrompt = `Você é um assistente pessoal prestativo e conciso. Responda à pergunta do usuário de forma direta, baseado apenas no contexto fornecido. Não use formatação Markdown.`;
         return await this.processConsulta(systemPrompt, contextualPrompt, name, projectName);
     }

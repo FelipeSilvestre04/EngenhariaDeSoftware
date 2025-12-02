@@ -87,7 +87,7 @@ export class CalendarController {
                 return res.end(JSON.stringify({ success: false, error: 'Usuário não autenticado' }));
             }
 
-            const events = await this.service.listEvents();
+            const events = await this.service.listEvents(400);
 
             res.writeHead(200, {'Content-Type': 'application/json'});
             res.end(JSON.stringify({ success: true, count: events.length, events: events }));

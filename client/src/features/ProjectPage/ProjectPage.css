@@ -1,0 +1,20 @@
+.project-page {
+  padding: 16px;
+  position: relative; /* allow absolutely positioned children like the chat toggle */
+}
+.project-header {
+  padding: 32px 16px;
+  border-radius: 8px;
+  color: white;
+  margin-bottom: 16px;
+}
+.project-body {
+  background: var(--bg-secondary);
+  padding: 16px;
+  border-radius: 8px;
+}
+.project-body a {
+  display: inline-block;
+  margin-top: 12px;
+  color: var(--text-primary);
+}

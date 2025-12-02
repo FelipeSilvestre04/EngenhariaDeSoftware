@@ -22,7 +22,7 @@ export const config = {
     },
     llm: {
         apiKey: process.env.GROQ_API_KEY,
-        defaultModel: 'openai/gpt-oss-120b',
+        defaultModel: 'moonshotai/kimi-k2-instruct-0905',
         defaultTemperature: 0.1,
         hfToken: process.env.HFTOKEN || '',
         // CORREÇÃO: Linha adicionada para o modelo de embeddings do HuggingFace
