@@ -1,7 +1,7 @@
 .chatToggleContainer {
   /* Position absolute so toggle is inside the project page area and not behind the sidebar */
   position: absolute;
-  left: 16px;
+  right: 0.5rem;
   bottom: 16px;
   z-index: 1000;
   display: flex;
@@ -10,14 +10,19 @@
 }
 
 .chatPanel {
-  width: 480px;
-  max-height: 600px;
+  position: fixed;
+  top: 11rem;
+  right: 6rem;
+  width: 42%;
+  max-height: none;
+  height: calc(100vh - 35vh);
   background: var(--bg-card);
   border-radius: 12px;
   box-shadow: 0 6px 18px rgba(0,0,0,0.15);
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  
 }
 
 .toggleButton {
@@ -33,6 +38,7 @@
   font-size: 20px;
   cursor: pointer;
   box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+  transition: all 0.3s ease;
 }
 
 .toggleButton.open {
