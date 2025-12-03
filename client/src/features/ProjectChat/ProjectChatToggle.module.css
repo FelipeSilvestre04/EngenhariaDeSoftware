@@ -15,14 +15,39 @@
   right: 5rem;  /* Espaço para o botão à direita */
   bottom: 1rem;
   width: 42%;
-  height: auto;
+
   background: var(--bg-sidebar);
   border-radius: 12px;
   box-shadow: 0 6px 18px rgba(0,0,0,0.15);
-  overflow: hidden;
+  
+  overflow: hidden; 
+  
   display: flex;
   flex-direction: column;
   z-index: 1000;
+}
+
+.chatPanel > div {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.chatPanel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chatPanel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chatPanel::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2); /* Cor da barra */
+  border-radius: 4px;
+}
+
+.chatPanel::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.4);
 }
 
 .toggleButton {
@@ -74,7 +99,7 @@
   .chatPanel {
     top: 11rem;
     right: 5rem;
-    width: 50%;
+    width: 58%;
   }
 }
 
@@ -82,7 +107,7 @@
   .chatPanel {
     top: 11rem;
     right: 5rem;
-    width: 45%;
+    width: 52%;
   }
 }
 
@@ -90,7 +115,7 @@
   .chatPanel {
     top: 11rem;
     right: 5rem;
-    width: 48%;
+    width: 46%;
   }
 }
 
@@ -98,7 +123,7 @@
   .chatPanel {
     top: 11rem;
     right: 5rem;
-    width: 50%;
+    width: 40%;
   }
 }
 
