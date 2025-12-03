@@ -25,8 +25,8 @@
   color: var(--text-primary);
   border: none;
   border-radius: 50%;
-  width: 70px;
-  height: 70px;
+  width: 50px;
+  height: 50px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -38,6 +38,7 @@
 .toggleButton.open {
   background: #ff5b5b;
   color: white;
+  font-size: 30px;
 }
 
 .iconButton {
@@ -53,8 +54,8 @@
 }
 
 .iconImage {
-  width: 35px;  
-  height: 35px; 
+  width: 30px;  
+  height: 30px; 
   transition: filter 0.2s ease-in-out;
 }
 
