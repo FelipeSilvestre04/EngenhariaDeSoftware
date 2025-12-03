@@ -39,3 +39,25 @@
   background: #ff5b5b;
   color: white;
 }
+
+.iconButton {
+  background: none;
+  border: none;
+  padding: 4px; 
+  cursor: pointer;
+  
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s ease-in-out; 
+}
+
+.iconImage {
+  width: 35px;  
+  height: 35px; 
+  transition: filter 0.2s ease-in-out;
+}
+
+.invert {
+  filter: invert(1);
+}

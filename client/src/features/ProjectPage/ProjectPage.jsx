@@ -4,7 +4,7 @@ import Projects from '../projects-data'
 import './ProjectPage.css'
 import ProjectChatToggle from '../ProjectChat/ProjectChatToggle'
 
-function ProjectPage() {
+function ProjectPage({ theme }) {
   const { projectId } = useParams()
   const id = parseInt(projectId, 10)
   const project = Projects.find(p => p.id === id)
@@ -28,7 +28,7 @@ function ProjectPage() {
         <p>Cor do projeto: <span style={{ color: project.color }}>{project.color}</span></p>
         <Link to="/">← Voltar</Link>
       </div>
-      <ProjectChatToggle projectName={project.title} theme="light" />
+      <ProjectChatToggle projectName={project.title} theme={theme} />
     </div>
   )
 }

@@ -12,6 +12,10 @@
   background: var(--bg-secondary);
   padding: 16px;
   border-radius: 8px;
+
+  color: var(--text-primary);
+
+  box-shadow: 0 4px 8px var(--box-shadow-color);
 }
 .project-body a {
   display: inline-block;
