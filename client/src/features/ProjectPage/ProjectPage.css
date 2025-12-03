@@ -1,20 +1,28 @@
 .project-page {
   padding: 16px;
   position: relative; /* allow absolutely positioned children like the chat toggle */
+  width: 100%;
 }
 .project-header {
   padding: 32px 16px;
   border-radius: 8px;
   color: white;
   margin-bottom: 16px;
+  width: 100%;
+  height: 5rem;
+  box-sizing: border-box;
+
+  display: flex;
+  justify-content: left; 
+  align-items: center;
 }
 .project-body {
   background: var(--bg-secondary);
   padding: 16px;
   border-radius: 8px;
-
+  width: 50%;
   color: var(--text-primary);
-
+  
   box-shadow: 0 4px 8px var(--box-shadow-color);
 }
 .project-body a {
