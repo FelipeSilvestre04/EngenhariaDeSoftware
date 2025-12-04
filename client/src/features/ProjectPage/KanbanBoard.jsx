@@ -3,35 +3,38 @@ import styles from './Kanban.module.css';
 import getKanbanData from './kanban-data';
 
 // ===========================================
-// Componente de Formulário para Adicionar Tarefa
+// Componente de Formulário (Base para Adicionar e Editar)
 // ===========================================
-function AddTaskForm({ onAddTask, onCancel, initialColumnKey }) {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [tagsInput, setTagsInput] = useState('');
+function TaskForm({ onSubmit, onCancel, initialData = {}, isEditing = false, initialColumnKey = 'to-do' }) {
+  const [title, setTitle] = useState(initialData.title || '');
+  const [description, setDescription] = useState(initialData.description || '');
+  const [tagsInput, setTagsInput] = useState(initialData.tags ? initialData.tags.join(', ') : '');
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!title.trim()) return;
 
-    // Converte a string de tags em um array (separado por vírgula ou espaço)
     const tags = tagsInput.split(/[,\s]+/).map(tag => tag.trim()).filter(tag => tag.length > 0);
 
-    onAddTask({
-      title,
-      description,
-      tags,
-      column: initialColumnKey,
-    });
-    // Fecha o formulário
-    onCancel();
+    const data = {
+        id: initialData.id,
+        title,
+        description,
+        tags,
+        // Mantém a coluna original ao editar
+        column: initialData.column || initialColumnKey, 
+    };
+
+    onSubmit(data);
   };
 
   return (
     <div className={styles.taskFormOverlay}>
         <div className={styles.taskFormCard}>
             <button className={styles.closeBtn} onClick={onCancel}>&times;</button>
-            <h4 className={styles.formTitle}>Nova Tarefa em: {initialColumnKey === 'to-do' ? 'A Fazer' : initialColumnKey}</h4>
+            <h4 className={styles.formTitle}>
+                {isEditing ? `Editar Tarefa: ${initialData.title}` : `Nova Tarefa em: ${initialColumnKey === 'to-do' ? 'A Fazer' : initialColumnKey}`}
+            </h4>
             <form onSubmit={handleSubmit} className={styles.taskForm}>
                 <label className={styles.formLabel}>
                     Título:
@@ -60,7 +63,9 @@ function AddTaskForm({ onAddTask, onCancel, initialColumnKey }) {
                         className={styles.formInput}
                     />
                 </label>
-                <button type="submit" className={styles.submitBtn}>Adicionar</button>
+                <button type="submit" className={styles.submitBtn}>
+                    {isEditing ? 'Salvar Alterações' : 'Adicionar Tarefa'}
+                </button>
             </form>
         </div>
     </div>
@@ -69,34 +74,59 @@ function AddTaskForm({ onAddTask, onCancel, initialColumnKey }) {
 
 // ===========================================
 // Componente para o card de tarefa
+// Habilita a edição e mantém o delete
 // ===========================================
-function TaskCard({ task, onDragStart, onDragEnd }) {
+function TaskCard({ task, onDragStart, onDragEnd, onDelete, onEditStart }) {
+  
+  // Previne a propagação do clique ao arrastar ou clicar no delete
+  const handleCardClick = (e) => {
+    // Evita abrir o modal se o delete for clicado
+    if (e.target.closest(`.${styles.deleteBtn}`)) {
+        return;
+    }
+    onEditStart(task);
+  };
+
   return (
     <div 
       className={styles.taskCard}
-      // Habilita o elemento para ser arrastável
+      // Removido o evento onClick do div principal para o clique ir para o handleCardClick
+      // O draggable já está definido aqui
       draggable
       onDragStart={(e) => onDragStart(e, task.id, task.column)}
       onDragEnd={onDragEnd}
-      // Adicionado data-task-id e data-column para acessibilidade
       data-task-id={task.id}
       data-column={task.column}
     >
-      <p className={styles.taskTitle}>{task.title}</p>
-      <p className={styles.taskDescription}>{task.description}</p>
-      <div className={styles.tagContainer}>
-        {task.tags.map((tag, index) => (
-          <span key={index} className={styles.tag}>{tag}</span>
-        ))}
-      </div>
+        {/* Usamos onMouseDown/onMouseUp para capturar o clique do card, permitindo a edição,
+        mas o D&D usa onDragStart/onDragEnd que tem prioridade. */}
+        <div className={styles.cardEditableContent} onClick={handleCardClick}>
+            <div className={styles.cardHeader}>
+                <p className={styles.taskTitle}>{task.title}</p>
+                <button 
+                    className={styles.deleteBtn} 
+                    onClick={() => onDelete(task.id, task.column)}
+                    aria-label="Deletar tarefa"
+                >
+                    &times;
+                </button>
+            </div>
+            <p className={styles.taskDescription}>{task.description}</p>
+            <div className={styles.tagContainer}>
+                {task.tags.map((tag, index) => (
+                    <span key={index} className={styles.tag}>{tag}</span>
+                ))}
+            </div>
+        </div>
     </div>
   );
 }
 
 // ===========================================
 // Componente para a coluna Kanban
+// Passa o handler de start edit
 // ===========================================
-function KanbanColumn({ title, tasks, columnKey, onDrop, onDragOver, onDragStart, onDragEnd, onShowForm }) {
+function KanbanColumn({ title, tasks, columnKey, onDrop, onDragOver, onDragStart, onDragEnd, onShowForm, onDeleteTask, onEditStart }) {
   const columnClass = {
     'to-do': styles.todo,
     'in-progress': styles.inProgress,
@@ -106,9 +136,7 @@ function KanbanColumn({ title, tasks, columnKey, onDrop, onDragOver, onDragStart
   return (
     <div 
       className={columnClass}
-      // Permite que outros elementos sejam "arrastados por cima"
       onDragOver={(e) => onDragOver(e)} 
-      // Recebe o drop
       onDrop={(e) => onDrop(e, columnKey)}
     >
       <h3 className={styles.columnTitle}>{title} ({tasks.length})</h3>
@@ -119,9 +147,10 @@ function KanbanColumn({ title, tasks, columnKey, onDrop, onDragOver, onDragStart
             task={task} 
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
+            onDelete={onDeleteTask} 
+            onEditStart={onEditStart} // Novo handler para iniciar a edição
           />
         ))}
-        {/* Usamos onShowForm para abrir o modal de adição de tarefa */}
         <div 
             className={styles.taskCardPlaceholder} 
             onClick={() => onShowForm(columnKey)}
@@ -135,15 +164,18 @@ function KanbanColumn({ title, tasks, columnKey, onDrop, onDragOver, onDragStart
 
 // ===========================================
 // Componente principal do Kanban
+// Adiciona lógica de edição
 // ===========================================
 export function KanbanBoard({ projectId }) {
   const numericProjectId = parseInt(projectId, 10);
-  // Usa o estado para gerenciar as tarefas, permitindo a mutação
   const [columns, setColumns] = useState(getKanbanData(numericProjectId));
   
-  // Novo estado para controlar a visibilidade do formulário de adição
-  const [isFormVisible, setIsFormVisible] = useState(false);
-  const [targetColumnForNewTask, setTargetColumnForNewTask] = useState('to-do'); // Padrão 'to-do'
+  // Controle do Formulário de Adição
+  const [isAddFormVisible, setIsAddFormVisible] = useState(false);
+  const [targetColumnForNewTask, setTargetColumnForNewTask] = useState('to-do'); 
+  
+  // NOVO: Controle da Tarefa de Edição
+  const [editingTask, setEditingTask] = useState(null); // Armazena o objeto da tarefa sendo editada
 
   const columnTitles = [
     { key: 'to-do', title: 'A Fazer' },
@@ -152,7 +184,40 @@ export function KanbanBoard({ projectId }) {
   ];
 
   // ===========================================
-  // Handlers D&D (Mantidos da implementação anterior)
+  // Lógica de Edição (Novo)
+  // ===========================================
+  
+  // Inicia a edição
+  const handleEditStart = (task) => {
+    setEditingTask(task);
+  };
+
+  // Salva as alterações
+  const handleEditTask = (updatedTaskData) => {
+    setColumns(prevColumns => {
+      const newColumns = { ...prevColumns };
+      const columnKey = updatedTaskData.column; 
+      
+      const columnTasks = newColumns[columnKey] || [];
+      
+      const taskIndex = columnTasks.findIndex(task => task.id === updatedTaskData.id);
+
+      if (taskIndex !== -1) {
+          // Atualiza a tarefa com os novos dados
+          columnTasks[taskIndex] = {
+              ...columnTasks[taskIndex],
+              ...updatedTaskData,
+          };
+      }
+      
+      return newColumns;
+    });
+    setEditingTask(null); // Fecha o modal de edição
+  };
+
+
+  // ===========================================
+  // Handlers D&D (Mantidos)
   // ===========================================
   const handleDragStart = (e, taskId, sourceColumn) => {
     e.dataTransfer.setData("taskId", taskId.toString());
@@ -196,22 +261,18 @@ export function KanbanBoard({ projectId }) {
   };
 
   // ===========================================
-  // Handlers de Adição de Tarefa (Novos)
+  // Handlers Adição/Exclusão (Adaptados)
   // ===========================================
-  
-  // Função para abrir o formulário
-  const handleShowForm = (columnKey) => {
+  const handleShowAddForm = (columnKey) => {
     setTargetColumnForNewTask(columnKey);
-    setIsFormVisible(true);
+    setIsAddFormVisible(true);
   }
 
-  // Função para adicionar a nova tarefa ao estado
   const handleAddTask = (newTaskData) => {
+    
     setColumns(prevColumns => {
         const newColumns = { ...prevColumns };
         
-        // Encontra o maior ID atual (simulando um auto-incremento)
-        // Isso é crucial para evitar duplicatas de chaves no React (key={task.id})
         let maxId = 0;
         Object.keys(newColumns).forEach(colKey => {
             newColumns[colKey].forEach(task => {
@@ -232,12 +293,29 @@ export function KanbanBoard({ projectId }) {
             tags: newTaskData.tags,
         };
 
-        // Adiciona a nova tarefa na coluna correta
         newColumns[newTask.column] = [...(newColumns[newTask.column] || []), newTask];
         
         return newColumns;
     });
+    setIsAddFormVisible(false);
   }
+
+
+  const handleDeleteTask = (taskId, columnKey) => {
+      if (!window.confirm("Tem certeza que deseja deletar esta tarefa?")) {
+          return;
+      }
+
+      setColumns(prevColumns => {
+          const newColumns = { ...prevColumns };
+          const columnTasks = newColumns[columnKey] || [];
+          
+          newColumns[columnKey] = columnTasks.filter(task => task.id !== taskId);
+          
+          return newColumns;
+      });
+  };
+
 
   return (
     <div className={styles.kanbanBoard}>
@@ -251,16 +329,29 @@ export function KanbanBoard({ projectId }) {
           onDragOver={handleDragOver}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
-          onShowForm={handleShowForm} // Passa o handler para mostrar o form
+          onShowForm={handleShowAddForm} 
+          onDeleteTask={handleDeleteTask}
+          onEditStart={handleEditStart} // Passando o novo handler
         />
       ))}
       
-      {/* Renderiza o formulário de adição se estiver visível */}
-      {isFormVisible && (
-        <AddTaskForm
-          onAddTask={handleAddTask}
-          onCancel={() => setIsFormVisible(false)}
+      {/* Renderiza o Formulário de Adição */}
+      {isAddFormVisible && (
+        <TaskForm
+          onSubmit={handleAddTask}
+          onCancel={() => setIsAddFormVisible(false)}
           initialColumnKey={targetColumnForNewTask}
+          isEditing={false}
+        />
+      )}
+      
+      {/* NOVO: Renderiza o Formulário de Edição */}
+      {editingTask && (
+        <TaskForm
+          onSubmit={handleEditTask}
+          onCancel={() => setEditingTask(null)}
+          initialData={editingTask}
+          isEditing={true}
         />
       )}
     </div>
