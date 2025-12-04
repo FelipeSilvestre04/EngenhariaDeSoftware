@@ -2,7 +2,74 @@ import React, { useState } from 'react';
 import styles from './Kanban.module.css';
 import getKanbanData from './kanban-data';
 
-// Componente para o card de tarefa - Habilita arrasto
+// ===========================================
+// Componente de Formulário para Adicionar Tarefa
+// ===========================================
+function AddTaskForm({ onAddTask, onCancel, initialColumnKey }) {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [tagsInput, setTagsInput] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!title.trim()) return;
+
+    // Converte a string de tags em um array (separado por vírgula ou espaço)
+    const tags = tagsInput.split(/[,\s]+/).map(tag => tag.trim()).filter(tag => tag.length > 0);
+
+    onAddTask({
+      title,
+      description,
+      tags,
+      column: initialColumnKey,
+    });
+    // Fecha o formulário
+    onCancel();
+  };
+
+  return (
+    <div className={styles.taskFormOverlay}>
+        <div className={styles.taskFormCard}>
+            <button className={styles.closeBtn} onClick={onCancel}>&times;</button>
+            <h4 className={styles.formTitle}>Nova Tarefa em: {initialColumnKey === 'to-do' ? 'A Fazer' : initialColumnKey}</h4>
+            <form onSubmit={handleSubmit} className={styles.taskForm}>
+                <label className={styles.formLabel}>
+                    Título:
+                    <input
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        required
+                        className={styles.formInput}
+                    />
+                </label>
+                <label className={styles.formLabel}>
+                    Descrição:
+                    <textarea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        className={styles.formTextarea}
+                    />
+                </label>
+                <label className={styles.formLabel}>
+                    Tags (separadas por vírgula ou espaço):
+                    <input
+                        type="text"
+                        value={tagsInput}
+                        onChange={(e) => setTagsInput(e.target.value)}
+                        className={styles.formInput}
+                    />
+                </label>
+                <button type="submit" className={styles.submitBtn}>Adicionar</button>
+            </form>
+        </div>
+    </div>
+  );
+}
+
+// ===========================================
+// Componente para o card de tarefa
+// ===========================================
 function TaskCard({ task, onDragStart, onDragEnd }) {
   return (
     <div 
@@ -26,8 +93,10 @@ function TaskCard({ task, onDragStart, onDragEnd }) {
   );
 }
 
-// Componente para a coluna Kanban - Define alvos de drop
-function KanbanColumn({ title, tasks, columnKey, onDrop, onDragOver, onDragStart, onDragEnd }) {
+// ===========================================
+// Componente para a coluna Kanban
+// ===========================================
+function KanbanColumn({ title, tasks, columnKey, onDrop, onDragOver, onDragStart, onDragEnd, onShowForm }) {
   const columnClass = {
     'to-do': styles.todo,
     'in-progress': styles.inProgress,
@@ -52,18 +121,29 @@ function KanbanColumn({ title, tasks, columnKey, onDrop, onDragOver, onDragStart
             onDragEnd={onDragEnd}
           />
         ))}
-        {/* Adicionar um espaço visual para mais tarefas */}
-        <div className={styles.taskCardPlaceholder}>+ Adicionar Tarefa</div>
+        {/* Usamos onShowForm para abrir o modal de adição de tarefa */}
+        <div 
+            className={styles.taskCardPlaceholder} 
+            onClick={() => onShowForm(columnKey)}
+        >
+            + Adicionar Tarefa
+        </div>
       </div>
     </div>
   );
 }
 
+// ===========================================
 // Componente principal do Kanban
+// ===========================================
 export function KanbanBoard({ projectId }) {
   const numericProjectId = parseInt(projectId, 10);
   // Usa o estado para gerenciar as tarefas, permitindo a mutação
   const [columns, setColumns] = useState(getKanbanData(numericProjectId));
+  
+  // Novo estado para controlar a visibilidade do formulário de adição
+  const [isFormVisible, setIsFormVisible] = useState(false);
+  const [targetColumnForNewTask, setTargetColumnForNewTask] = useState('to-do'); // Padrão 'to-do'
 
   const columnTitles = [
     { key: 'to-do', title: 'A Fazer' },
@@ -71,40 +151,34 @@ export function KanbanBoard({ projectId }) {
     { key: 'done', title: 'Concluído' },
   ];
 
-  // Handler para o início do arrasto
+  // ===========================================
+  // Handlers D&D (Mantidos da implementação anterior)
+  // ===========================================
   const handleDragStart = (e, taskId, sourceColumn) => {
-    // Armazena os dados no objeto de transferência de dados
     e.dataTransfer.setData("taskId", taskId.toString());
     e.dataTransfer.setData("sourceColumn", sourceColumn);
-    
-    // Adiciona classe para feedback visual (opacidade)
     e.currentTarget.classList.add(styles.dragging);
   };
 
-  // Handler para o final do arrasto (limpeza)
   const handleDragEnd = (e) => {
     e.currentTarget.classList.remove(styles.dragging);
   }
 
-  // Handler para permitir o drop na coluna
   const handleDragOver = (e) => {
     e.preventDefault();
   }
 
-  // Handler para o drop
   const handleDrop = (e, targetColumnKey) => {
     e.preventDefault();
 
     const taskId = parseInt(e.dataTransfer.getData("taskId"), 10);
     const sourceColumnKey = e.dataTransfer.getData("sourceColumn");
     
-    if (sourceColumnKey === targetColumnKey) return; // Evita drop na mesma coluna
+    if (sourceColumnKey === targetColumnKey) return;
 
     setColumns(prevColumns => {
-      // Clonagem profunda para garantir que a mutação seja percebida pelo React
       const newColumns = JSON.parse(JSON.stringify(prevColumns));
       
-      // 1. Encontra e remove a tarefa da coluna de origem
       const sourceTasks = newColumns[sourceColumnKey] || [];
       const taskIndex = sourceTasks.findIndex(task => task.id === taskId);
       
@@ -112,10 +186,8 @@ export function KanbanBoard({ projectId }) {
 
       const [movedTask] = sourceTasks.splice(taskIndex, 1);
       
-      // 2. Atualiza a propriedade 'column' da tarefa movida
       movedTask.column = targetColumnKey;
       
-      // 3. Adiciona a tarefa à coluna de destino
       newColumns[targetColumnKey] = newColumns[targetColumnKey] || [];
       newColumns[targetColumnKey].push(movedTask);
       
@@ -123,8 +195,51 @@ export function KanbanBoard({ projectId }) {
     });
   };
 
+  // ===========================================
+  // Handlers de Adição de Tarefa (Novos)
+  // ===========================================
+  
+  // Função para abrir o formulário
+  const handleShowForm = (columnKey) => {
+    setTargetColumnForNewTask(columnKey);
+    setIsFormVisible(true);
+  }
+
+  // Função para adicionar a nova tarefa ao estado
+  const handleAddTask = (newTaskData) => {
+    setColumns(prevColumns => {
+        const newColumns = { ...prevColumns };
+        
+        // Encontra o maior ID atual (simulando um auto-incremento)
+        // Isso é crucial para evitar duplicatas de chaves no React (key={task.id})
+        let maxId = 0;
+        Object.keys(newColumns).forEach(colKey => {
+            newColumns[colKey].forEach(task => {
+                if (task.id > maxId) {
+                    maxId = task.id;
+                }
+            });
+        });
+
+        const newId = maxId + 1;
+        
+        const newTask = {
+            id: newId,
+            projectId: numericProjectId,
+            title: newTaskData.title,
+            description: newTaskData.description,
+            column: newTaskData.column,
+            tags: newTaskData.tags,
+        };
+
+        // Adiciona a nova tarefa na coluna correta
+        newColumns[newTask.column] = [...(newColumns[newTask.column] || []), newTask];
+        
+        return newColumns;
+    });
+  }
+
   return (
-    // Agora, o .kanbanBoard é o contêiner de nível superior do componente.
     <div className={styles.kanbanBoard}>
       {columnTitles.map(col => (
         <KanbanColumn
@@ -136,8 +251,18 @@ export function KanbanBoard({ projectId }) {
           onDragOver={handleDragOver}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
+          onShowForm={handleShowForm} // Passa o handler para mostrar o form
         />
       ))}
+      
+      {/* Renderiza o formulário de adição se estiver visível */}
+      {isFormVisible && (
+        <AddTaskForm
+          onAddTask={handleAddTask}
+          onCancel={() => setIsFormVisible(false)}
+          initialColumnKey={targetColumnForNewTask}
+        />
+      )}
     </div>
   );
 }
