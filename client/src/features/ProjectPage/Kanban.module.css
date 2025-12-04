@@ -72,6 +72,12 @@
     flex-shrink: 0;
 }
 
+/* NOVO: Estilo para o card que está sendo arrastado */
+.dragging {
+    opacity: 0.4; /* Torna o card semi-transparente */
+    border: 2px dashed var(--text-primary);
+}
+
 .taskCard:hover {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
