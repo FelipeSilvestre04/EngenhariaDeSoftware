@@ -70,6 +70,16 @@
     border-left: 5px solid #cf50f2; 
     color: var(--text-primary);
     flex-shrink: 0;
+    
+    /* Garante que o conteúdo e o botão de delete se alinhem */
+    display: flex;
+    flex-direction: column; 
+}
+
+/* NOVO: Wrapper para o conteúdo do card clicável (para edição) */
+.cardEditableContent {
+    cursor: pointer;
+    /* Ajustes para remover padding duplicado se necessário, mas mantendo a margem do taskCard */
 }
 
 /* Estilo para o card que está sendo arrastado */
@@ -82,7 +92,7 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* NOVO: Estilo para o cabeçalho do card que contém o título e o botão de delete */
+/* Estilo para o cabeçalho do card que contém o título e o botão de delete */
 .cardHeader {
     display: flex;
     justify-content: space-between;
@@ -134,7 +144,7 @@
 }
 
 /* =========================================== */
-/* Estilos do Formulário de Adicionar Tarefa (Inalterados) */
+/* Estilos do Formulário (Reutilizados para Adição e Edição) */
 /* =========================================== */
 
 .taskFormOverlay {
@@ -230,7 +240,7 @@
     opacity: 0.85;
 }
 
-/* NOVO: Estilo para o botão de deletar */
+/* Estilo para o botão de deletar */
 .deleteBtn {
     background: none;
     border: none;
