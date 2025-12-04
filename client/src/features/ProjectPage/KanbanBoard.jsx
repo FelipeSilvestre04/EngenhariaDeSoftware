@@ -4,6 +4,7 @@ import getKanbanData from './kanban-data';
 
 // ===========================================
 // Componente de Formulário para Adicionar Tarefa
+// Mantido inalterado
 // ===========================================
 function AddTaskForm({ onAddTask, onCancel, initialColumnKey }) {
   const [title, setTitle] = useState('');
@@ -69,8 +70,9 @@ function AddTaskForm({ onAddTask, onCancel, initialColumnKey }) {
 
 // ===========================================
 // Componente para o card de tarefa
+// Adiciona botão de delete
 // ===========================================
-function TaskCard({ task, onDragStart, onDragEnd }) {
+function TaskCard({ task, onDragStart, onDragEnd, onDelete }) {
   return (
     <div 
       className={styles.taskCard}
@@ -82,7 +84,16 @@ function TaskCard({ task, onDragStart, onDragEnd }) {
       data-task-id={task.id}
       data-column={task.column}
     >
-      <p className={styles.taskTitle}>{task.title}</p>
+        <div className={styles.cardHeader}>
+            <p className={styles.taskTitle}>{task.title}</p>
+            <button 
+                className={styles.deleteBtn} 
+                onClick={() => onDelete(task.id, task.column)}
+                aria-label="Deletar tarefa"
+            >
+                &times;
+            </button>
+        </div>
       <p className={styles.taskDescription}>{task.description}</p>
       <div className={styles.tagContainer}>
         {task.tags.map((tag, index) => (
@@ -95,8 +106,9 @@ function TaskCard({ task, onDragStart, onDragEnd }) {
 
 // ===========================================
 // Componente para a coluna Kanban
+// Passa o handler de delete
 // ===========================================
-function KanbanColumn({ title, tasks, columnKey, onDrop, onDragOver, onDragStart, onDragEnd, onShowForm }) {
+function KanbanColumn({ title, tasks, columnKey, onDrop, onDragOver, onDragStart, onDragEnd, onShowForm, onDeleteTask }) {
   const columnClass = {
     'to-do': styles.todo,
     'in-progress': styles.inProgress,
@@ -106,9 +118,7 @@ function KanbanColumn({ title, tasks, columnKey, onDrop, onDragOver, onDragStart
   return (
     <div 
       className={columnClass}
-      // Permite que outros elementos sejam "arrastados por cima"
       onDragOver={(e) => onDragOver(e)} 
-      // Recebe o drop
       onDrop={(e) => onDrop(e, columnKey)}
     >
       <h3 className={styles.columnTitle}>{title} ({tasks.length})</h3>
@@ -119,9 +129,9 @@ function KanbanColumn({ title, tasks, columnKey, onDrop, onDragOver, onDragStart
             task={task} 
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
+            onDelete={onDeleteTask} // Novo handler de delete
           />
         ))}
-        {/* Usamos onShowForm para abrir o modal de adição de tarefa */}
         <div 
             className={styles.taskCardPlaceholder} 
             onClick={() => onShowForm(columnKey)}
@@ -135,15 +145,13 @@ function KanbanColumn({ title, tasks, columnKey, onDrop, onDragOver, onDragStart
 
 // ===========================================
 // Componente principal do Kanban
+// Adiciona a função handleDeleteTask
 // ===========================================
 export function KanbanBoard({ projectId }) {
   const numericProjectId = parseInt(projectId, 10);
-  // Usa o estado para gerenciar as tarefas, permitindo a mutação
   const [columns, setColumns] = useState(getKanbanData(numericProjectId));
-  
-  // Novo estado para controlar a visibilidade do formulário de adição
   const [isFormVisible, setIsFormVisible] = useState(false);
-  const [targetColumnForNewTask, setTargetColumnForNewTask] = useState('to-do'); // Padrão 'to-do'
+  const [targetColumnForNewTask, setTargetColumnForNewTask] = useState('to-do'); 
 
   const columnTitles = [
     { key: 'to-do', title: 'A Fazer' },
@@ -151,9 +159,7 @@ export function KanbanBoard({ projectId }) {
     { key: 'done', title: 'Concluído' },
   ];
 
-  // ===========================================
-  // Handlers D&D (Mantidos da implementação anterior)
-  // ===========================================
+  // ... (handleDragStart, handleDragEnd, handleDragOver, handleDrop - Mantidos inalterados)
   const handleDragStart = (e, taskId, sourceColumn) => {
     e.dataTransfer.setData("taskId", taskId.toString());
     e.dataTransfer.setData("sourceColumn", sourceColumn);
@@ -195,23 +201,18 @@ export function KanbanBoard({ projectId }) {
     });
   };
 
-  // ===========================================
-  // Handlers de Adição de Tarefa (Novos)
-  // ===========================================
-  
-  // Função para abrir o formulário
   const handleShowForm = (columnKey) => {
     setTargetColumnForNewTask(columnKey);
     setIsFormVisible(true);
   }
 
-  // Função para adicionar a nova tarefa ao estado
+  // Função para adicionar a nova tarefa (agora async)
   const handleAddTask = (newTaskData) => {
+    
+    // Simulação: Encontrar o maior ID e criar um novo
     setColumns(prevColumns => {
         const newColumns = { ...prevColumns };
         
-        // Encontra o maior ID atual (simulando um auto-incremento)
-        // Isso é crucial para evitar duplicatas de chaves no React (key={task.id})
         let maxId = 0;
         Object.keys(newColumns).forEach(colKey => {
             newColumns[colKey].forEach(task => {
@@ -232,12 +233,32 @@ export function KanbanBoard({ projectId }) {
             tags: newTaskData.tags,
         };
 
-        // Adiciona a nova tarefa na coluna correta
         newColumns[newTask.column] = [...(newColumns[newTask.column] || []), newTask];
         
         return newColumns;
     });
   }
+
+
+  // ===========================================
+  // NOVO: Handler para Deletar Tarefa
+  // ===========================================
+  const handleDeleteTask = (taskId, columnKey) => {
+      if (!window.confirm("Tem certeza que deseja deletar esta tarefa?")) {
+          return;
+      }
+
+      setColumns(prevColumns => {
+          const newColumns = { ...prevColumns };
+          const columnTasks = newColumns[columnKey] || [];
+          
+          // Filtra a lista para remover a tarefa com o ID correspondente
+          newColumns[columnKey] = columnTasks.filter(task => task.id !== taskId);
+          
+          return newColumns;
+      });
+  };
+
 
   return (
     <div className={styles.kanbanBoard}>
@@ -251,11 +272,11 @@ export function KanbanBoard({ projectId }) {
           onDragOver={handleDragOver}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
-          onShowForm={handleShowForm} // Passa o handler para mostrar o form
+          onShowForm={handleShowForm} 
+          onDeleteTask={handleDeleteTask} // Passa o novo handler de delete
         />
       ))}
       
-      {/* Renderiza o formulário de adição se estiver visível */}
       {isFormVisible && (
         <AddTaskForm
           onAddTask={handleAddTask}
