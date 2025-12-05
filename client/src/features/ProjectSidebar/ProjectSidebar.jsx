@@ -23,9 +23,10 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
   const [projects, setProjects] = useState(FALLBACK_PROJECTS);
   const [loading, setLoading] = useState(true);
   const [usingFallback, setUsingFallback] = useState(false);
-  const sidebarClass = `${styles.sidebarContainer} ${isOpen ? styles.open : styles.collapsed}`;
   
   const [showOptions, setShowOptions] = useState(false);
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [selectedProjects, setSelectedProjects] = useState([]);
 
   // Busca projetos da API ao montar o componente
   useEffect(() => {
@@ -64,6 +65,43 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
     };
   }, []);
 
+  // Ativa o modo de exclusão
+  const handleEnterDeleteMode = () => {
+    setIsDeleteMode(true);
+    setShowOptions(false); // Fecha o menu popover
+    setSelectedProjects([]); // Limpa seleções anteriores
+  };
+
+  // Cancela o modo de exclusão
+  const handleCancelDelete = () => {
+    setIsDeleteMode(false);
+    setSelectedProjects([]);
+  };
+
+  // Seleciona/Desseleciona um projeto
+  const toggleSelection = (id) => {
+    if (selectedProjects.includes(id)) {
+      setSelectedProjects(selectedProjects.filter(pid => pid !== id));
+    } else {
+      setSelectedProjects([...selectedProjects, id]);
+    }
+  };
+
+  // Confirma a exclusão (Simulação)
+  const handleDeleteConfirm = () => {
+    // Aqui você faria a chamada para a API (DELETE)
+    console.log("Excluindo projetos:", selectedProjects);
+
+    // Atualiza a lista local removendo os selecionados
+    const newProjectList = projects.filter(p => !selectedProjects.includes(p.id));
+    setProjects(newProjectList);
+    
+    // Sai do modo de exclusão
+    handleCancelDelete();
+  };
+
+  const sidebarClass = `${styles.sidebarContainer} ${isOpen ? styles.open : styles.collapsed}`;
+
   return (
     <aside className={sidebarClass}>
 
@@ -76,55 +114,43 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
           <div className={styles.projectsCard}>
             <div className={styles.projectsCardHeader}>
               <div className={styles.headerLeft}>
-                <svg className={styles.homeIcon} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18" aria-hidden="true">
-                  <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-                </svg>
+                {/* Ícone Home... */}
+                <svg className={styles.homeIcon} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" /></svg>
                 <h2>Meus Projetos {usingFallback && '(offline)'}</h2>
               </div>
+              
               <div className={styles.headerRight}>
-                <Link to="/" className={styles.homeButton} aria-label="Ir para tela inicial">
-                  <span className={styles.homeText}>Início</span>
-                </Link>
+                {/* Se estiver no modo delete, esconde o botão Início e Opções para limpar a UI */}
+                {!isDeleteMode && (
+                  <>
+                    <Link to="/" className={styles.homeButton}>
+                      <span className={styles.homeText}>Início</span>
+                    </Link>
 
-                {/* Botão de 3 pontos */}
-                <button 
-                  className={styles.optionsButton} 
-                  onClick={() => setShowOptions(!showOptions)}
-                  aria-label="Opções do projeto"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
-                  </svg>
-                </button>
-
-                {/* Menu Popover */}
-                {showOptions && (
-                  <div className={styles.optionsMenu}>
                     <button 
-                      className={styles.optionItem}
-                      onClick={() => {
-                        console.log("Criar projeto");
-                        setShowOptions(false); // Fecha ao clicar
-                      }}
+                      className={styles.optionsButton} 
+                      onClick={() => setShowOptions(!showOptions)}
                     >
+                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                    </button>
+                  </>
+                )}
+
+                {showOptions && !isDeleteMode && (
+                  <div className={styles.optionsMenu}>
+                    <button className={styles.optionItem} onClick={() => setShowOptions(false)}>
                       Criar projeto
                     </button>
                     <button 
                       className={`${styles.optionItem} ${styles.danger}`}
-                      onClick={() => {
-                        console.log("Excluir projeto");
-                        setShowOptions(false); // Fecha ao clicar
-                      }}
+                      onClick={handleEnterDeleteMode} // CHAMA O MODO DELETE
                     >
                       Excluir projeto
                     </button>
                   </div>
                 )}
-
               </div>
             </div>
-
-
 
             <div className={styles.projectsCardBody}>
               {loading ? (
@@ -132,20 +158,62 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
               ) : (
                 <div className={styles.cardList}>
                   {projects.map(project => (
-                    <ProjectCard
-                      key={project.id}
-                      id={project.id}
-                      title={project.title}
-                      color={project.color}
-                    />
+                    // WRAPPER PARA CHECKBOX E ANIMAÇÃO
+                      <div 
+                        key={project.id} 
+                        className={`${styles.projectItemWrapper} ${isDeleteMode ? styles.shaking : ''}`}
+                        onClick={() => isDeleteMode && toggleSelection(project.id)}
+                      >
+                        
+                        {/* 1. O Card vem PRIMEIRO agora (lado esquerdo) */}
+                        <div style={{ flex: 1, pointerEvents: isDeleteMode ? 'none' : 'auto' }}>
+                          <ProjectCard
+                            id={project.id}
+                            title={project.title}
+                            color={project.color}
+                          />
+                        </div>
+
+                        {/* 2. A Checkbox vem DEPOIS (lado direito) */}
+                        {isDeleteMode && (
+                          <input 
+                            type="checkbox" 
+                            className={styles.deleteCheckbox}
+                            checked={selectedProjects.includes(project.id)}
+                            onChange={() => {}} 
+                          />
+                        )}
+
+                      </div>
                   ))}
                 </div>
               )}
             </div>
+
+            {/* BARRA DE AÇÃO INFERIOR - Só aparece no modo delete */}
+            {isDeleteMode && (
+              <div className={styles.bottomActions}>
+                <button 
+                  className={`${styles.actionBtn} ${styles.cancelBtn}`}
+                  onClick={handleCancelDelete}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  className={`${styles.actionBtn} ${styles.confirmBtn}`}
+                  onClick={handleDeleteConfirm}
+                  disabled={selectedProjects.length === 0}
+                >
+                  Excluir ({selectedProjects.length})
+                </button>
+              </div>
+            )}
+
           </div>
         </>
       )}
     </aside>
   );
 }
+
 export default ProjectSidebar;

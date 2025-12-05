@@ -150,6 +150,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+
+  min-height: 45px;
 }
 
 .projectsCardHeader h2 {
@@ -262,4 +264,77 @@
 .optionItem.danger:hover {
   background-color: rgba(255, 87, 51, 0.2);
   color: #ff5733;
+}
+
+@keyframes shake {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(0.5deg); }
+  50% { transform: rotate(0deg); }
+  75% { transform: rotate(-0.5deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.shaking {
+  animation: shake 0.35s infinite linear;
+  cursor: pointer; /* Indica que é clicável para selecionar */
+}
+
+/* Wrapper para alinhar Checkbox + Card */
+.projectItemWrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  width: 100%; /* Garante que o container ocupe a largura toda */
+  justify-content: space-between; /* Garante espaçamento correto se sobrar espaço */
+}
+
+/* Checkbox personalizado simples */
+.deleteCheckbox {
+  width: 20px;
+  height: 20px;
+  accent-color: #ff5b5b; /* Cor do check */
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Área dos botões inferiores */
+.bottomActions {
+  margin-top: auto; /* Empurra para o fundo se houver espaço */
+  padding: 15px 10px;
+  border-top: 1px solid var(--border-color, #444);
+  background: var(--bg-card);
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.actionBtn {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.2s;
+}
+
+.cancelBtn {
+  background-color: var(--input-button-bg, #444);
+  color: var(--text-primary, #fff);
+}
+
+.confirmBtn {
+  background-color: #ff5b5b; /* Vermelho alerta */
+  color: white;
+}
+
+.confirmBtn:disabled {
+  background-color: #553333;
+  color: #888;
+  cursor: not-allowed;
+}
+
+.actionBtn:hover:not(:disabled) {
+  filter: brightness(1.1);
 }
