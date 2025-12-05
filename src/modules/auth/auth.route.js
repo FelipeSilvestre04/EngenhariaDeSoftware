@@ -9,13 +9,17 @@ export class AuthRoute {
         this.router = express.Router();
         this.setupRoutes();
     }
-    
+
     setupRoutes() {
         this.router.get('/login', async (req, res) => {
+            console.log("⭐ ROTA /auth/login FOI CHAMADA");
             await this.controller.initiateAuth(req, res);
         });
 
         this.router.get('/callback', async (req, res) => {
+            console.log("\n\n⭐⭐⭐ ROTA /auth/callback FOI CHAMADA ⭐⭐⭐\n");
+            console.log("URL completa:", req.url);
+            console.log("Query params:", req.query);
             await this.controller.handleCallback(req, res);
         });
 
@@ -50,6 +54,7 @@ export class AuthRoute {
         });
 
         this.router.all('*', (req, res) => {
+            console.log("❌ Rota auth não encontrada:", req.path);
             res.status(404).json({ error: 'Auth route not found' });
         });
     }

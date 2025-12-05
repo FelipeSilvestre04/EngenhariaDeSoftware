@@ -15,6 +15,10 @@ export class AuthService {
             config?.googleCalendar.clientSecret,
             config?.googleCalendar.redirectUri
         )
+
+        if (!process.env.JWT_SECRET) {
+            console.warn("⚠️ AVISO: JWT_SECRET não está definido nas variáveis de ambiente. A autenticação falhará.");
+        }
     }
 
     getAuthUrl() {
@@ -33,6 +37,7 @@ export class AuthService {
         }
 
         try {
+            console.log("🔵 Iniciando handleOAuthCallback");
             // Create a new client instance to avoid race conditions with the singleton this.oauth2Client
             const oauth2Client = new google.auth.OAuth2(
                 this.config.googleCalendar.clientId,
@@ -41,6 +46,7 @@ export class AuthService {
             );
 
             const { tokens } = await oauth2Client.getToken(code);
+            console.log("🔵 Tokens OAuth2 obtidos");
 
             if (!tokens) {
                 throw new Error("Falha ao obter tokens OAuth2.");
@@ -54,14 +60,18 @@ export class AuthService {
             });
 
             const { data } = await oauth2.userinfo.get();
-            
+            console.log("🔵 Dados do usuário obtidos");
+
             if (!data || !data.id) {
                 throw new Error("Falha ao obter informações do usuário.");
             }
 
             const userId = crypto.randomUUID();
-            
+            console.log("🔵 userId gerado:", userId);
+
+            console.log("🔵 ANTES de saveTokens");
             await this.tokenStorage.saveTokens(userId, tokens);
+            console.log("🔵 DEPOIS de saveTokens");
 
             const payload = {
                 userId: userId,
@@ -69,9 +79,16 @@ export class AuthService {
                 name: data.name,
                 picture: data.picture,
             }
+            console.log("🔵 Payload criado");
+
+            console.log("🔵 ANTES de generateTokenPair");
+            console.log("🔵 JWT_SECRET existe?", !!process.env.JWT_SECRET);
+            console.log("🔵 JWT_REFRESH_SECRET existe?", !!process.env.JWT_REFRESH_SECRET);
 
             const jwtTokens = await this.generateTokenPair(payload);
+            console.log("🔵 DEPOIS de generateTokenPair:", jwtTokens ? "Sucesso" : "Falhou");
 
+            console.log("🔵 Retornando resultado final");
             return {
                 success: true,
                 message: 'Autenticação bem-sucedida',
@@ -83,7 +100,8 @@ export class AuthService {
                 tokens: jwtTokens
             };
         } catch (error) {
-            console.error("Erro ao processar callback OAuth2:", error);
+            console.error("🔴 ERRO em handleOAuthCallback:", error.message);
+            console.error("🔴 Stack:", error.stack);
             return {
                 success: false,
                 message: `Erro na autenticação OAuth2: ${error.message}`
@@ -152,7 +170,7 @@ export class AuthService {
 
     async generateRefreshToken(payload, expiresIn = '15d') {
         try {
-            const refreshToken = await this.jwtLibrary.sign({...payload, type: 'refresh'},
+            const refreshToken = await this.jwtLibrary.sign({ ...payload, type: 'refresh' },
                 process.env.JWT_REFRESH_SECRET,
                 { expiresIn });
             return refreshToken;
@@ -164,14 +182,20 @@ export class AuthService {
 
     async generateTokenPair(payload) {
         try {
+            console.log("🟡 generateTokenPair: Início");
             delete payload.password;
-            
+
+            console.log("🟡 generateTokenPair: Gerando accessToken...");
             const accessToken = await this.generateToken(payload, '15m');
+            console.log("🟡 generateTokenPair: accessToken gerado, length:", accessToken.length);
+
+            console.log("🟡 generateTokenPair: Gerando refreshToken...");
             const refreshToken = await this.generateRefreshToken(payload, '7d');
+            console.log("🟡 generateTokenPair: refreshToken gerado, length:", refreshToken.length);
 
             return { accessToken, refreshToken, expiresIn: 900 };
         } catch (error) {
-            console.error("Erro ao gerar par de tokens:", error);
+            console.error("🔴 Erro ao gerar par de tokens:", error);
             throw new Error("Não foi possível gerar o par de tokens");
         }
     }
@@ -189,18 +213,18 @@ export class AuthService {
     async refreshAccessToken(refreshToken) {
         try {
             const decoded = await this.jwtLibrary.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-            
+
             if (!decoded || decoded.type !== 'refresh') {
                 throw new Error("Refresh token inválido");
             }
 
-            const {type, iat, exp, ...payload} = decoded;
+            const { type, iat, exp, ...payload } = decoded;
             const accessToken = await this.generateToken(payload, '15m');
-            
-            return { 
-                accessToken, 
+
+            return {
+                accessToken,
                 refreshToken,
-                expiresIn: 900 
+                expiresIn: 900
             };
 
         } catch (error) {

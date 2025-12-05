@@ -1,42 +1,61 @@
 // src/modules/calendar/services/CalendarService.js
 import { CalendarModel } from "../models/CalendarModel.js";
+import { AuthService } from "../../auth/auth.service.js";
 
 export class CalendarService {
-    constructor(config){
+    constructor(config) {
         this.model = new CalendarModel(config);
+        this.authService = new AuthService(undefined, config);
         this.currentUserId = null; // Armazena o userId da sessão atual
     }
 
-    async initialize(userId){
+    async initialize(userId) {
         if (userId) {
             this.currentUserId = userId;
         }
         return await this.model.initialize(userId || this.currentUserId);
     }
 
-    getAuthenticationUrl(){
+    getAuthenticationUrl() {
         return this.model.getAuthUrl();
     }
 
-    async handleOauthCallback(code){
-        if (!code){
+    async handleOauthCallback(code) {
+        if (!code) {
             throw new Error("Código de autorização não fornecido.");
         }
 
         try {
+            console.log("📘 CalendarService.handleOauthCallback: Autenticando com código...");
             const result = await this.model.authenticateWithCode(code);
-            
+            console.log("📘 CalendarService: authenticateWithCode retornou userId:", result.userId);
+            console.log("📘 CalendarService: userInfo:", result.userInfo);
+
             // Armazena o userId na sessão
             this.currentUserId = result.userId;
-            
+
+            // GERA TOKENS JWT COM INFORMAÇÕES DO USUÁRIO
+            console.log("📘 CalendarService: Gerando tokens JWT...");
+            const payload = {
+                userId: result.userId,
+                email: result.userInfo?.email,
+                name: result.userInfo?.name,
+                picture: result.userInfo?.picture
+            };
+
+            const jwtTokens = await this.authService.generateTokenPair(payload);
+            console.log("📘 CalendarService: Tokens JWT gerados!");
+
             return {
                 success: true,
                 message: 'Autenticação realizada com sucesso!',
-                userId: result.userId
+                userId: result.userId,
+                tokens: jwtTokens  // RETORNA OS TOKENS!
             }
-        } catch (error){
+        } catch (error) {
+            console.error("📘 CalendarService: Erro:", error);
             return {
-                success : false,
+                success: false,
                 message: error.message
             }
         }
@@ -45,19 +64,19 @@ export class CalendarService {
     async checkAuthentication(userId) {
         // Se não passou userId, usa o da sessão atual
         const userToCheck = userId || this.currentUserId;
-        
+
         if (!userToCheck) {
             return false;
         }
-        
+
         const hasTokens = await this.model.isAuthenticated(userToCheck);
-        
+
         // Se tem tokens, inicializa o model com esse userId
         if (hasTokens && !this.model.calendar) {
             await this.model.initialize(userToCheck);
             this.currentUserId = userToCheck;
         }
-        
+
         return hasTokens;
     }
 
@@ -71,14 +90,14 @@ export class CalendarService {
         }
     }
 
-    async listEvents(maxResults = 10){
+    async listEvents(maxResults = 10) {
         await this.ensureInitialized(); // Garante inicialização antes de listar
         console.log("LOG: [CalendarService] Buscando eventos...");
         const items = await this.model.getEvents(maxResults);
         return items;
-    }   
+    }
 
-    async createEvent({summary, description, location, startDateTime, endDateTime}){
+    async createEvent({ summary, description, location, startDateTime, endDateTime }) {
         await this.ensureInitialized(); // Garante inicialização antes de criar evento
         console.log("🔧 [CalendarService] Criando evento:", {
             summary,
@@ -87,7 +106,7 @@ export class CalendarService {
             startDateTime,
             endDateTime
         });
-        
+
         const event = await this.model.insertEvent({
             summary,
             description,
@@ -95,12 +114,12 @@ export class CalendarService {
             startDateTime,
             endDateTime
         });
-        
+
         console.log("✅ [CalendarService] Evento criado:", event);
         return event;
     }
 
-    async logout(userId){
+    async logout(userId) {
         try {
             const userToLogout = userId || this.currentUserId;
             await this.model.logout(userToLogout);

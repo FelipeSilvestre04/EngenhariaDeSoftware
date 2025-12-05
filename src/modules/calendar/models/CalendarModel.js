@@ -6,7 +6,7 @@ import crypto from 'crypto';
 
 // funcoes basicas do calendar tool
 export class CalendarModel {
-    constructor(){
+    constructor() {
         // criar storage?
         this.tokenStorage = new TokenStorage();
         this.oauth2Client = new google.auth.OAuth2(
@@ -18,7 +18,7 @@ export class CalendarModel {
         this.currentUserId = null; // ← Armazena o userId atual
     }
 
-    getAuthUrl(){
+    getAuthUrl() {
         return this.oauth2Client.generateAuthUrl({
             access_type: 'offline',
             scope: [
@@ -28,30 +28,38 @@ export class CalendarModel {
         });
     }
 
-    async isAuthenticated(userId = 'default'){
+    async isAuthenticated(userId = 'default') {
         return await this.tokenStorage.hasTokens(userId);
     }
 
-    async authenticateWithCode(code){
-        try{
+    async authenticateWithCode(code) {
+        try {
             const { tokens } = await this.oauth2Client.getToken(code);
             this.oauth2Client.setCredentials(tokens);
 
-            // Buscar email do usuário
+            // Buscar informações do usuário do Google
             const oauth2 = google.oauth2({ version: 'v2', auth: this.oauth2Client });
+            const { data } = await oauth2.userinfo.get();
 
-
-            // Usar email como userId
+            // Gerar userId único
             const userId = crypto.randomUUID();
             this.currentUserId = userId;
             await this.tokenStorage.saveTokens(userId, tokens);
-            
+
             this.calendar = google.calendar({
                 version: 'v3',
                 auth: this.oauth2Client
             });
-                        
-            return { tokens, userId: userId };
+
+            return {
+                tokens,
+                userId: userId,
+                userInfo: {
+                    email: data.email,
+                    name: data.name,
+                    picture: data.picture
+                }
+            };
         } catch (error) {
             throw new Error(`Erro ao autenticar: ${error.message}`);
         }
@@ -59,22 +67,22 @@ export class CalendarModel {
 
     async initialize(userId = 'default') {
         const tokens = await this.tokenStorage.loadTokens(userId);
-        
+
         if (tokens) {
             this.currentUserId = userId;
             this.oauth2Client.setCredentials(tokens);
             this.calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
-            
+
             console.log(`✅ Tokens carregados para usuário: ${userId}`);
-            
+
             if (tokens.expiry_date && tokens.expiry_date < Date.now()) {
                 console.log('⚠️  Token expirado, renovando...');
                 await this.refreshToken(userId);
             }
-            
+
             return true;
         }
-        
+
         console.log('⚠️  Nenhum token encontrado. Usuário precisa autenticar.');
         return false;
     }
@@ -87,27 +95,27 @@ export class CalendarModel {
         } catch (error) {
             throw new Error('Token expirado. Faça login novamente.');
         }
-    }    
+    }
 
-    async getEvents(maxResults = 10){
+    async getEvents(maxResults = 10) {
         if (!this.calendar) {
             throw new Error("Usuário não autenticado! Autenticar primeiro.");
         }
 
-                try {
-                        // Buscar eventos a partir do início do mês atual
-                        const now = new Date();
-                        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
-                        const response = await this.calendar.events.list({
-                            calendarId: 'primary',
-                            timeMin: startOfMonth.toISOString(),
-                            maxResults: maxResults,
-                            singleEvents: true,
-                            orderBy: 'startTime',  
-                        });
+        try {
+            // Buscar eventos a partir do início do mês atual
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+            const response = await this.calendar.events.list({
+                calendarId: 'primary',
+                timeMin: startOfMonth.toISOString(),
+                maxResults: maxResults,
+                singleEvents: true,
+                orderBy: 'startTime',
+            });
 
             const events = response.data.items || [];
-            
+
             // Formatar os eventos para retornar dados mais limpos
             return events.map(event => ({
                 id: event.id,
@@ -126,7 +134,7 @@ export class CalendarModel {
         }
     }
 
-    async insertEvent({summary, description, location, startDateTime, endDateTime}){
+    async insertEvent({ summary, description, location, startDateTime, endDateTime }) {
         if (!this.calendar) {
             throw new Error("Usuário não autenticado! Autenticar primeiro.");
         }
@@ -154,12 +162,12 @@ export class CalendarModel {
         }
     }
 
-    async logout(userId = 'default'){
+    async logout(userId = 'default') {
         await this.tokenStorage.deleteTokens(userId);
         this.oauth2Client.setCredentials({});
         this.calendar = null;
         this.currentUserId = null;
     }
-    
+
     // CORRIGIDO: A função duplicada 'createEvent' que estava aqui foi removida.
 }
