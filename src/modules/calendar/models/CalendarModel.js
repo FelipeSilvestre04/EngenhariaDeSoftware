@@ -89,22 +89,38 @@ export class CalendarModel {
         }
     }
 
-    async getEvents(maxResults = 10) {
+    async getEvents(maxResults = 10, query = null, timeMin = null, timeMax = null) {
         if (!this.calendar) {
             throw new Error("Usuário não autenticado! Autenticar primeiro.");
         }
 
         try {
-            // Buscar eventos a partir do início do mês atual
-            const now = new Date();
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
-            const response = await this.calendar.events.list({
+            // Se timeMin não for fornecido, usa o início do dia atual
+            let startDateTime;
+            if (timeMin) {
+                startDateTime = new Date(timeMin);
+            } else {
+                const now = new Date();
+                startDateTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+            }
+            
+            const params = {
                 calendarId: 'primary',
-                timeMin: startOfMonth.toISOString(),
+                timeMin: startDateTime.toISOString(),
                 maxResults: maxResults,
                 singleEvents: true,
                 orderBy: 'startTime',
-            });
+            };
+
+            if (timeMax) {
+                params.timeMax = new Date(timeMax).toISOString();
+            }
+
+            if (query) {
+                params.q = query;
+            }
+
+            const response = await this.calendar.events.list(params);
 
             const events = response.data.items || [];
 
@@ -151,6 +167,22 @@ export class CalendarModel {
             return response.data;
         } catch (error) {
             throw new Error(`Não foi possível criar o evento! Erro: ${error.message}`);
+        }
+    }
+
+    async getEventById(eventId) {
+        if (!this.calendar) {
+            throw new Error("Usuário não autenticado! Autenticar primeiro.");
+        }
+
+        try {
+            const response = await this.calendar.events.get({
+                calendarId: 'primary',
+                eventId: eventId
+            });
+            return response.data;
+        } catch (error) {
+            throw new Error(`Não foi possível encontrar o evento! Erro: ${error.message}`);
         }
     }
 

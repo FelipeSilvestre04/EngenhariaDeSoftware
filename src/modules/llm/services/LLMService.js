@@ -26,12 +26,14 @@ export class LLMService {
     // CORREÇÃO 3: Removido 'async'
     _createTools() {
         const getCalendarEventsTool = tool(
-            async ({ maxResults = 10 }) => {
+            async ({ maxResults = 10, query }) => {
                 try {
-                    const events = await this.calendarService.listEvents(maxResults);
+                    const events = await this.calendarService.listEvents(maxResults, query);
 
                     if (!events || events.length === 0) {
-                        return "Nenhum evento encontrado no calendário.";
+                        return query 
+                            ? `Nenhum evento encontrado para a busca "${query}".`
+                            : "Nenhum evento encontrado no calendário.";
                     }
 
                     const formattedEvents = events.map((event, index) => {
@@ -86,9 +88,10 @@ export class LLMService {
             },
             {
                 name: "get_calendar_events",
-                description: "Busca eventos do calendário Google do usuário. Use esta ferramenta quando precisar verificar a agenda, compromissos ou eventos marcados. Retorna informações detalhadas incluindo ID, datas, horários, descrições e locais.",
+                description: "Busca eventos do calendário Google do usuário. Use esta ferramenta quando precisar verificar a agenda, compromissos ou eventos marcados. Você pode filtrar por um termo de busca (query) para encontrar eventos específicos.",
                 schema: z.object({
-                    maxResults: z.number().optional().default(10).describe("Número máximo de eventos a retornar")
+                    maxResults: z.number().optional().default(10).describe("Número máximo de eventos a retornar"),
+                    query: z.string().optional().describe("Termo de busca para filtrar eventos (ex: 'Reunião', 'Dentista', 'Jogar Bola')")
                 }),
             }
         );
@@ -122,19 +125,53 @@ export class LLMService {
         );
 
         const cancelEventTool = tool(
-            async ({ eventId }) => {
+            async ({ eventId, eventTitle }) => {
                 try {
-                    const result = await this.calendarService.deleteEvent(eventId);
-                    return `Evento cancelado com sucesso! ID: ${eventId}`;
+                    let idToDelete = eventId;
+                    let eventSummary = "";
+
+                    if (!idToDelete && eventTitle) {
+                        // Search for the event by title using the API's query parameter
+                        const matchingEvents = await this.calendarService.listEvents(50, eventTitle);
+
+                        if (matchingEvents.length === 0) {
+                            return `Não encontrei nenhum evento com o título ou descrição contendo "${eventTitle}".`;
+                        } else if (matchingEvents.length > 1) {
+                            // If multiple events, try to find an exact match on summary to disambiguate
+                            const exactMatches = matchingEvents.filter(e => e.summary.toLowerCase() === eventTitle.toLowerCase());
+                            
+                            if (exactMatches.length === 1) {
+                                idToDelete = exactMatches[0].id;
+                                eventSummary = exactMatches[0].summary;
+                            } else {
+                                const matchesList = matchingEvents.map(e => `- ${e.summary} (${e.start})`).join('\\n');
+                                return `Encontrei múltiplos eventos relacionados a "${eventTitle}". Por favor, seja mais específico ou use o ID:\\n${matchesList}`;
+                            }
+                        } else {
+                            idToDelete = matchingEvents[0].id;
+                            eventSummary = matchingEvents[0].summary;
+                        }
+                    } else if (idToDelete) {
+                         const event = await this.calendarService.getEventById(idToDelete);
+                         eventSummary = event.summary;
+                    } else {
+                        return "Por favor, forneça o ID do evento ou o título para cancelar.";
+                    }
+
+                    if (idToDelete) {
+                        await this.calendarService.deleteEvent(idToDelete);
+                        return `Evento "${eventSummary}" cancelado com sucesso! ID: ${idToDelete}`;
+                    }
                 } catch (error) {
                     return `Erro ao cancelar evento: ${error.message}`;
                 }
             },
             {
                 name: "cancel_calendar_event",
-                description: "Cancela (deleta) um evento existente do calendário Google do usuário. Use quando o usuário pedir para cancelar, remover ou deletar um compromisso. IMPORTANTE: Você precisa do ID do evento, então geralmente deve listar os eventos primeiro para encontrar o ID correto.",
+                description: "Cancela (deleta) um evento existente do calendário Google do usuário. Você pode fornecer o ID do evento OU o título (nome) do evento para buscar e deletar.",
                 schema: z.object({
-                    eventId: z.string().describe("ID do evento a ser cancelado (obtido através do get_calendar_events)")
+                    eventId: z.string().optional().describe("ID do evento a ser cancelado"),
+                    eventTitle: z.string().optional().describe("Título/Nome do evento para buscar e cancelar (se não tiver o ID)")
                 }),
             }
         );
@@ -142,6 +179,9 @@ export class LLMService {
         const rescheduleEventTool = tool(
             async ({ eventId, summary, description, location, startDateTime, endDateTime }) => {
                 try {
+                    // Verifica se o evento existe antes de tentar atualizar
+                    const existingEvent = await this.calendarService.getEventById(eventId);
+                    
                     const updates = {};
                     if (summary) updates.summary = summary;
                     if (description !== undefined) updates.description = description;
@@ -217,6 +257,10 @@ export class LLMService {
         const deleteProjectTool = tool(
             async ({ projectId }) => {
                 try {
+                    const project = this.projectService.getProjectById(projectId);
+                    if (!project) {
+                        return `Projeto com ID ${projectId} não encontrado.`;
+                    }
                     const deletedProject = this.projectService.deleteProject(projectId);
                     return `Projeto "${deletedProject.title}" (ID: ${deletedProject.id}) deletado com sucesso!`;
                 } catch (error) {
@@ -313,6 +357,11 @@ Projeto ID: ${projectId}`;
         const updateTaskTool = tool(
             async ({ taskId, title, description, column, tags }) => {
                 try {
+                    const task = this.tasksService.getTaskById(taskId);
+                    if (!task) {
+                        return `Tarefa com ID ${taskId} não encontrada.`;
+                    }
+
                     const updates = {};
                     if (title !== undefined) updates.title = title;
                     if (description !== undefined) updates.description = description;
@@ -351,6 +400,10 @@ Status: ${columnTitles[updatedTask.column]}`;
         const deleteTaskTool = tool(
             async ({ taskId }) => {
                 try {
+                    const task = this.tasksService.getTaskById(taskId);
+                    if (!task) {
+                        return `Tarefa com ID ${taskId} não encontrada.`;
+                    }
                     const deletedTask = this.tasksService.deleteTask(taskId);
                     return `Tarefa "${deletedTask.title}" (ID: ${deletedTask.id}) deletada com sucesso!`;
                 } catch (error) {
@@ -421,13 +474,27 @@ Status: ${columnTitles[updatedTask.column]}`;
 
         const systemPrompt = `Você é um assistente que ajuda os usuários a gerenciar e consultar seus calendários do Google Calendar. Você também
     pode criar novos projetos quando solicitado. Utilize as ferramentas disponíveis para buscar eventos e criar novos eventos ou projetos conforme necessário.
+    Com base no nome do projeto, você também pode criar novas tarefas para o projeto quando solicitado pelo usuário.
+
+    Você tem as seguintes ferramentas:
+        getCalendarEventsTool,
+        createEventTool,
+        cancelEventTool,
+        rescheduleEventTool,
+        createProjectTool,
+        listProjectsTool,
+        deleteProjectTool,
+        listTasksTool,
+        createTaskTool,
+        updateTaskTool,
+        deleteTaskTool.
 
     INFORMAÇÕES DE DATA E HORA ATUAL:
     - Data e hora completa: ${dateTimeInfo.dataCompleta}
     - Data ISO 8601: ${dateTimeInfo.dataISO}
     - Dia da semana: ${dateTimeInfo.diaSemana}
 
-    PROJETO: ${projectName}
+    NOME DO PROJETO: ${projectName}
 
     INSTRUÇÕES IMPORTANTES:
     1. Use estas informações para calcular datas relativas (amanhã, próxima semana, etc)

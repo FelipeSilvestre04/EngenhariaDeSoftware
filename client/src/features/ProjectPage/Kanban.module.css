@@ -6,8 +6,8 @@
 /* Estilos do Quadro Kanban */
 .kanbanBoard {
     display: flex;
-    gap: 16px;
-    align-items: space-between;
+    gap: 8px;
+    align-items: stretch;
     justify-content: space-between;
 
     /* Removendo estilos de fundo e padding para evitar duplicação com .kanban-board-container */
@@ -22,7 +22,7 @@
 
 /* Estilos da Coluna */
 .column {
-    min-width: 280px;
+    min-width: 350px;
     /* 'flex: 1' é mantido. Ele garante o crescimento (flex-grow: 1) das colunas para preencher o espaço. */
     flex: 1;
     flex-shrink: 0;

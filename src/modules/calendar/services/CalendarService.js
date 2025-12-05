@@ -71,10 +71,10 @@ export class CalendarService {
         }
     }
 
-    async listEvents(maxResults = 10) {
+    async listEvents(maxResults = 10, query = null, timeMin = null, timeMax = null) {
         await this.ensureInitialized(); // Garante inicialização antes de listar
-        console.log("LOG: [CalendarService] Buscando eventos...");
-        const items = await this.model.getEvents(maxResults);
+        console.log(`LOG: [CalendarService] Buscando eventos... (Query: ${query || 'Nenhuma'}, Min: ${timeMin}, Max: ${timeMax})`);
+        const items = await this.model.getEvents(maxResults, query, timeMin, timeMax);
         return items;
     }
 
@@ -97,6 +97,13 @@ export class CalendarService {
         });
 
         console.log("✅ [CalendarService] Evento criado:", event);
+        return event;
+    }
+
+    async getEventById(eventId) {
+        await this.ensureInitialized();
+        console.log("🔍 [CalendarService] Buscando evento:", eventId);
+        const event = await this.model.getEventById(eventId);
         return event;
     }
 
