@@ -80,9 +80,15 @@ function Header({ onThemeToggle, theme, onLogout, user }) {
                     <p className={styles.userEmail}>{userEmail}</p>
 
                   <button 
-                    className={styles.manageAccountBtn} 
+                    className={styles.AccountBtn} 
                     onClick={onLogout}>
                     Sair da Conta
+                </button>
+
+                  <button 
+                    className={styles.DeleteAccountBtn} 
+                    /*onClick={onLogout}  /*Placeholder para deletar conta*/>   
+                    Excluir Conta
                 </button>
                 </div>
             </div>

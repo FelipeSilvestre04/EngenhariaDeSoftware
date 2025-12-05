@@ -160,19 +160,37 @@
 }
 
 /* Botão de Gerenciar Conta */
-.manageAccountBtn {
+.AccountBtn {
     background: transparent;
     color: var(--text-primary);
     border: 1px solid #5f6368;
     padding: 8px 20px;
+    margin: 5px 0 2px 0;
     border-radius: 100px;
     font-size: 0.9rem;
     cursor: pointer;
     transition: background 0.2s;
 }
 
-.manageAccountBtn:hover {
+.DeleteAccountBtn {
+    background: transparent;
+    color: var(--text-primary);
+    border: 1px solid #5f6368;
+    padding: 8px 20px;
+    margin: 5px 0 2px 0;
+    border-radius: 100px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.AccountBtn:hover {
     background-color: var(--scrollbar-thumb);
+}
+
+.DeleteAccountBtn:hover {
+    background-color: #f93636;
+    color: #ffff;
 }
 
 .userAvatar {
