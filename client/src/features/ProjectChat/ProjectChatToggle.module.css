@@ -1,23 +1,53 @@
 .chatToggleContainer {
-  /* Position absolute so toggle is inside the project page area and not behind the sidebar */
-  position: absolute;
-  left: 16px;
-  bottom: 16px;
-  z-index: 1000;
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1001;
   display: flex;
+  flex-direction: row;  /* Botão ao lado direito do painel */
   align-items: flex-end;
-  gap: 8px;
+  gap: 1rem;
 }
 
 .chatPanel {
-  width: 480px;
-  max-height: 600px;
-  background: var(--bg-card);
+  position: fixed;
+  top: 11rem;  /* Mais próximo do "Ver Detalhes" */
+  right: 5rem;  /* Espaço para o botão à direita */
+  bottom: 1rem;
+  width: 42%;
+
+  background: var(--bg-sidebar);
   border-radius: 12px;
   box-shadow: 0 6px 18px rgba(0,0,0,0.15);
-  overflow: hidden;
+  
+  overflow: hidden; 
+  
   display: flex;
   flex-direction: column;
+  z-index: 1000;
+}
+
+.chatPanel > div {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.chatPanel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chatPanel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chatPanel::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2); /* Cor da barra */
+  border-radius: 4px;
+}
+
+.chatPanel::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.4);
 }
 
 .toggleButton {
@@ -25,17 +55,95 @@
   color: var(--text-primary);
   border: none;
   border-radius: 50%;
-  width: 70px;
-  height: 70px;
+  width: 50px;
+  height: 50px;
+  flex-shrink: 0;  /* Não encolher */
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 20px;
   cursor: pointer;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+  box-shadow: 0 3px 10px var(--box-shadow-color);
+  transition: all 0.3s ease;
 }
 
 .toggleButton.open {
   background: #ff5b5b;
   color: white;
+  font-size: 30px;
+}
+
+.iconButton {
+  background: none;
+  border: none;
+  padding: 4px; 
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s ease-in-out; 
+}
+
+.iconImage {
+  width: 30px;  
+  height: 30px; 
+  transition: filter 0.2s ease-in-out;
+}
+
+.invert {
+  filter: invert(1);
+}
+
+/* Media queries para diferentes resoluções */
+@media (min-width: 1600px) {
+  .chatPanel {
+    top: 11rem;
+    right: 5rem;
+    width: 58%;
+  }
+}
+
+@media (max-width: 1400px) {
+  .chatPanel {
+    top: 11rem;
+    right: 5rem;
+    width: 52%;
+  }
+}
+
+@media (max-width: 1200px) {
+  .chatPanel {
+    top: 11rem;
+    right: 5rem;
+    width: 46%;
+  }
+}
+
+@media (max-width: 1024px) {
+  .chatPanel {
+    top: 11rem;
+    right: 5rem;
+    width: 40%;
+  }
+}
+
+@media (max-width: 768px) {
+  .chatPanel {
+    width: 8rem;
+    right: 5rem;
+    top: 10rem;
+  }
+  
+  .chatToggleContainer {
+    right: 1rem;
+    bottom: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .chatPanel {
+    width: calc(100% - 5rem);
+    right: 4rem;
+    top: 9rem;
+  }
 }

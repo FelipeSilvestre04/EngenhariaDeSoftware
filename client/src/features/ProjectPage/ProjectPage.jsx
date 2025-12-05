@@ -1,15 +1,17 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import Projects from '../projects-data'
 import './ProjectPage.css'
 import ProjectChatToggle from '../ProjectChat/ProjectChatToggle'
 import { KanbanBoard } from './KanbanBoard' // Importado
 
-function ProjectPage() {
+function ProjectPage({ theme }) {
   const { projectId } = useParams()
   const id = parseInt(projectId, 10)
   const project = Projects.find(p => p.id === id)
-  
+
+  const [isExpanded, setIsExpanded] = useState(true)
+
   if (!project) {
     return (
       <div className="project-page">
@@ -26,25 +28,26 @@ function ProjectPage() {
       <div className="project-header" style={{ background: project.color }}>
         <h1>{project.title}</h1>
       </div>
-      
-      <div className="project-main-content">
-        
-        {/* Coluna 1: Detalhes do Projeto */}
-        <div className="project-body">
-          <h3>Detalhes do Projeto</h3>
-          <p><strong>ID:</strong> {project.id}</p>
-          <p><strong>Cor:</strong> <span style={{ color: project.color }}>{project.color}</span></p>
-          <p>Esta é a área original de detalhes do projeto, mantida no lado esquerdo.</p>
-          <Link to="/">← Voltar para Meus Projetos</Link>
-        </div>
-        
-        {/* 🚨 CORREÇÃO AQUI: Envolver o KanbanBoard com a classe de layout 🚨 */}
-        <div className="kanban-board-container">
-          <KanbanBoard projectId={project.id} />
+
+      {/* --- NOVA BARRA DE DETALHES --- */}
+      {/* Ela recebe a classe 'expanded' ou 'collapsed' para estilização da borda */}
+      <div 
+        className={`details-toggle-bar ${isExpanded ? 'expanded' : 'collapsed'}`} 
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <span>{isExpanded ? 'Ocultar Detalhes' : 'Ver Detalhes'}</span>
+        <span className="toggle-icon">{isExpanded ? '▲' : '▼'}</span>
+      </div>
+
+      <div className={`project-body ${isExpanded ? 'expanded' : 'collapsed'}`}>
+        <div className="project-body-content">
+            <p>Detalhes do projeto: <strong>ID:</strong> {project.id}</p>
+            <p>Cor do projeto: <span style={{ color: project.color }}>{project.color}</span></p>
+            <Link to="/">← Voltar</Link>
         </div>
       </div>
 
-      <ProjectChatToggle projectName={project.title} theme="light" />
+      <ProjectChatToggle projectName={project.title} theme={theme} />
     </div>
   )
 }

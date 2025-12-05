@@ -1,13 +1,7 @@
 .project-page {
-  padding: 16px;
+  padding: 5px;
   position: relative; 
-  display: flex; 
-  flex-direction: column;
-  /* Largura e altura de 100% da área disponível, como em App.css */
-  width: 100%; 
-  height: 100%; 
-  min-height: 0; 
-  box-sizing: border-box; /* Garante que o padding não estoure a largura/altura */
+  width: 100%;
 }
 
 .project-header {
@@ -16,55 +10,79 @@
   border-radius: 8px;
   color: white;
   margin-bottom: 16px;
-  flex-shrink: 0; /* O header não deve encolher */
-  /* Remove a largura fixa, permitindo que o flexbox ocupe o espaço */
+  width: 100%;
+  height: 5rem;
+  box-sizing: border-box;
+
+  display: flex;
+  justify-content: left; 
+  align-items: center;
+}
+.details-toggle-bar {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  width: 20%;
+  top: 0.5rem; 
+  margin: 0;
+  padding: 12px 16px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between; 
+  align-items: center;
+  font-weight: bold;
+  box-sizing: border-box; 
+  transition: border-radius 0.3s ease; 
+  
+  box-shadow: 0 4px 8px var(--box-shadow-color);
+  position: relative;
+  z-index: 2; 
 }
 
-/* Container principal com layout de duas colunas (Detalhes + Kanban) */
-.project-main-content {
-  flex-grow: 1; /* Ocupa todo o espaço vertical restante */
-  min-height: 0; 
-  display: flex; 
-  gap: 20px; 
-  /* Ajuste: Se este contêiner já é o principal na área de conteúdo, a margem inferior pode ser desnecessária ou deve ser ajustada para o padding do .project-page */
-  /* Mantendo margin-bottom: 16px; se houver algo abaixo ou para simetria do padding */
-  margin-bottom: 0; /* Geralmente 0 para ocupar a altura toda */
+.details-toggle-bar.collapsed {
+  border-radius: 8px;
+  margin-bottom: 0; 
+  box-shadow: none;
+}
+
+.details-toggle-bar.expanded {
+  border-radius: 8px 8px 0 0;
+  margin-bottom: 0; 
+  border-bottom: 3px solid var(--bg-primary); 
+
+  box-shadow: none;
 }
 
 .project-body {
   /* Detalhes do projeto (coluna da esquerda) */
   background: var(--bg-secondary);
-  padding: 16px;
-  border-radius: 8px;
+  width: 20%;
+  color: var(--text-primary);
+  box-shadow: 0 4px 8px var(--box-shadow-color);
+  margin: 0 auto 16px 0;
   
-  /* Largura fixa mantida para a coluna de detalhes (280px) */
-  width: 280px; 
-  flex-shrink: 0; /* Não permite que encolha */
-  overflow-y: auto; 
-  
-  max-height: 100%; /* Garante que a altura seja limitada pelo .project-main-content */
+  overflow: hidden;
+  transition: max-height 0.4s ease, opacity 0.4s ease;
+  font-size: 14px;
 }
 
-.project-body h3 {
-    margin-top: 0;
-    color: var(--text-secondary);
+.project-body.expanded {
+  max-height: 500px;
+  opacity: 1;
+  border-radius: 0 0 8px 8px; 
+}
+
+.project-body.collapsed {
+  max-height: 0;
+  opacity: 0;
+  box-shadow: none; 
+}
+
+.project-body-content {
+  padding: 16px;
 }
 
 .project-body a {
   display: inline-block;
   margin-top: 12px;
   color: var(--text-primary);
-}
-
-/* NOVO: Estilo para o mural do Kanban */
-.kanban-board-container {
-  /* O mural do Kanban é a segunda coluna, deve ocupar o espaço restante (coluna da direita) */
-  flex-grow: 1; 
-  min-width: 0; /* Importante para flex-item com conteúdo muito largo */
-  
-  /* Adicionei um estilo de exemplo para visualização */
-  background: var(--bg-secondary); /* Pode usar outra cor */
-  border-radius: 8px;
-  padding: 16px;
-  overflow-x: auto; /* Se as colunas Kanban excederem a largura, habilita a rolagem horizontal */
 }
