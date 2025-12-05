@@ -22,7 +22,7 @@
 .dark {
   --bg-primary: #181818;
   --bg-secondary: hsl(0, 0%, 17%);
-  --bg-sidebar: hsla(0, 0%, 10%, 0.6);
+  --bg-sidebar: hsla(0, 0%, 10%);
   --bg-chat-bubble: #333333;
   --text-primary: #f0f0f0;
   --text-secondary: hsl(0, 0%, 100%);

@@ -91,7 +91,7 @@ return (
         <div className="empty-chat-container">
           <h2 
             className="empty-chat-title"
-            onMouseMove={handleMouseMove}>Por onde começamos?</h2>
+            onMouseMove={handleMouseMove}>{projectName ? `O que deseja saber de ${projectName}?` : "Por onde começamos?"}</h2>
         </div>
 
         ) : (
