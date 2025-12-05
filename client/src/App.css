@@ -1,7 +1,7 @@
 /* client/src/App.css */
 :root {
   --bg-primary: #ffffff;      
-  --bg-secondary: #f8f9fa;    
+  --bg-secondary: #efefef;    
   --bg-sidebar: #f7f7f9;
   --bg-chat-bubble: #f1f0f0;
   --text-primary: #1a1a1a;    
@@ -15,10 +15,12 @@
   --scrollbar-thumb: #c1c1c1;
   
   --event-dot-color: #525217;
+
+  --box-shadow-color: rgba(0, 0, 0, 0.3);
 }
 
 .dark {
-  --bg-primary: #0D0D0D;
+  --bg-primary: #181818;
   --bg-secondary: hsl(0, 0%, 17%);
   --bg-sidebar: hsla(0, 0%, 10%, 0.6);
   --bg-chat-bubble: #333333;
@@ -33,6 +35,8 @@
   --scrollbar-thumb: #555555;  
 
   --event-dot-color: #F9FA76;
+
+  --box-shadow-color: rgba(0, 0, 0, 0.7);
 }
 
 body {

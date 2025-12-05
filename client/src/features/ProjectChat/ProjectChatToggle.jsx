@@ -1,9 +1,12 @@
 import React, { useState } from 'react'
 import styles from './ProjectChatToggle.module.css'
 import { ChatWindow } from '../chat/ChatWindow'
+import ChatIconPath from '../../assets/chat.svg';
 
-export default function ProjectChatToggle({ projectName, theme = 'light' }) {
+export default function ProjectChatToggle({ projectName, theme}) {
   const [open, setOpen] = useState(false)
+
+  const currentTheme = typeof theme === 'object' ? theme.theme : theme;
 
   return (
     <div className={styles.chatToggleContainer} aria-live="polite">
@@ -19,7 +22,11 @@ export default function ProjectChatToggle({ projectName, theme = 'light' }) {
         aria-label={open ? 'Fechar chat do projeto' : 'Abrir chat do projeto'}
         onClick={() => setOpen(prev => !prev)}
       >
-        {open ? '✕' : '💬'}
+        {open ? '✕' : <img 
+                        src={ChatIconPath} 
+                        alt="Chat" 
+                        className={`${styles.iconImage} ${theme === 'dark' ? styles.invert : ''}`}
+                      />}
       </button>
     </div>
   )
