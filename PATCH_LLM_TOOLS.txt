@@ -1,0 +1,60 @@
+// PATCH: Novos tools para LLM
+// Adicionar após createProjectTool (linha 135) e antes de this.tools.push (linha 137)
+
+const cancelEventTool = tool(
+    async ({eventId}) => {
+        try {
+            const result = await this.calendarService.deleteEvent(eventId);
+            return `Evento cancelado com sucesso! ID: ${eventId}`;
+        } catch (error) {
+            return `Erro ao cancelar evento: ${error.message}`;
+        }
+    },
+    {
+        name: "cancel_calendar_event",
+        description: "Cancela (deleta) um evento existente do calendário Google do usuário. Use quando o usuário pedir para cancelar, remover ou deletar um compromisso. IMPORTANTE: Você precisa do ID do evento, então geralmente deve listar os eventos primeiro para encontrar o ID correto.",
+        schema: z.object({
+            eventId: z.string().describe("ID do evento a ser cancelado (obtido através do get_calendar_events)")
+        }),
+    }
+);
+
+const rescheduleEventTool = tool(
+    async ({eventId, summary, description, location, startDateTime, endDateTime}) => {
+        try {
+            const updates = {};
+            if (summary) updates.summary = summary;
+            if (description !== undefined) updates.description = description;
+            if (location !== undefined) updates.location = location;
+            if (startDateTime) updates.startDateTime = startDateTime;
+            if (endDateTime) updates.endDateTime = endDateTime;
+            
+            const event = await this.calendarService.updateEvent(eventId, updates);
+            
+            return `Evento reagendado com sucesso: ${event.summary} para ${event.start.dateTime || event.start.date}`;
+        } catch (error) {
+            return `Erro ao reagendar evento: ${error.message}`;
+        }
+    },
+    {
+        name: "reschedule_calendar_event",
+        description: "Reagenda (atualiza) um evento existente do calendário. Use quando o usuário pedir para mudar a data, hora, título, descrição ou local de um compromisso. Você pode atualizar apenas os campos necessários. IMPORTANTE: Você precisa do ID do evento, então geralmente deve listar os eventos primeiro.",
+        schema: z.object({
+            eventId: z.string().describe("ID do evento a ser atualizado"),
+            summary: z.string().optional().describe("Novo título do evento (opcional)"),
+            description: z.string().optional().describe("Nova descrição (opcional)"),
+            location: z.string().optional().describe("Novo local (opcional)"),
+            startDateTime: z.string().optional().describe("Nova data/hora de início em ISO 8601 (opcional)"),
+            endDateTime: z.string().optional().describe("Nova data/hora de término em ISO 8601 (opcional)")
+        }),
+    }
+);
+
+// Atualizar this.tools.push para:
+this.tools.push(
+    getCalendarEventsTool, 
+    createEventTool, 
+    cancelEventTool, 
+    rescheduleEventTool, 
+    createProjectTool
+);

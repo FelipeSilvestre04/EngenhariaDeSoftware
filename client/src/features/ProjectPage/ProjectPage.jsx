@@ -21,25 +21,19 @@ function ProjectPage({ theme }) {
     )
   }
 
-// ProjectPage.jsx (Trecho do retorno)
+  // ProjectPage.jsx (Trecho do retorno)
 
   return (
     <div className="project-page">
       <div className="project-header" style={{ background: project.color }}>
         <h1>{project.title}</h1>
       </div>
-      
+
       <div className="project-main-content">
-        
+
         {/* Coluna 1: Detalhes do Projeto */}
-        <div className="project-body">
-          <h3>Detalhes do Projeto</h3>
-          <p><strong>ID:</strong> {project.id}</p>
-          <p><strong>Cor:</strong> <span style={{ color: project.color }}>{project.color}</span></p>
-          <p>Esta é a área original de detalhes do projeto, mantida no lado esquerdo.</p>
-          <Link to="/">← Voltar para Meus Projetos</Link>
-        </div>
-        
+
+
         {/* 🚨 CORREÇÃO AQUI: Envolver o KanbanBoard com a classe de layout 🚨 */}
         <div className="kanban-board-container">
           <KanbanBoard projectId={project.id} />
@@ -50,8 +44,8 @@ function ProjectPage({ theme }) {
 
       {/* --- NOVA BARRA DE DETALHES --- */}
       {/* Ela recebe a classe 'expanded' ou 'collapsed' para estilização da borda */}
-      <div 
-        className={`details-toggle-bar ${isExpanded ? 'expanded' : 'collapsed'}`} 
+      {/* <div
+        className={`details-toggle-bar ${isExpanded ? 'expanded' : 'collapsed'}`}
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <span>{isExpanded ? 'Ocultar Detalhes' : 'Ver Detalhes'}</span>
@@ -60,11 +54,11 @@ function ProjectPage({ theme }) {
 
       <div className={`project-body ${isExpanded ? 'expanded' : 'collapsed'}`}>
         <div className="project-body-content">
-            <p>Detalhes do projeto: <strong>ID:</strong> {project.id}</p>
-            <p>Cor do projeto: <span style={{ color: project.color }}>{project.color}</span></p>
-            <Link to="/">← Voltar</Link>
+          <p>Detalhes do projeto: <strong>ID:</strong> {project.id}</p>
+          <p>Cor do projeto: <span style={{ color: project.color }}>{project.color}</span></p>
+          <Link to="/">← Voltar</Link>
         </div>
-      </div>
+      </div> */}
 
       <ProjectChatToggle projectName={project.title} theme={theme} />
     </div>

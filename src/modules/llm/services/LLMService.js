@@ -1,4 +1,4 @@
-import {LLMModel} from "../models/LLMModel.js"
+import { LLMModel } from "../models/LLMModel.js"
 import { z } from "zod";
 import { tool } from "@langchain/core/tools";
 import { ProjectsService } from "../../projects/projects.service.js";
@@ -6,8 +6,8 @@ import { ProjectsService } from "../../projects/projects.service.js";
 // o serviço é o que vai ser usado pelo controller. ele executará o modelo 
 // e irá usá-lo para entregar um serviço específico.
 
-export class LLMService{
-    constructor(apiKey, calendarService){
+export class LLMService {
+    constructor(apiKey, calendarService) {
         this.model = new LLMModel(apiKey);
         this.calendarService = calendarService;
         this.projectService = new ProjectsService();
@@ -15,16 +15,16 @@ export class LLMService{
     }
 
     // CORREÇÃO 1: Removido 'async'
-    createModel(temperature, modelName){
+    createModel(temperature, modelName) {
         // CORREÇÃO 2: Removido 'await'
         this._createTools();
         this.model.initialize(modelName, temperature, this.tools);
     }
 
     // CORREÇÃO 3: Removido 'async'
-    _createTools(){
+    _createTools() {
         const getCalendarEventsTool = tool(
-            async ({maxResults = 10}) => {
+            async ({ maxResults = 10 }) => {
                 try {
                     const events = await this.calendarService.listEvents(maxResults);
 
@@ -36,16 +36,16 @@ export class LLMService{
                         // Os eventos já vêm processados com start e end como strings
                         const startDateTime = event.start;
                         const endDateTime = event.end;
-                        
+
                         // Formata as datas de forma legível
                         let dateInfo = 'Horário: Não especificado';
                         if (startDateTime) {
                             const startDate = new Date(startDateTime);
                             const endDate = endDateTime ? new Date(endDateTime) : null;
-                            
+
                             // Verifica se tem horário (se tem 'T' na string, tem horário)
                             const hasTime = startDateTime.includes('T');
-                            
+
                             if (!hasTime) {
                                 // Evento de dia inteiro
                                 dateInfo = `Data: ${startDate.toLocaleDateString('pt-BR')} (dia inteiro)`;
@@ -53,7 +53,7 @@ export class LLMService{
                                 // Evento com horário específico
                                 const dateStr = startDate.toLocaleDateString('pt-BR');
                                 const timeStr = startDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                                
+
                                 if (endDate && hasTime) {
                                     const endTimeStr = endDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
                                     dateInfo = `Data: ${dateStr} | Horário: ${timeStr} - ${endTimeStr}`;
@@ -62,29 +62,29 @@ export class LLMService{
                                 }
                             }
                         }
-                        
-                        // Monta a informação do evento de forma estruturada
-                        let eventInfo = `${index + 1}. **${event.summary || 'Sem título'}**\n   ${dateInfo}`;
-                        
-                        if (event.description && event.description.trim()) {
-                            eventInfo += `\n   Descrição: ${event.description}`;
-                        }
-                        
-                        if (event.location && event.location.trim()) {
-                            eventInfo += `\n   Local: ${event.location}`;
-                        }
-                        
-                        return eventInfo;
-                    }).join('\n\n');
 
-                    return `Encontrei ${events.length} evento(s) no calendário:\n\n${formattedEvents}`;
+                        // Monta a informação do evento de forma estruturada - ADICIONADO ID
+                        let eventInfo = `${index + 1}. **${event.summary || 'Sem título'}**\\n   ID: ${event.id}\\n   ${dateInfo}`;
+
+                        if (event.description && event.description.trim()) {
+                            eventInfo += `\\n   Descrição: ${event.description}`;
+                        }
+
+                        if (event.location && event.location.trim()) {
+                            eventInfo += `\\n   Local: ${event.location}`;
+                        }
+
+                        return eventInfo;
+                    }).join('\\n\\n');
+
+                    return `Encontrei ${events.length} evento(s) no calendário:\\n\\n${formattedEvents}`;
                 } catch (error) {
                     return `Erro ao buscar eventos: ${error.message}`;
                 }
             },
             {
                 name: "get_calendar_events",
-                description: "Busca eventos do calendário Google do usuário. Use esta ferramenta quando precisar verificar a agenda, compromissos ou eventos marcados. Retorna informações detalhadas incluindo datas, horários, descrições e locais.",
+                description: "Busca eventos do calendário Google do usuário. Use esta ferramenta quando precisar verificar a agenda, compromissos ou eventos marcados. Retorna informações detalhadas incluindo ID, datas, horários, descrições e locais.",
                 schema: z.object({
                     maxResults: z.number().optional().default(10).describe("Número máximo de eventos a retornar")
                 }),
@@ -92,7 +92,7 @@ export class LLMService{
         );
 
         const createEventTool = tool(
-            async ({summary, description, location, startDateTime, endDateTime}) => {
+            async ({ summary, description, location, startDateTime, endDateTime }) => {
                 try {
                     const event = await this.calendarService.createEvent({
                         summary,
@@ -120,7 +120,7 @@ export class LLMService{
         );
 
         const createProjectTool = tool(
-            async ({projectName}) => {
+            async ({ projectName }) => {
                 // Simula a criação de um projeto
                 const newProject = await this.projectService.createProject(projectName);
                 return `Projeto criado com sucesso: ID ${newProject.id}, Nome: ${newProject.title}`;
@@ -134,7 +134,57 @@ export class LLMService{
             }
         );
 
-        this.tools.push(getCalendarEventsTool, createEventTool, createProjectTool);
+        // NOVOS TOOLS
+        const cancelEventTool = tool(
+            async ({ eventId }) => {
+                try {
+                    const result = await this.calendarService.deleteEvent(eventId);
+                    return `Evento cancelado com sucesso! ID: ${eventId}`;
+                } catch (error) {
+                    return `Erro ao cancelar evento: ${error.message}`;
+                }
+            },
+            {
+                name: "cancel_calendar_event",
+                description: "Cancela (deleta) um evento existente do calendário Google do usuário. Use quando o usuário pedir para cancelar, remover ou deletar um compromisso. IMPORTANTE: Você precisa do ID do evento, então geralmente deve listar os eventos primeiro para encontrar o ID correto.",
+                schema: z.object({
+                    eventId: z.string().describe("ID do evento a ser cancelado (obtido através do get_calendar_events)")
+                }),
+            }
+        );
+
+        const rescheduleEventTool = tool(
+            async ({ eventId, summary, description, location, startDateTime, endDateTime }) => {
+                try {
+                    const updates = {};
+                    if (summary) updates.summary = summary;
+                    if (description !== undefined) updates.description = description;
+                    if (location !== undefined) updates.location = location;
+                    if (startDateTime) updates.startDateTime = startDateTime;
+                    if (endDateTime) updates.endDateTime = endDateTime;
+
+                    const event = await this.calendarService.updateEvent(eventId, updates);
+
+                    return `Evento reagendado com sucesso: ${event.summary} para ${event.start.dateTime || event.start.date}`;
+                } catch (error) {
+                    return `Erro ao reagendar evento: ${error.message}`;
+                }
+            },
+            {
+                name: "reschedule_calendar_event",
+                description: "Reagenda (atualiza) um evento existente do calendário. Use quando o usuário pedir para mudar a data, hora, título, descrição ou local de um compromisso. Você pode atualizar apenas os campos necessários. IMPORTANTE: Você precisa do ID do evento, então geralmente deve listar os eventos primeiro.",
+                schema: z.object({
+                    eventId: z.string().describe("ID do evento a ser atualizado"),
+                    summary: z.string().optional().describe("Novo título do evento (opcional)"),
+                    description: z.string().optional().describe("Nova descrição (opcional)"),
+                    location: z.string().optional().describe("Novo local (opcional)"),
+                    startDateTime: z.string().optional().describe("Nova data/hora de início em ISO 8601 (opcional)"),
+                    endDateTime: z.string().optional().describe("Nova data/hora de término em ISO 8601 (opcional)")
+                }),
+            }
+        );
+
+        this.tools.push(getCalendarEventsTool, createEventTool, cancelEventTool, rescheduleEventTool, createProjectTool);
     }
 
     // CORREÇÃO: A função duplicada _createTools que estava aqui foi removida.
@@ -142,7 +192,7 @@ export class LLMService{
     async processConsulta(systemPrompt, userPrompt, userName, projectName) {
         try {
             const response = await this.model.queryWithTools(systemPrompt, userPrompt, userName, projectName);
-            
+
             return {
                 success: true,
                 content: response.content,
@@ -150,7 +200,7 @@ export class LLMService{
                     timeStamp: new Date().toISOString()
                 }
             };
-        } catch (error){
+        } catch (error) {
             console.error("Erro em processConsulta:", error);
             console.error("Stack trace:", error.stack);
             return {
@@ -161,11 +211,11 @@ export class LLMService{
     }
 
     // aqui implementar os serviços que vao utilizar processConsulta.
-    async checaAgenda(name, prompt, projectName){
+    async checaAgenda(name, prompt, projectName) {
         // Obter data e hora atual
         const now = new Date();
         const dateTimeInfo = {
-            dataCompleta: now.toLocaleString('pt-BR', { 
+            dataCompleta: now.toLocaleString('pt-BR', {
                 timeZone: 'America/Sao_Paulo',
                 dateStyle: 'full',
                 timeStyle: 'long'

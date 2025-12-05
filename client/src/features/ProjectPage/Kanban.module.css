@@ -7,31 +7,33 @@
 .kanbanBoard {
     display: flex;
     gap: 16px;
-    
+    align-items: space-between;
+    justify-content: space-between;
+
     /* Removendo estilos de fundo e padding para evitar duplicação com .kanban-board-container */
     padding: 0;
-    background: none; 
-    border-radius: 0; 
-    
+    background: none;
+    border-radius: 0;
+
     /* Manter 100% de altura para garantir que as colunas se expandam */
-    min-height: 100%; 
-    height: 100%; 
+    min-height: 100%;
+    height: 100%;
 }
 
 /* Estilos da Coluna */
 .column {
-    min-width: 280px; 
+    min-width: 280px;
     /* 'flex: 1' é mantido. Ele garante o crescimento (flex-grow: 1) das colunas para preencher o espaço. */
-    flex: 1; 
+    flex: 1;
     flex-shrink: 0;
 
-    background-color: var(--bg-primary); 
+    background-color: var(--bg-primary);
     border-radius: 10px;
     padding: 12px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     display: flex;
     flex-direction: column;
-    height: 100%; 
+    height: 100%;
 }
 
 .columnTitle {
@@ -45,17 +47,25 @@
 }
 
 /* Cores de destaque para os títulos das colunas */
-.todo .columnTitle { border-bottom-color: #ff5b5b; }
-.inProgress .columnTitle { border-bottom-color: #f0c33a; }
-.done .columnTitle { border-bottom-color: #34c759; }
+.todo .columnTitle {
+    border-bottom-color: #ff5b5b;
+}
+
+.inProgress .columnTitle {
+    border-bottom-color: #f0c33a;
+}
+
+.done .columnTitle {
+    border-bottom-color: #34c759;
+}
 
 /* Lista de Tarefas */
 .taskList {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    flex-grow: 1; 
-    overflow-y: auto; 
+    flex-grow: 1;
+    overflow-y: auto;
     min-height: 0;
 }
 
@@ -67,13 +77,13 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     cursor: grab;
     transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-    border-left: 5px solid #cf50f2; 
+    border-left: 5px solid #cf50f2;
     color: var(--text-primary);
     flex-shrink: 0;
-    
+
     /* Garante que o conteúdo e o botão de delete se alinhem */
     display: flex;
-    flex-direction: column; 
+    flex-direction: column;
 }
 
 /* NOVO: Wrapper para o conteúdo do card clicável (para edição) */
@@ -84,7 +94,8 @@
 
 /* Estilo para o card que está sendo arrastado */
 .dragging {
-    opacity: 0.4; /* Torna o card semi-transparente */
+    opacity: 0.4;
+    /* Torna o card semi-transparente */
     border: 2px dashed var(--text-primary);
 }
 
@@ -103,7 +114,8 @@
     font-size: 0.95rem;
     font-weight: 600;
     margin: 0 0 5px 0;
-    flex-grow: 1; /* Permite que o título ocupe o espaço restante */
+    flex-grow: 1;
+    /* Permite que o título ocupe o espaço restante */
 }
 
 .taskDescription {
@@ -153,11 +165,12 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.6); 
+    background-color: rgba(0, 0, 0, 0.6);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 2000; /* Garante que fique acima de tudo */
+    z-index: 2000;
+    /* Garante que fique acima de tudo */
 }
 
 .taskFormCard {
@@ -203,7 +216,8 @@
     gap: 5px;
 }
 
-.formInput, .formTextarea {
+.formInput,
+.formTextarea {
     padding: 10px;
     border: 1px solid var(--border-color);
     border-radius: 6px;
@@ -213,7 +227,8 @@
     transition: border-color 0.2s;
 }
 
-.formInput:focus, .formTextarea:focus {
+.formInput:focus,
+.formTextarea:focus {
     border-color: var(--input-button-bg);
     outline: none;
 }
@@ -244,7 +259,7 @@
 .deleteBtn {
     background: none;
     border: none;
-    color: var(--text-secondary); 
+    color: var(--text-secondary);
     font-size: 1.2rem;
     cursor: pointer;
     padding: 0;
@@ -255,6 +270,6 @@
 }
 
 .deleteBtn:hover {
-    color: #ff5b5b; 
+    color: #ff5b5b;
     opacity: 1;
 }
