@@ -23,6 +23,9 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
   const [projects, setProjects] = useState(FALLBACK_PROJECTS);
   const [loading, setLoading] = useState(true);
   const [usingFallback, setUsingFallback] = useState(false);
+  const sidebarClass = `${styles.sidebarContainer} ${isOpen ? styles.open : styles.collapsed}`;
+  
+  const [showOptions, setShowOptions] = useState(false);
 
   // Busca projetos da API ao montar o componente
   useEffect(() => {
@@ -61,8 +64,6 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
     };
   }, []);
 
-  const sidebarClass = `${styles.sidebarContainer} ${isOpen ? styles.open : styles.collapsed}`;
-
   return (
     <aside className={sidebarClass}>
 
@@ -84,8 +85,46 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
                 <Link to="/" className={styles.homeButton} aria-label="Ir para tela inicial">
                   <span className={styles.homeText}>Início</span>
                 </Link>
+
+                {/* Botão de 3 pontos */}
+                <button 
+                  className={styles.optionsButton} 
+                  onClick={() => setShowOptions(!showOptions)}
+                  aria-label="Opções do projeto"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                  </svg>
+                </button>
+
+                {/* Menu Popover */}
+                {showOptions && (
+                  <div className={styles.optionsMenu}>
+                    <button 
+                      className={styles.optionItem}
+                      onClick={() => {
+                        console.log("Criar projeto");
+                        setShowOptions(false); // Fecha ao clicar
+                      }}
+                    >
+                      Criar projeto
+                    </button>
+                    <button 
+                      className={`${styles.optionItem} ${styles.danger}`}
+                      onClick={() => {
+                        console.log("Excluir projeto");
+                        setShowOptions(false); // Fecha ao clicar
+                      }}
+                    >
+                      Excluir projeto
+                    </button>
+                  </div>
+                )}
+
               </div>
             </div>
+
+
 
             <div className={styles.projectsCardBody}>
               {loading ? (
