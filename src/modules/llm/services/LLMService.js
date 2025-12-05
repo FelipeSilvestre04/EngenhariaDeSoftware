@@ -2,6 +2,7 @@ import { LLMModel } from "../models/LLMModel.js"
 import { z } from "zod";
 import { tool } from "@langchain/core/tools";
 import { ProjectsService } from "../../projects/projects.service.js";
+import { TasksService } from "../../tasks/tasks.service.js";
 
 // o serviço é o que vai ser usado pelo controller. ele executará o modelo 
 // e irá usá-lo para entregar um serviço específico.

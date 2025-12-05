@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import styles from './Kanban.module.css';
 import getKanbanData from './kanban-data';
 
+const API_URL = 'http://localhost:10000/api/tasks';
+
 // ===========================================
 // Componente de Formulário (Base para Adicionar e Editar)
 // ===========================================
@@ -21,7 +23,6 @@ function TaskForm({ onSubmit, onCancel, initialData = {}, isEditing = false, ini
       title,
       description,
       tags,
-      // Mantém a coluna original ao editar
       column: initialData.column || initialColumnKey,
     };
 
@@ -33,7 +34,7 @@ function TaskForm({ onSubmit, onCancel, initialData = {}, isEditing = false, ini
       <div className={styles.taskFormCard}>
         <button className={styles.closeBtn} onClick={onCancel}>&times;</button>
         <h4 className={styles.formTitle}>
-          {isEditing ? `Editar Tarefa: ${initialData.title}` : `Nova Tarefa em: ${initialColumnKey === 'to-do' ? 'A Fazer' : initialColumnKey}`}
+          {isEditing ? `Editar Tarefa: ${initialData.title}` : `Nova Tarefa`}
         </h4>
         <form onSubmit={handleSubmit} className={styles.taskForm}>
           <label className={styles.formLabel}>
@@ -74,13 +75,9 @@ function TaskForm({ onSubmit, onCancel, initialData = {}, isEditing = false, ini
 
 // ===========================================
 // Componente para o card de tarefa
-// Habilita a edição e mantém o delete
 // ===========================================
 function TaskCard({ task, onDragStart, onDragEnd, onDelete, onEditStart }) {
-
-  // Previne a propagação do clique ao arrastar ou clicar no delete
   const handleCardClick = (e) => {
-    // Evita abrir o modal se o delete for clicado
     if (e.target.closest(`.${styles.deleteBtn}`)) {
       return;
     }
@@ -90,16 +87,12 @@ function TaskCard({ task, onDragStart, onDragEnd, onDelete, onEditStart }) {
   return (
     <div
       className={styles.taskCard}
-      // Removido o evento onClick do div principal para o clique ir para o handleCardClick
-      // O draggable já está definido aqui
       draggable
       onDragStart={(e) => onDragStart(e, task.id, task.column)}
       onDragEnd={onDragEnd}
       data-task-id={task.id}
       data-column={task.column}
     >
-      {/* Usamos onMouseDown/onMouseUp para capturar o clique do card, permitindo a edição,
-        mas o D&D usa onDragStart/onDragEnd que tem prioridade. */}
       <div className={styles.cardEditableContent} onClick={handleCardClick}>
         <div className={styles.cardHeader}>
           <p className={styles.taskTitle}>{task.title}</p>
@@ -113,7 +106,7 @@ function TaskCard({ task, onDragStart, onDragEnd, onDelete, onEditStart }) {
         </div>
         <p className={styles.taskDescription}>{task.description}</p>
         <div className={styles.tagContainer}>
-          {task.tags.map((tag, index) => (
+          {task.tags && task.tags.map((tag, index) => (
             <span key={index} className={styles.tag}>{tag}</span>
           ))}
         </div>
@@ -122,9 +115,8 @@ function TaskCard({ task, onDragStart, onDragEnd, onDelete, onEditStart }) {
   );
 }
 
-// ===========================================
+// =========================================== 
 // Componente para a coluna Kanban
-// Passa o handler de start edit
 // ===========================================
 function KanbanColumn({ title, tasks, columnKey, onDrop, onDragOver, onDragStart, onDragEnd, onShowForm, onDeleteTask, onEditStart }) {
   const columnClass = {
@@ -148,7 +140,7 @@ function KanbanColumn({ title, tasks, columnKey, onDrop, onDragOver, onDragStart
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
             onDelete={onDeleteTask}
-            onEditStart={onEditStart} // Novo handler para iniciar a edição
+            onEditStart={onEditStart}
           />
         ))}
         <div
@@ -164,23 +156,17 @@ function KanbanColumn({ title, tasks, columnKey, onDrop, onDragOver, onDragStart
 
 // ===========================================
 // Componente principal do Kanban
-// Adiciona lógica de edição
 // ===========================================
 export function KanbanBoard({ projectId }) {
   const numericProjectId = parseInt(projectId, 10);
-  const [columns, setColumns] = useState(getKanbanData(numericProjectId));
 
-  // Controle do Formulário de Adição
+  const [columns, setColumns] = useState({ 'to-do': [], 'in-progress': [], 'done': [] });
+  const [loading, setLoading] = useState(true);
+  const [usingFallback, setUsingFallback] = useState(false);
+
   const [isAddFormVisible, setIsAddFormVisible] = useState(false);
   const [targetColumnForNewTask, setTargetColumnForNewTask] = useState('to-do');
-
-  // NOVO: Controle da Tarefa de Edição
-  const [editingTask, setEditingTask] = useState(null); // Armazena o objeto da tarefa sendo editada
-
-  // Recarrega os dados do kanban quando o projectId mudar
-  useEffect(() => {
-    setColumns(getKanbanData(numericProjectId));
-  }, [numericProjectId]);
+  const [editingTask, setEditingTask] = useState(null);
 
   const columnTitles = [
     { key: 'to-do', title: 'A Fazer' },
@@ -188,42 +174,71 @@ export function KanbanBoard({ projectId }) {
     { key: 'done', title: 'Concluído' },
   ];
 
-  // ===========================================
-  // Lógica de Edição (Novo)
-  // ===========================================
+  // Busca tarefas da API
+  const fetchTasks = async () => {
+    try {
+      const response = await fetch(`${API_URL}?projectId=${numericProjectId}`);
 
-  // Inicia a edição
+      if (!response.ok) {
+        throw new Error('API falhou');
+      }
+
+      const tasks = await response.json();
+
+      // Organiza tarefas por coluna
+      const organized = {
+        'to-do': tasks.filter(t => t.column === 'to-do'),
+        'in-progress': tasks.filter(t => t.column === 'in-progress'),
+        'done': tasks.filter(t => t.column === 'done'),
+      };
+
+      setColumns(organized);
+      setUsingFallback(false);
+      console.log('✅ Tarefas carregadas da API:', tasks.length);
+    } catch (err) {
+      // Fallback: usa dados locais
+      const localData = getKanbanData(numericProjectId);
+      setColumns(localData);
+      setUsingFallback(true);
+      console.warn('⚠️ Usando tarefas locais:', err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Carrega tarefas ao montar e quando projectId muda
+  useEffect(() => {
+    fetchTasks();
+
+    // Auto-refresh a cada 3 segundos
+    const intervalId = setInterval(fetchTasks, 3000);
+
+    return () => clearInterval(intervalId);
+  }, [numericProjectId]);
+
+  // Handlers
   const handleEditStart = (task) => {
     setEditingTask(task);
   };
 
-  // Salva as alterações
-  const handleEditTask = (updatedTaskData) => {
-    setColumns(prevColumns => {
-      const newColumns = { ...prevColumns };
-      const columnKey = updatedTaskData.column;
+  const handleEditTask = async (updatedTaskData) => {
+    try {
+      const response = await fetch(`${API_URL}/${updatedTaskData.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedTaskData)
+      });
 
-      const columnTasks = newColumns[columnKey] || [];
-
-      const taskIndex = columnTasks.findIndex(task => task.id === updatedTaskData.id);
-
-      if (taskIndex !== -1) {
-        // Atualiza a tarefa com os novos dados
-        columnTasks[taskIndex] = {
-          ...columnTasks[taskIndex],
-          ...updatedTaskData,
-        };
+      if (response.ok) {
+        await fetchTasks(); // Recarrega tarefas
       }
+    } catch (err) {
+      console.error('Erro ao editar tarefa:', err);
+    }
 
-      return newColumns;
-    });
-    setEditingTask(null); // Fecha o modal de edição
+    setEditingTask(null);
   };
 
-
-  // ===========================================
-  // Handlers D&D (Mantidos)
-  // ===========================================
   const handleDragStart = (e, taskId, sourceColumn) => {
     e.dataTransfer.setData("taskId", taskId.toString());
     e.dataTransfer.setData("sourceColumn", sourceColumn);
@@ -238,7 +253,7 @@ export function KanbanBoard({ projectId }) {
     e.preventDefault();
   }
 
-  const handleDrop = (e, targetColumnKey) => {
+  const handleDrop = async (e, targetColumnKey) => {
     e.preventDefault();
 
     const taskId = parseInt(e.dataTransfer.getData("taskId"), 10);
@@ -246,84 +261,81 @@ export function KanbanBoard({ projectId }) {
 
     if (sourceColumnKey === targetColumnKey) return;
 
-    setColumns(prevColumns => {
-      const newColumns = JSON.parse(JSON.stringify(prevColumns));
+    try {
+      const response = await fetch(`${API_URL}/${taskId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ column: targetColumnKey })
+      });
 
-      const sourceTasks = newColumns[sourceColumnKey] || [];
-      const taskIndex = sourceTasks.findIndex(task => task.id === taskId);
-
-      if (taskIndex === -1) return prevColumns;
-
-      const [movedTask] = sourceTasks.splice(taskIndex, 1);
-
-      movedTask.column = targetColumnKey;
-
-      newColumns[targetColumnKey] = newColumns[targetColumnKey] || [];
-      newColumns[targetColumnKey].push(movedTask);
-
-      return newColumns;
-    });
+      if (response.ok) {
+        await fetchTasks(); // Recarrega tarefas
+      }
+    } catch (err) {
+      console.error('Erro ao mover tarefa:', err);
+    }
   };
 
-  // ===========================================
-  // Handlers Adição/Exclusão (Adaptados)
-  // ===========================================
   const handleShowAddForm = (columnKey) => {
     setTargetColumnForNewTask(columnKey);
     setIsAddFormVisible(true);
   }
 
-  const handleAddTask = (newTaskData) => {
-
-    setColumns(prevColumns => {
-      const newColumns = { ...prevColumns };
-
-      let maxId = 0;
-      Object.keys(newColumns).forEach(colKey => {
-        newColumns[colKey].forEach(task => {
-          if (task.id > maxId) {
-            maxId = task.id;
-          }
-        });
+  const handleAddTask = async (newTaskData) => {
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: numericProjectId,
+          ...newTaskData
+        })
       });
 
-      const newId = maxId + 1;
+      if (response.ok) {
+        await fetchTasks(); // Recarrega tarefas
+      }
+    } catch (err) {
+      console.error('Erro ao criar tarefa:', err);
+    }
 
-      const newTask = {
-        id: newId,
-        projectId: numericProjectId,
-        title: newTaskData.title,
-        description: newTaskData.description,
-        column: newTaskData.column,
-        tags: newTaskData.tags,
-      };
-
-      newColumns[newTask.column] = [...(newColumns[newTask.column] || []), newTask];
-
-      return newColumns;
-    });
     setIsAddFormVisible(false);
   }
 
-
-  const handleDeleteTask = (taskId, columnKey) => {
+  const handleDeleteTask = async (taskId, columnKey) => {
     if (!window.confirm("Tem certeza que deseja deletar esta tarefa?")) {
       return;
     }
 
-    setColumns(prevColumns => {
-      const newColumns = { ...prevColumns };
-      const columnTasks = newColumns[columnKey] || [];
+    try {
+      const response = await fetch(`${API_URL}/${taskId}`, {
+        method: 'DELETE'
+      });
 
-      newColumns[columnKey] = columnTasks.filter(task => task.id !== taskId);
-
-      return newColumns;
-    });
+      if (response.ok) {
+        await fetchTasks(); // Recarrega tarefas
+      }
+    } catch (err) {
+      console.error('Erro ao deletar tarefa:', err);
+    }
   };
 
+  if (loading) {
+    return (
+      <div className={styles.kanbanBoard} style={{ textAlign: 'center', padding: '50px' }}>
+        <p>Carregando tarefas...</p>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.kanbanBoard}>
+      {usingFallback && (
+        <div style={{ textAlign: 'center', padding: '10px', background: '#fff3cd', marginBottom: '20px', borderRadius: '4px' }}>
+          ⚠️ API offline - usando dados locais
+        </div>
+      )}
+
       {columnTitles.map(col => (
         <KanbanColumn
           key={col.key}
@@ -336,11 +348,10 @@ export function KanbanBoard({ projectId }) {
           onDragEnd={handleDragEnd}
           onShowForm={handleShowAddForm}
           onDeleteTask={handleDeleteTask}
-          onEditStart={handleEditStart} // Passando o novo handler
+          onEditStart={handleEditStart}
         />
       ))}
 
-      {/* Renderiza o Formulário de Adição */}
       {isAddFormVisible && (
         <TaskForm
           onSubmit={handleAddTask}
@@ -350,7 +361,6 @@ export function KanbanBoard({ projectId }) {
         />
       )}
 
-      {/* NOVO: Renderiza o Formulário de Edição */}
       {editingTask && (
         <TaskForm
           onSubmit={handleEditTask}

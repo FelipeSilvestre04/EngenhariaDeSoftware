@@ -4,6 +4,7 @@ import { LLMRoutes } from "./modules/llm/index.js";
 import { CalendarRoute } from "./modules/calendar/routes/CalendarRoute.js";
 import { AuthRoute } from "./modules/auth/auth.route.js";
 import ProjectsRoute from "./modules/projects/projects.routes.js";
+import TasksRoute from "./modules/tasks/tasks.routes.js";
 
 export class AppRouter {
     constructor(config) {
@@ -16,12 +17,14 @@ export class AppRouter {
         const llm = new LLMRoutes(this.config, calendar.controller.service);
         const auth = new AuthRoute(this.config);
         const projects = ProjectsRoute;
+        const tasks = TasksRoute;
 
         return {
             llm: llm,
             calendar: calendar,
             auth: auth,
             projects: projects,
+            tasks: tasks,
         };
     }
 
@@ -85,5 +88,6 @@ export class AppRouter {
         app.use('/llm', this.llmInitMiddleware(), this.modules.llm.getRouter());
         app.use('/auth', this.modules.auth.getRouter());
         app.use('/api/projects', this.modules.projects);
+        app.use('/api/tasks', this.modules.tasks);
     }
 }
