@@ -3,22 +3,25 @@ import express from 'express';
 import { LLMRoutes } from "./modules/llm/index.js";
 import { CalendarRoute } from "./modules/calendar/routes/CalendarRoute.js";
 import { AuthRoute } from "./modules/auth/auth.route.js";
+import ProjectsRoute from "./modules/projects/projects.routes.js";
 
 export class AppRouter {
-    constructor(config){
+    constructor(config) {
         this.config = config;
         this.modules = this.initializeModules();
     }
 
-    initializeModules(){
+    initializeModules() {
         const calendar = new CalendarRoute(this.config);
         const llm = new LLMRoutes(this.config, calendar.controller.service);
         const auth = new AuthRoute(this.config);
-        
+        const projects = ProjectsRoute;
+
         return {
             llm: llm,
             calendar: calendar,
             auth: auth,
+            projects: projects,
         };
     }
 
@@ -35,7 +38,7 @@ export class AppRouter {
             if (!isPublicRoute) {
                 const userId = this.getUserIdFromCookie(req);
                 console.log(`🔍 UserId do cookie: ${userId}`);
-                
+
                 if (userId) {
                     try {
                         await this.modules.calendar.controller.service.initialize(userId);
@@ -70,8 +73,8 @@ export class AppRouter {
     setupRoutes(app) {
         // Health check
         app.get('/health', (req, res) => {
-            res.json({ 
-                status: 'ok', 
+            res.json({
+                status: 'ok',
                 message: 'Server is running',
                 timestamp: new Date().toISOString()
             });
@@ -81,5 +84,6 @@ export class AppRouter {
         app.use('/calendar', this.calendarInitMiddleware(), this.modules.calendar.getRouter());
         app.use('/llm', this.llmInitMiddleware(), this.modules.llm.getRouter());
         app.use('/auth', this.modules.auth.getRouter());
+        app.use('/api/projects', this.modules.projects);
     }
 }
