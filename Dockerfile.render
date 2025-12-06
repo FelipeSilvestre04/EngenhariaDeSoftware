@@ -19,49 +19,78 @@ COPY src/ ./src/
 COPY --from=frontend-builder /app/client/dist /app/client/dist
 COPY --from=frontend-builder /app/client/dist /usr/share/nginx/html
 
-# Criar configuração nginx para produção (localhost em vez de backend)
-RUN sed 's/backend:10000/localhost:10000/g' > /tmp/nginx.conf << 'EOF' && \
+# Criar configuração nginx para produção
+RUN cat > /etc/nginx/http.d/default.conf << 'EOF'
 server {
     listen 80;
     server_name _;
     root /usr/share/nginx/html;
     index index.html;
+    
     gzip on;
     gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
-    location / {
+
+    # Proxy para rotas da API
+    location /api {
         proxy_pass http://localhost:10000;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_cache_bypass \$http_upgrade;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
         proxy_read_timeout 300s;
-        proxy_connect_timeout 75s;
     }
-    location ~ ^/(calendar/auth|calendar/oauth2callback)\$ {
+
+    # Proxy para rotas de LLM
+    location /llm {
         proxy_pass http://localhost:10000;
         proxy_http_version 1.1;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 300s;
     }
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)\$ {
+
+    # Proxy para rotas de auth
+    location /auth {
+        proxy_pass http://localhost:10000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Proxy para rotas de calendar
+    location /calendar {
+        proxy_pass http://localhost:10000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Proxy para health check
+    location /health {
+        proxy_pass http://localhost:10000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+    }
+
+    # Cache para assets estáticos
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
         expires 1y;
         add_header Cache-Control "public, immutable";
     }
-    location = /index.html {
-        add_header Cache-Control "no-cache, no-store, must-revalidate";
-    }
+
+    # SPA routing - catch-all para o frontend
     location / {
-        try_files \$uri \$uri/ /index.html;
+        try_files $uri $uri/ /index.html;
     }
 }
 EOF
-RUN mv /tmp/nginx.conf /etc/nginx/http.d/default.conf
 
 RUN mkdir -p /app/src/modules/calendar/storage
 RUN echo '#!/bin/sh' > /app/start.sh && \
