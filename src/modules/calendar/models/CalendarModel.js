@@ -216,4 +216,104 @@ export class CalendarModel {
         this.calendar = null;
         this.currentUserId = null;
     }
+
+    // ========================================
+    // GMAIL METHODS
+    // ========================================
+
+    async listEmails(maxResults = 10) {
+        if (!this.oauth2Client.credentials || !this.oauth2Client.credentials.access_token) {
+            throw new Error("Usuário não autenticado! Autenticar primeiro.");
+        }
+
+        try {
+            const gmail = google.gmail({ version: 'v1', auth: this.oauth2Client });
+
+            // Lista IDs das mensagens
+            const response = await gmail.users.messages.list({
+                userId: 'me',
+                maxResults: maxResults,
+                labelIds: ['INBOX']
+            });
+
+            const messages = response.data.messages || [];
+
+            if (messages.length === 0) {
+                return [];
+            }
+
+            // Busca detalhes de cada mensagem
+            const detailedMessages = await Promise.all(
+                messages.map(async (message) => {
+                    const details = await gmail.users.messages.get({
+                        userId: 'me',
+                        id: message.id,
+                        format: 'metadata',
+                        metadataHeaders: ['From', 'Subject', 'Date']
+                    });
+
+                    const headers = details.data.payload.headers;
+                    const from = headers.find(h => h.name === 'From')?.value || '';
+                    const subject = headers.find(h => h.name === 'Subject')?.value || '(sem assunto)';
+                    const date = headers.find(h => h.name === 'Date')?.value || '';
+
+                    return {
+                        id: message.id,
+                        from,
+                        subject,
+                        date,
+                        snippet: details.data.snippet || ''
+                    };
+                })
+            );
+
+            return detailedMessages;
+        } catch (error) {
+            throw new Error(`Não foi possível listar emails! Erro: ${error.message}`);
+        }
+    }
+
+    async sendEmail({ to, subject, body }) {
+        if (!this.oauth2Client.credentials || !this.oauth2Client.credentials.access_token) {
+            throw new Error("Usuário não autenticado! Autenticar primeiro.");
+        }
+
+        try {
+            const gmail = google.gmail({ version: 'v1', auth: this.oauth2Client });
+
+            // Criar mensagem no formato RFC 2822
+            const emailLines = [
+                `To: ${to}`,
+                `Subject: ${subject}`,
+                'Content-Type: text/plain; charset=utf-8',
+                '',
+                body
+            ];
+            const email = emailLines.join('\r\n');
+
+            // Codificar em base64url (sem padding)
+            const encodedEmail = Buffer.from(email)
+                .toString('base64')
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=+$/, '');
+
+            // Enviar email
+            const response = await gmail.users.messages.send({
+                userId: 'me',
+                requestBody: {
+                    raw: encodedEmail
+                }
+            });
+
+            return {
+                success: true,
+                messageId: response.data.id,
+                to,
+                subject
+            };
+        } catch (error) {
+            throw new Error(`Não foi possível enviar email! Erro: ${error.message}`);
+        }
+    }
 }

@@ -1,37 +1,56 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
 import { LoginPage } from './features/login-page/login-page';
 import ProjectSidebar from './features/ProjectSidebar/ProjectSidebar';
-import Header from './features/header/header'; 
+import Header from './features/header/header';
 import { ChatWindow } from './features/chat/ChatWindow';
-import { GoogleAuth } from './features/auth/GoogleAuth'; 
+import { GoogleAuth } from './features/auth/GoogleAuth';
+import { EmailDraftBox } from './features/EmailDraft/EmailDraftBox';
 // Note: `Routes` and `Route` are already imported above; duplicate import removed
 import ProjectPage from './features/ProjectPage/ProjectPage'
 import './App.css';
 
 function DashboardLayout({ onLogout, theme, toggleTheme, user }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  
+  const [emailDraft, setEmailDraft] = useState(null);
+
+  const handleEmailDraftCreated = (draft) => {
+    console.log('📧 [App] Rascunho de email recebido da LLM:', draft);
+    setEmailDraft(draft);
+  };
+
+  const handleDraftCleared = () => {
+    setEmailDraft(null);
+  };
+
   return (
     <div className={`App-Wrapper ${theme}`}>
-      <ProjectSidebar 
-        isOpen={isSidebarOpen} 
-        onToggleClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+      <ProjectSidebar
+        isOpen={isSidebarOpen}
+        onToggleClick={() => setIsSidebarOpen(!isSidebarOpen)}
       />
       <main className="Main-Content">
-        <Header onThemeToggle={toggleTheme} theme={theme} onLogout={onLogout} user={user}/>
-        <div className="App-Container"> 
+        <Header onThemeToggle={toggleTheme} theme={theme} onLogout={onLogout} user={user} />
+        <div className="App-Container">
           <Routes>
             <Route index element={
               <>
-                <ChatWindow theme={theme}/>
+                <ChatWindow
+                  theme={theme}
+                  onEmailDraftCreated={handleEmailDraftCreated}
+                />
                 <div className="calendar-view-container">
                   <GoogleAuth />
                 </div>
+                {/* EmailDraftBox agora é componente flutuante independente */}
+                <EmailDraftBox
+                  initialDraft={emailDraft}
+                  onDraftCleared={handleDraftCleared}
+                />
               </>
-            }/>
-            <Route path="project/:projectId" element={<ProjectPage theme={theme}/>} />
+            } />
+            <Route path="project/:projectId" element={<ProjectPage theme={theme} />} />
           </Routes>
         </div>
       </main>
@@ -42,13 +61,13 @@ function DashboardLayout({ onLogout, theme, toggleTheme, user }) {
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true); 
+  const [isLoading, setIsLoading] = useState(true);
   const [theme, setTheme] = useState('dark');
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch('/auth/check'); 
+        const res = await fetch('/auth/check');
         const data = await res.json();
 
         if (data.authenticated) {
@@ -86,32 +105,32 @@ function App() {
   };
 
   if (isLoading) {
-    return <div style={{height: '100vh', background: '#0D0D0D', color: 'white', display:'flex', justifyContent:'center', alignItems:'center'}}>Carregando SecretarIA...</div>;
+    return <div style={{ height: '100vh', background: '#0D0D0D', color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>Carregando SecretarIA...</div>;
   }
 
   return (
-      <Routes>
-        <Route 
-          path="/login" 
-          element={!isAuthenticated ? <LoginPage /> : <Navigate to="/" />} 
-        />
+    <Routes>
+      <Route
+        path="/login"
+        element={!isAuthenticated ? <LoginPage /> : <Navigate to="/" />}
+      />
 
-        <Route 
-          path="/*" 
-          element={
-            isAuthenticated ? (
-              <DashboardLayout 
-                onLogout={handleLogout} 
-                theme={theme} 
-                toggleTheme={toggleTheme}
-                user={user} 
-              />
-            ) : (
-              <Navigate to="/login" />
-            )
-          } 
-        />
-      </Routes>
+      <Route
+        path="/*"
+        element={
+          isAuthenticated ? (
+            <DashboardLayout
+              onLogout={handleLogout}
+              theme={theme}
+              toggleTheme={toggleTheme}
+              user={user}
+            />
+          ) : (
+            <Navigate to="/login" />
+          )
+        }
+      />
+    </Routes>
   );
 }
 

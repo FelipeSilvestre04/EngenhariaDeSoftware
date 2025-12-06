@@ -1,19 +1,19 @@
 /* client/src/App.css */
 :root {
-  --bg-primary: #ffffff;      
-  --bg-secondary: #efefef;    
+  --bg-primary: #ffffff;
+  --bg-secondary: #efefef;
   --bg-sidebar: #f7f7f9;
   --bg-chat-bubble: #f1f0f0;
-  --text-primary: #1a1a1a;    
-  --text-secondary: #4a4063;  
-  --border-color: #e0e0e0;     
-  --card-title-bg: #e6e0f0;  
+  --text-primary: #1a1a1a;
+  --text-secondary: #4a4063;
+  --border-color: #e0e0e0;
+  --card-title-bg: #e6e0f0;
 
   --input-button-bg: #c69ff9e6;
 
-  --scrollbar-track: #f1f1f1; 
+  --scrollbar-track: #f1f1f1;
   --scrollbar-thumb: #c1c1c1;
-  
+
   --event-dot-color: #525217;
 
   --box-shadow-color: rgba(0, 0, 0, 0.3);
@@ -31,8 +31,8 @@
 
   --input-button-bg: #553b7a;
 
-  --scrollbar-track: hsl(0, 0%, 6%);  
-  --scrollbar-thumb: #555555;  
+  --scrollbar-track: hsl(0, 0%, 6%);
+  --scrollbar-thumb: #555555;
 
   --event-dot-color: #F9FA76;
 
@@ -42,7 +42,7 @@
 body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  overflow: hidden; 
+  overflow: hidden;
 }
 
 .main-container {
@@ -57,10 +57,25 @@ body {
   padding: 2rem;
   border-right: 1px solid var(--border-color);
 }
-.project-list-container h2 { margin-top: 0; }
-.project-list-container ul { list-style: none; padding: 0; }
-.project-list-container li { padding: 0.8rem; cursor: pointer; border-radius: 6px; }
-.project-list-container li:hover { background-color: #e9ecef; }
+
+.project-list-container h2 {
+  margin-top: 0;
+}
+
+.project-list-container ul {
+  list-style: none;
+  padding: 0;
+}
+
+.project-list-container li {
+  padding: 0.8rem;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.project-list-container li:hover {
+  background-color: #e9ecef;
+}
 
 /* --- Coluna do Chat --- */
 .chat-window-container {
@@ -69,23 +84,28 @@ body {
   display: flex;
   flex-direction: column;
 }
-.chat-window-container h2 { margin-top: 0; }
+
+.chat-window-container h2 {
+  margin-top: 0;
+}
+
 .messages-area {
-  flex-grow: 1;        
-  background-color: transparent; 
+  flex-grow: 1;
+  background-color: transparent;
   border: none;
   border-radius: 8px;
   padding: 1rem;
-  overflow-y: auto;     
+  overflow-y: auto;
 
-  min-height: 0;        
-   
-  display: flex;       
-  flex-direction: column; 
+  min-height: 0;
 
-  
+  display: flex;
+  flex-direction: column;
+
+
   color: var(--text-primary);
 }
+
 .input-area {
   margin-top: 1rem;
   display: flex;
@@ -93,6 +113,7 @@ body {
   border-radius: 8px;
   padding: 0.5rem;
 }
+
 .input-area input {
   flex-grow: 1;
   border: none;
@@ -102,6 +123,7 @@ body {
 
   color: var(--text-primary);
 }
+
 .input-area button {
   border: none;
   background-color: var(--input-button-bg);
@@ -117,22 +139,22 @@ body {
   justify-content: center;
 }
 
-.input-area button :hover{
+.input-area button :hover {
   opacity: 0.7;
 }
 
-.send-button-img{
+.send-button-img {
   width: 20x;
   height: 20px;
 
-  object-fit: contain; 
+  object-fit: contain;
 }
 
 /* --- Coluna do Calendário --- */
 .calendar-view-container {
-  flex-grow: 0;     
-  flex-shrink: 0;   
-  flex-basis: 40vh; 
+  flex-grow: 0;
+  flex-shrink: 0;
+  flex-basis: 40vh;
 
   padding: 1rem;
   display: flex;
@@ -143,9 +165,9 @@ body {
 
 
 .calendar-wrapper {
-  flex-grow: 0; 
-  position: relative; 
-  
+  flex-grow: 0;
+  position: relative;
+
 }
 
 /* --- Estilos para o React Big Calendar --- */
@@ -158,12 +180,14 @@ body {
   transition: background-color 0.2s;
 
 }
-.rbc-toolbar button:hover { 
+
+.rbc-toolbar button:hover {
   background-color: var(--bg-secondary);
 }
+
 .rbc-toolbar .rbc-active {
   background-color: var(--bg-secondary);
-  box-shadow: inset 0 3px 5px rgba(0,0,0,.125);
+  box-shadow: inset 0 3px 5px rgba(0, 0, 0, .125);
 }
 
 .CalendarComponent.react-calendar {
@@ -171,7 +195,7 @@ body {
   background-color: var(--bg-secondary);
   border: var(--scrollbar-thumb) 2px solid;
   border-radius: 8px;
-  font-family: inherit; 
+  font-family: inherit;
 }
 
 .react-calendar__navigation button {
@@ -204,29 +228,29 @@ body {
 
 .react-calendar__tile:enabled:hover,
 .react-calendar__tile:enabled:focus {
-  background-color: var(--bg-sidebar); 
+  background-color: var(--bg-sidebar);
   color: var(--text-primary);
   border-radius: 6px;
 }
 
 .react-calendar__tile--active {
   background: var(--input-button-bg) !important;
-  color: var(--bg-primary) !important; 
+  color: var(--bg-primary) !important;
   border-radius: 6px;
 }
 
 .react-calendar__tile--now {
-  background: #cf50f2 !important; 
-  
-  color: #1a1a1a !important; 
-  
+  background: #cf50f2 !important;
+
+  color: #1a1a1a !important;
+
   border-radius: 6px;
-  font-weight: bold; 
+  font-weight: bold;
 }
 
 .react-calendar__tile--now:enabled:hover,
 .react-calendar__tile--now:enabled:focus {
-  background: hsla(287, 86%, 63%, 0.67) !important; 
+  background: hsla(287, 86%, 63%, 0.67) !important;
   color: #1a1a1a !important;
 }
 
@@ -242,9 +266,9 @@ body {
 .event-dot {
   height: 8px;
   width: 8px;
-  background-color: var(--event-dot-color); 
+  background-color: var(--event-dot-color);
   border-radius: 50%;
-  margin: 2px auto 0; 
+  margin: 2px auto 0;
 }
 
 .message {
@@ -259,13 +283,13 @@ body {
 
 .ai-message {
   background-color: var(--bg-chat-bubble);
-  align-self: flex-start; 
+  align-self: flex-start;
   border-bottom-left-radius: 4px;
 }
 
 .user-message {
-  background-color: var(--input-button-bg); 
-  align-self: flex-end; 
+  background-color: var(--input-button-bg);
+  align-self: flex-end;
   border-bottom-right-radius: 4px;
 
   transition: all 0.2s ease-in-out;
@@ -275,28 +299,28 @@ body {
 
 .App-Wrapper {
   display: flex;
-  flex-direction: row; 
-  height: 100vh; 
+  flex-direction: row;
+  height: 100vh;
   background-color: var(--bg-primary);
 
   transition: all 0.2s ease-in-out;
 }
 
 .Main-Content {
-  flex: 1; 
+  flex: 1;
   display: flex;
-  flex-direction: column; 
-  height: 100vh; 
-  overflow-y: auto; 
+  flex-direction: column;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .App-Container {
-  display: flex; 
+  display: flex;
   justify-content: space-between;
   /*align-items: flex-start;*/
   padding: 24px;
-  gap: 20px; 
-  flex: 1; 
+  gap: 20px;
+  flex: 1;
 
   min-height: 0;
 }
@@ -313,11 +337,11 @@ body {
 .messages-area::-webkit-scrollbar-thumb {
   background-color: var(--scrollbar-thumb);
   border-radius: 10px;
-  border: 2px solid var(--scrollbar-track); 
+  border: 2px solid var(--scrollbar-track);
 }
 
 .messages-area::-webkit-scrollbar-thumb:hover {
-  background-color: #888; 
+  background-color: #888;
 }
 
 .invert {
@@ -334,7 +358,7 @@ body {
   font-size: 14px;
   font-weight: 520;
   cursor: pointer;
-  margin-top: 1rem; 
+  margin-top: 1rem;
 
   transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, border-color 0.2s ease-in-out;
 }
@@ -350,31 +374,29 @@ body {
   justify-content: flex-end;
   text-align: center;
   padding: 8rem 2rem 2rem 2rem;
-  color: var(--text-primary); 
+  color: var(--text-primary);
 }
 
 .empty-chat-title {
-  font-size: 2.2rem; 
+  font-size: 2.2rem;
   font-weight: 600;
   margin-top: 3rem;
   margin-bottom: 1.5rem;
 
   width: 100%;
-  color: var(--text-primary); 
+  color: var(--text-primary);
 }
 
 .empty-chat-title {
-  font-size: 2.2rem; 
+  font-size: 2.2rem;
   font-weight: 600;
   margin-top: 3rem;
 
-  background-image: radial-gradient(
-    circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-    #cf50f2,  
-    #553b7a   
-  );
+  background-image: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      #cf50f2,
+      #553b7a);
 
   -webkit-background-clip: text;
   background-clip: text;
-  color: transparent; 
+  color: transparent;
 }

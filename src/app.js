@@ -5,6 +5,7 @@ import { CalendarRoute } from "./modules/calendar/routes/CalendarRoute.js";
 import { AuthRoute } from "./modules/auth/auth.route.js";
 import ProjectsRoute from "./modules/projects/projects.routes.js";
 import TasksRoute from "./modules/tasks/tasks.routes.js";
+import { EmailRoutes } from "./modules/email/email.routes.js";
 
 export class AppRouter {
     constructor(config) {
@@ -18,6 +19,7 @@ export class AppRouter {
         const auth = new AuthRoute(this.config);
         const projects = ProjectsRoute;
         const tasks = TasksRoute;
+        const email = new EmailRoutes(calendar.controller.service);
 
         return {
             llm: llm,
@@ -25,6 +27,7 @@ export class AppRouter {
             auth: auth,
             projects: projects,
             tasks: tasks,
+            email: email,
         };
     }
 
@@ -89,5 +92,6 @@ export class AppRouter {
         app.use('/auth', this.modules.auth.getRouter());
         app.use('/api/projects', this.modules.projects);
         app.use('/api/tasks', this.modules.tasks);
+        app.use('/api/email', this.calendarInitMiddleware(), this.modules.email.getRouter());
     }
 }

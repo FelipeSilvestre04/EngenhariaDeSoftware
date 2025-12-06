@@ -366,6 +366,62 @@ Status: ${columnTitles[updatedTask.column]}`;
             }
         );
 
+        // ========================================
+        // GMAIL TOOLS
+        // ========================================
+
+        const listEmailsTool = tool(
+            async ({ maxResults = 10 }) => {
+                try {
+                    const emails = await this.calendarService.listEmails(maxResults);
+
+                    if (!emails || emails.length === 0) {
+                        return "Nenhum email encontrado na caixa de entrada.";
+                    }
+
+                    const formattedEmails = emails.map((email, index) => {
+                        return `${index + 1}. De: ${email.from}
+   Assunto: ${email.subject}
+   Data: ${email.date}
+   Prévia: ${email.snippet}`;
+                    }).join('\n\n');
+
+                    return `Encontrei ${emails.length} email(s) na caixa de entrada:\n\n${formattedEmails}`;
+                } catch (error) {
+                    return `Erro ao listar emails: ${error.message}`;
+                }
+            },
+            {
+                name: "list_emails",
+                description: "Lista os emails mais recentes da caixa de entrada do Gmail. Use quando o usuário quiser ver seus emails ou verificar mensagens recebidas.",
+                schema: z.object({
+                    maxResults: z.number().optional().default(10).describe("Número máximo de emails a retornar (padrão: 10)")
+                }),
+            }
+        );
+
+        const createEmailDraftTool = tool(
+            async ({ to, subject, body }) => {
+                try {
+                    // Retorna no formato de comando que o ChatWindow detecta
+                    return `/email ${to} | ${subject} | ${body}
+
+Rascunho de email criado com sucesso!`;
+                } catch (error) {
+                    return `Erro ao criar rascunho de email: ${error.message}`;
+                }
+            },
+            {
+                name: "create_email_draft",
+                description: "Cria rascunho de email. Use quando usuário pedir para criar/gerar/compor email.",
+                schema: z.object({
+                    to: z.string().describe("Email do destinatário"),
+                    subject: z.string().describe("Assunto"),
+                    body: z.string().describe("Corpo do email")
+                }),
+            }
+        );
+
         this.tools.push(
             getCalendarEventsTool,
             createEventTool,
@@ -377,7 +433,9 @@ Status: ${columnTitles[updatedTask.column]}`;
             listTasksTool,
             createTaskTool,
             updateTaskTool,
-            deleteTaskTool
+            deleteTaskTool,
+            listEmailsTool,
+            createEmailDraftTool
         );
     }
 
@@ -419,36 +477,35 @@ Status: ${columnTitles[updatedTask.column]}`;
             timestamp: now.getTime()
         };
 
-        const systemPrompt = `Você é um assistente que ajuda os usuários a gerenciar e consultar seus calendários do Google Calendar. Você também
-    pode criar novos projetos quando solicitado. Utilize as ferramentas disponíveis para buscar eventos e criar novos eventos ou projetos conforme necessário.
+        const systemPrompt = `Você é um assistente que ajuda os usuários a gerenciar seus calendários e emails.
 
-    INFORMAÇÕES DE DATA E HORA ATUAL:
-    - Data e hora completa: ${dateTimeInfo.dataCompleta}
-    - Data ISO 8601: ${dateTimeInfo.dataISO}
-    - Dia da semana: ${dateTimeInfo.diaSemana}
-
+    DATA/HORA ATUAL: ${dateTimeInfo.dataCompleta}
     PROJETO: ${projectName}
 
-    INSTRUÇÕES IMPORTANTES:
-    1. Use estas informações para calcular datas relativas (amanhã, próxima semana, etc)
-    2. Ao criar eventos, SEMPRE use o formato ISO 8601 para startDateTime e endDateTime
-    3. Se o usuário não especificar hora, use um horário padrão (ex: 09:00)
-    4. Se o usuário não especificar duração, use 1 hora de duração padrão
-    5. Utilize as ferramentas disponíveis para buscar eventos e criar novos eventos
-    6. Se você adicionar um novo evento, confirme os detalhes ao usuário
-    7. **ATENÇÃO:** Ao chamar a ferramenta de criação de evento, envie APENAS os campos: summary, description, location, startDateTime, endDateTime (todos como string). NÃO envie campos extras como id, status, start, end, htmlLink, ou objetos aninhados. Siga exatamente o schema abaixo:
-
-    {
-      "summary": "Título do evento",
-      "description": "Descrição do evento",
-      "location": "Local do evento",
-      "startDateTime": "2025-10-21T14:00:00-03:00",
-      "endDateTime": "2025-10-21T15:00:00-03:00"
-    }
-
-    Exemplo de formato correto para datas:
-    - Início: "2025-10-21T14:00:00-03:00"
-    - Fim: "2025-10-21T15:00:00-03:00"`;
+    🚨 REGRA CRÍTICA PARA EMAILS 🚨
+    
+    Quando usuário pedir email, você DEVE começar sua resposta EXATAMENTE com o comando /email:
+    
+    FORMATO OBRIGATÓRIO:
+    /email destinatario@exemplo.com | Assunto | Corpo
+    
+    EXEMPLOS CORRETOS:
+    
+    Usuário: "crie email para joao@teste.com sobre reunião"
+    Você: /email joao@teste.com | Reunião | Olá João, gostaria de marcar uma reunião.
+    
+    Pronto! Criei o rascunho.
+    
+    Usuário: "mande email para maria@empresa.com dizendo olá"
+    Você: /email maria@empresa.com | Olá | Olá Maria, tudo bem?
+    
+    Email criado!
+    
+    ⚠️ IMPORTANTE: A primeira linha da sua resposta DEVE ser o comando /email. Não descreva o que fez, EXECUTE o comando primeiro.
+    
+    OUTRAS INSTRUÇÕES:
+    - Eventos: use ISO 8601 para datas
+    - Use ferramentas disponíveis para calendário e projetos`;
 
         const userPrompt = prompt;
         return await this.processConsulta(systemPrompt, userPrompt, name, projectName);
