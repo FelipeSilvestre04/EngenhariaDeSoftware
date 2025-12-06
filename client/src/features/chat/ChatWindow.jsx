@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import styles from './ChatWindow.module.css';
 import sendpath from '../../assets/send.svg';
 
-export function ChatWindow( {theme, projectName} ) {
+export function ChatWindow({ theme, projectName, onEmailDraftCreated }) {
 
   const [messages, setMessages] = useState([]);
 
@@ -15,16 +15,56 @@ export function ChatWindow( {theme, projectName} ) {
 
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    
+
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
-    
+
     e.currentTarget.style.setProperty('--mouse-x', `${x}%`);
     e.currentTarget.style.setProperty('--mouse-y', `${y}%`);
   };
 
   const handleSubmit = async () => {
     if (!input) return; // Não faz nada se o input estiver vazio
+
+    // Detectar comando /email
+    if (input.trim().startsWith('/email')) {
+      console.log('📧 [ChatWindow] Comando /email detectado');
+
+      // Formato: /email destinatario@exemplo.com | Assunto | Corpo da mensagem
+      const parts = input.substring(6).split('|').map(p => p.trim());
+
+      if (parts.length === 3) {
+        const [to, subject, body] = parts;
+
+        // Criar draft diretamente
+        const draft = { to, subject, body };
+        console.log('📧 [ChatWindow] Draft criado via comando:', draft);
+
+        if (onEmailDraftCreated) {
+          onEmailDraftCreated(draft);
+        }
+
+        // Adicionar mensagem de confirmação ao chat
+        const confirmMessage = {
+          id: Date.now(),
+          text: `✅ Rascunho de email criado!\n\nPara: ${to}\nAssunto: ${subject}\n\nO rascunho foi preenchido na caixa de email abaixo.`,
+          sender: 'ai'
+        };
+        setMessages(prevMessages => [...prevMessages, confirmMessage]);
+        setInput('');
+        return;
+      } else {
+        const errorMessage = {
+          id: Date.now(),
+          text: '❌ Formato incorreto. Use: /email destinatario@exemplo.com | Assunto | Corpo da mensagem',
+          sender: 'ai',
+          isError: true
+        };
+        setMessages(prevMessages => [...prevMessages, errorMessage]);
+        setInput('');
+        return;
+      }
+    }
 
     const userMessage = {
       id: Date.now(),
@@ -48,10 +88,46 @@ export function ChatWindow( {theme, projectName} ) {
       if (!res.ok) throw new Error(`Erro na rede: ${res.statusText}`);
 
       const data = await res.json();
+      console.log('📦 [ChatWindow] Dados recebidos da API:', data);
+
+      // Detectar comando /email na resposta da LLM
+      let answerText = data.answer;
+      if (answerText && answerText.includes('/email')) {
+        console.log('📧 [ChatWindow] Comando /email detectado na resposta da LLM');
+
+        // Extrair o comando /email da resposta
+        const emailCommandRegex = /\/email\s+([^\s|]+)\s*\|\s*([^|]+)\s*\|\s*(.+)/;
+        const match = answerText.match(emailCommandRegex);
+
+        if (match) {
+          const [, to, subject, body] = match;
+          const draft = {
+            to: to.trim(),
+            subject: subject.trim(),
+            body: body.trim()
+          };
+
+          console.log('📧 [ChatWindow] Draft extraído da resposta:', draft);
+
+          if (onEmailDraftCreated) {
+            onEmailDraftCreated(draft);
+          }
+
+          // Mostrar mensagem de sucesso bonita
+          answerText = `✅ **Rascunho de email criado com sucesso!**\n\n📧 **Para:** ${draft.to}\n📋 **Assunto:** ${draft.subject}\n\n_O rascunho está disponível na caixa de email abaixo para você revisar e enviar._`;
+        }
+      }
+
+      // Verificar se a resposta contém um rascunho de email (método antigo com hasDraft)
+      if (data.hasDraft && data.draft && onEmailDraftCreated) {
+        console.log('📧 [ChatWindow] Rascunho de email detectado via hasDraft');
+        console.log('📧 [ChatWindow] Draft data:', data.draft);
+        onEmailDraftCreated(data.draft);
+      }
 
       const aiMessage = {
-        id: Date.now() + 1, 
-        text: data.answer,
+        id: Date.now() + 1,
+        text: answerText,
         sender: 'ai'
       };
       setMessages(prevMessages => [...prevMessages, aiMessage]);
@@ -75,7 +151,7 @@ export function ChatWindow( {theme, projectName} ) {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]); 
+  }, [messages]);
 
   // When projectName changes, clear the current chat messages so the UI loads fresh context
   useEffect(() => {
@@ -83,18 +159,18 @@ export function ChatWindow( {theme, projectName} ) {
     setIsLoading(false);
   }, [projectName]);
 
-return (
+  return (
     <div className="chat-window-container">
 
       {messages.length === 0 ? (
 
         <div className="empty-chat-container">
-          <h2 
+          <h2
             className="empty-chat-title"
             onMouseMove={handleMouseMove}>Por onde começamos?</h2>
         </div>
 
-        ) : (
+      ) : (
 
         <>
           <div className="messages-area" ref={messagesAreaRef}>
@@ -115,7 +191,7 @@ return (
               </div>
             )}
 
-            <div ref={messagesEndRef} /> 
+            <div ref={messagesEndRef} />
           </div>
         </>
       )}
@@ -131,10 +207,10 @@ return (
         />
         <button onClick={handleSubmit} disabled={isLoading}>
           {isLoading ? '...' : <img className={`send-button-img ${theme === 'dark' ? 'invert' : ''}`}
-                                    src={sendpath} 
-                                    alt="Enviar"
-            />
-            }
+            src={sendpath}
+            alt="Enviar"
+          />
+          }
         </button>
       </div>
 

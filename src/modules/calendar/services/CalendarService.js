@@ -137,4 +137,26 @@ export class CalendarService {
             throw new Error('Erro ao deslogar!');
         }
     }
+
+    // ========================================
+    // GMAIL METHODS
+    // ========================================
+
+    async listEmails(maxResults = 10) {
+        await this.ensureInitialized();
+        console.log("📧 [CalendarService] Buscando emails...");
+        const emails = await this.model.listEmails(maxResults);
+        console.log(`✅ [CalendarService] ${emails.length} email(s) encontrado(s)`);
+        return emails;
+    }
+
+    async sendEmail({ to, subject, body }) {
+        await this.ensureInitialized();
+        console.log("📤 [CalendarService] Enviando email para:", to);
+
+        const result = await this.model.sendEmail({ to, subject, body });
+
+        console.log("✅ [CalendarService] Email enviado com sucesso!");
+        return result;
+    }
 }
