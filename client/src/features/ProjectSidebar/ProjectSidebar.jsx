@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ProjectCard from '../ProjectCard/ProjectCard';
 import { Link } from 'react-router-dom';
 import styles from './ProjectSidebar.module.css';
@@ -18,6 +18,15 @@ const FALLBACK_PROJECTS = [
   { id: 11, title: 'Projeto Z', color: '#3357ff' }
 ];
 
+const PREDEFINED_COLORS = [
+  '#ff5b5b',
+  '#cf50f2', 
+  '#3357ff', 
+  '#33ff57',
+  '#ffbd33', 
+  '#33ccff', 
+];
+
 function ProjectSidebar({ isOpen, onToggleClick }) {
 
   const [projects, setProjects] = useState(FALLBACK_PROJECTS);
@@ -27,6 +36,13 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
   const [showOptions, setShowOptions] = useState(false);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [selectedProjects, setSelectedProjects] = useState([]);
+
+  /* States para criação de projeto */
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newProjectName, setNewProjectName] = useState('');
+  const [newProjectColor, setNewProjectColor] = useState(PREDEFINED_COLORS[0]);
+
+  const colorInputRef = useRef(null);
 
   // Busca projetos da API ao montar o componente
   useEffect(() => {
@@ -87,7 +103,7 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
     }
   };
 
-  // Confirma a exclusão (Simulação)
+  // Confirma a exclusão
   const handleDeleteConfirm = () => {
     // Aqui você faria a chamada para a API (DELETE)
     console.log("Excluindo projetos:", selectedProjects);
@@ -100,6 +116,39 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
     handleCancelDelete();
   };
 
+  /*Criação de projeto */
+
+  const openCreateModal = () => {
+    setNewProjectName(''); // Limpa o input
+    setNewProjectColor(PREDEFINED_COLORS[0]); // Reseta a cor
+    setIsCreateModalOpen(true);
+    setShowOptions(false); // Fecha o menu flutuante
+  };
+
+  const handleCreateProject = async () => {
+    if (!newProjectName.trim()) return; // Validação simples
+
+    const newProject = {
+      id: Date.now(), // ID temporário
+      title: newProjectName,
+      color: newProjectColor
+    };
+
+    console.log("Criando projeto:", newProject);
+    
+    // Aqui viria o POST para a API
+    // await fetch('/api/projects', ...)
+
+    setProjects(prev => [...prev, newProject]); // Atualização otimista
+    setIsCreateModalOpen(false); // Fecha o modal
+  };
+
+  const handleColorWheelClick = () => {
+    // Simula um clique no input type="color" invisível
+    colorInputRef.current.click();
+  };
+
+  /* Renderização */
   const sidebarClass = `${styles.sidebarContainer} ${isOpen ? styles.open : styles.collapsed}`;
 
   return (
@@ -114,13 +163,11 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
           <div className={styles.projectsCard}>
             <div className={styles.projectsCardHeader}>
               <div className={styles.headerLeft}>
-                {/* Ícone Home... */}
                 <svg className={styles.homeIcon} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" /></svg>
                 <h2>Meus Projetos {usingFallback && '(offline)'}</h2>
               </div>
               
               <div className={styles.headerRight}>
-                {/* Se estiver no modo delete, esconde o botão Início e Opções para limpar a UI */}
                 {!isDeleteMode && (
                   <>
                     <Link to="/" className={styles.homeButton}>
@@ -138,12 +185,12 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
 
                 {showOptions && !isDeleteMode && (
                   <div className={styles.optionsMenu}>
-                    <button className={styles.optionItem} onClick={() => setShowOptions(false)}>
+                    <button className={styles.optionItem} onClick={openCreateModal}>
                       Criar projeto
                     </button>
                     <button 
                       className={`${styles.optionItem} ${styles.danger}`}
-                      onClick={handleEnterDeleteMode} // CHAMA O MODO DELETE
+                      onClick={handleEnterDeleteMode}
                     >
                       Excluir projeto
                     </button>
@@ -153,19 +200,16 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
             </div>
 
             <div className={styles.projectsCardBody}>
-              {loading ? (
+               {loading ? (
                 <p style={{ textAlign: 'center', color: '#999', padding: '20px' }}>Carregando...</p>
               ) : (
                 <div className={styles.cardList}>
                   {projects.map(project => (
-                    // WRAPPER PARA CHECKBOX E ANIMAÇÃO
                       <div 
                         key={project.id} 
                         className={`${styles.projectItemWrapper} ${isDeleteMode ? styles.shaking : ''}`}
                         onClick={() => isDeleteMode && toggleSelection(project.id)}
                       >
-                        
-                        {/* 1. O Card vem PRIMEIRO agora (lado esquerdo) */}
                         <div style={{ flex: 1, pointerEvents: isDeleteMode ? 'none' : 'auto' }}>
                           <ProjectCard
                             id={project.id}
@@ -173,8 +217,6 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
                             color={project.color}
                           />
                         </div>
-
-                        {/* 2. A Checkbox vem DEPOIS (lado direito) */}
                         {isDeleteMode && (
                           <input 
                             type="checkbox" 
@@ -183,14 +225,12 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
                             onChange={() => {}} 
                           />
                         )}
-
                       </div>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* BARRA DE AÇÃO INFERIOR - Só aparece no modo delete */}
             {isDeleteMode && (
               <div className={styles.bottomActions}>
                 <button 
@@ -208,12 +248,88 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
                 </button>
               </div>
             )}
-
           </div>
         </>
+      )}
+
+      {isCreateModalOpen && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h3 className={styles.modalTitle}>Novo Projeto</h3>
+            
+            <div className={styles.inputGroup}>
+              <label className={styles.inputLabel}>Nome do Projeto</label>
+              <input 
+                type="text" 
+                className={styles.textInput} 
+                placeholder="Ex: Meu projeto"
+                value={newProjectName}
+                onChange={(e) => setNewProjectName(e.target.value)}
+                autoFocus
+              />
+            </div>
+
+            <div className={styles.inputGroup}>
+              <label className={styles.inputLabel}>Cor do Projeto</label>
+              
+              <div className={styles.colorSelectionContainer}>
+                {/* 1. Cores Predefinidas */}
+                {PREDEFINED_COLORS.map((color) => (
+                  <div
+                    key={color}
+                    className={`${styles.colorOption} ${newProjectColor === color ? styles.selected : ''}`}
+                    style={{ backgroundColor: color }}
+                    onClick={() => setNewProjectColor(color)}
+                    title={color}
+                  />
+                ))}
+
+                {/* 2. Botão da Roda de Cores (Multicolorido) */}
+                <div 
+                  className={`${styles.customColorBtn} ${!PREDEFINED_COLORS.includes(newProjectColor) ? styles.selected : ''}`}
+                  onClick={handleColorWheelClick}
+                  title="Escolher cor personalizada"
+                  // Se a cor atual não for predefinida, mostramos ela como background desse botão
+                  style={!PREDEFINED_COLORS.includes(newProjectColor) ? { background: newProjectColor } : {}}
+                >
+                   {/* Ícone de + ou ícone de conta-gotas */}
+                   <span className={styles.plusIcon}>+</span>
+
+                {/* Input invisível para o seletor nativo */}
+                  <input 
+                    type="color" 
+                    ref={colorInputRef}
+                    className={styles.hiddenColorInput}
+                    onChange={(e) => setNewProjectColor(e.target.value)}
+                    value={newProjectColor}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.modalActions}>
+              <button 
+                className={`${styles.modalBtn} ${styles.modalBtnCancel}`}
+                onClick={() => setIsCreateModalOpen(false)}
+              >
+                Cancelar
+              </button>
+              
+              <button 
+                className={`${styles.modalBtn} ${styles.modalBtnConfirm}`}
+                onClick={handleCreateProject}
+                disabled={!newProjectName.trim()}
+              >
+                Criar
+              </button>
+            </div>
+
+          </div>
+        </div>
       )}
     </aside>
   );
 }
+
 
 export default ProjectSidebar;

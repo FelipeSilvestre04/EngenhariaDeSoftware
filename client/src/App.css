@@ -16,6 +16,8 @@
   
   --event-dot-color: #525217;
 
+  --new-color-botton-bg: #303030;
+
   --box-shadow-color: rgba(0, 0, 0, 0.3);
 }
 
@@ -35,6 +37,8 @@
   --scrollbar-thumb: #555555;  
 
   --event-dot-color: #F9FA76;
+
+  --new-color-botton-bg: #8e8e8e;
 
   --box-shadow-color: rgba(0, 0, 0, 0.7);
 }

@@ -338,3 +338,230 @@
 .actionBtn:hover:not(:disabled) {
   filter: brightness(1.1);
 }
+
+/* --- Criação de Projeto --- */
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6); /* Fundo escuro transparente */
+  backdrop-filter: blur(2px); /* Efeito de desfoque opcional */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999; /* Garante que fique acima de tudo */
+}
+
+.modalContent {
+  background-color: var(--bg-primary); /* Usa a cor do card do seu tema */
+  border: 1px solid var(--border-color, #444);
+  padding: 24px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: var(--text-primary);
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text-primary);
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inputLabel {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.textInput {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 2px solid var(--border-color, #444);
+  background-color: transparent;
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.textInput:focus {
+  border-color: #836af2; /* Cor de destaque */
+}
+
+/* --- Seleção de Cores --- */
+.colorSelectionContainer {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 5px 0;
+}
+
+.colorOption {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent; /* Borda invisível por padrão */
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.colorOption:hover {
+  transform: scale(1.1);
+}
+
+.colorOption.selected {
+  border-color: white; /* Borda branca para indicar seleção */
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.5); /* Sombra para contraste */
+}
+
+/* Botão da Roda de Cores (Multicolorido) */
+.customColorBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  
+  background: var(--new-color-botton-bg); 
+  border: 1px solid var(--border-color);
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative; 
+  overflow: hidden;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.customColorBtn:hover {
+  transform: scale(1.1);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.customColorBtn.selected {
+  border-color: white;
+  box-shadow: 0 0 0 2px rgba(131, 106, 242, 0.6); /* Roxo destaque */
+}
+
+/* O ícone de imagem dentro do botão */
+.colorIconImg {
+  width: 20px;
+  height: 20px;
+  pointer-events: none; /* O clique passa direto para o input/div */
+  object-fit: contain;
+}
+
+/* O Input Invisível (O Segredo da Posição) */
+.hiddenColorInput {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0; /* Invisível, mas existe fisicamente */
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  border: none;
+}
+
+/* Ícone de "+" dentro do botão colorido */
+.plusIcon {
+  color: #fff;
+  font-weight: bold;
+  font-size: 18px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  pointer-events: none; /* Deixa o clique passar para o botão */
+}
+
+/* Modal Actions (Botões do rodapé) */
+.modalActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.modalActions {
+  display: flex;
+  gap: 12px;         /* Espaço entre os botões */
+  margin-top: 24px;  /* Espaço do topo */
+  width: 100%;       /* Ocupa a largura total */
+}
+
+/* Estilo base para ambos os botões do modal */
+.modalBtn {
+  flex: 1;           /* Faz ambos terem o mesmo tamanho e ocuparem tudo */
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Botão Cancelar (Cinza/Transparente) */
+.modalBtnCancel {
+  background-color: transparent;
+  border: 1px solid var(--border-color, #444);
+  color: var(--text-secondary);
+}
+
+.modalBtnCancel:hover {
+  background-color: hsla(0, 94%, 59%, 0.8);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+.modalBtnConfirm {
+  background-color: #836af2; 
+  color: white;
+  border: 1px solid #836af2;
+}
+
+.modalBtnConfirm:hover:not(:disabled) {
+  background-color: #6f5acb; 
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(131, 106, 242, 0.4);
+}
+
+.modalBtnConfirm:disabled {
+  background-color: var(--input-button-bg); 
+  border-color: transparent;
+  color: #666; 
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.hiddenColorInput {
+  position: absolute;
+  left: 120%; 
+  top: -200px; 
+  width: 1px;
+  height: 1px;
+  
+  opacity: 0; 
+  pointer-events: none; 
+  
+  border: none;
+  padding: 0;
+  margin: 0;
+}
