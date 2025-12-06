@@ -84,17 +84,15 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
   // Ativa o modo de exclusão
   const handleEnterDeleteMode = () => {
     setIsDeleteMode(true);
-    setShowOptions(false); // Fecha o menu popover
-    setSelectedProjects([]); // Limpa seleções anteriores
+    setShowOptions(false); 
+    setSelectedProjects([]); 
   };
 
-  // Cancela o modo de exclusão
   const handleCancelDelete = () => {
     setIsDeleteMode(false);
     setSelectedProjects([]);
   };
 
-  // Seleciona/Desseleciona um projeto
   const toggleSelection = (id) => {
     if (selectedProjects.includes(id)) {
       setSelectedProjects(selectedProjects.filter(pid => pid !== id));
@@ -103,48 +101,77 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
     }
   };
 
-  // Confirma a exclusão
-  const handleDeleteConfirm = () => {
-    // Aqui você faria a chamada para a API (DELETE)
-    console.log("Excluindo projetos:", selectedProjects);
+  const handleDeleteConfirm = async () => {
+    console.log("Excluindo projetos na API:", selectedProjects);
 
-    // Atualiza a lista local removendo os selecionados
-    const newProjectList = projects.filter(p => !selectedProjects.includes(p.id));
-    setProjects(newProjectList);
-    
-    // Sai do modo de exclusão
-    handleCancelDelete();
+    try {
+      const deletePromises = selectedProjects.map(id => 
+        fetch(`http://localhost:10000/api/projects/${id}`, {
+          method: 'DELETE',
+        })
+      );
+
+      await Promise.all(deletePromises);
+
+      console.log("✅ Projetos excluídos com sucesso");
+
+      const newProjectList = projects.filter(p => !selectedProjects.includes(p.id));
+      setProjects(newProjectList);
+      
+      handleCancelDelete();
+
+    } catch (error) {
+      console.error("Erro ao excluir projetos:", error);
+      alert("Erro ao excluir alguns projetos. Tente novamente.");
+    }
   };
 
   /*Criação de projeto */
 
   const openCreateModal = () => {
-    setNewProjectName(''); // Limpa o input
-    setNewProjectColor(PREDEFINED_COLORS[0]); // Reseta a cor
+    setNewProjectName('');
+    setNewProjectColor(PREDEFINED_COLORS[0]); 
     setIsCreateModalOpen(true);
-    setShowOptions(false); // Fecha o menu flutuante
+    setShowOptions(false); 
   };
 
   const handleCreateProject = async () => {
-    if (!newProjectName.trim()) return; // Validação simples
+    if (!newProjectName.trim()) return; 
 
-    const newProject = {
-      id: Date.now(), // ID temporário
+    const projectPayload = {
       title: newProjectName,
       color: newProjectColor
     };
 
-    console.log("Criando projeto:", newProject);
-    
-    // Aqui viria o POST para a API
-    // await fetch('/api/projects', ...)
+    try {
+      const response = await fetch('http://localhost:10000/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(projectPayload),
+      });
 
-    setProjects(prev => [...prev, newProject]); // Atualização otimista
-    setIsCreateModalOpen(false); // Fecha o modal
+      if (!response.ok) {
+        throw new Error('Falha ao criar projeto');
+      }
+
+      const createdProject = await response.json();
+      console.log("✅ Projeto criado na API:", createdProject);
+
+      setProjects(prev => [...prev, createdProject]);
+      
+      setIsCreateModalOpen(false);
+      setNewProjectName('');
+      setNewProjectColor(PREDEFINED_COLORS[0]);
+
+    } catch (error) {
+      console.error("Erro ao criar projeto:", error);
+      alert("Erro ao criar projeto. Verifique o console.");
+    }
   };
 
   const handleColorWheelClick = () => {
-    // Simula um clique no input type="color" invisível
     colorInputRef.current.click();
   };
 
@@ -273,7 +300,6 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
               <label className={styles.inputLabel}>Cor do Projeto</label>
               
               <div className={styles.colorSelectionContainer}>
-                {/* 1. Cores Predefinidas */}
                 {PREDEFINED_COLORS.map((color) => (
                   <div
                     key={color}
@@ -284,7 +310,6 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
                   />
                 ))}
 
-                {/* 2. Botão da Roda de Cores (Multicolorido) */}
                 <div 
                   className={`${styles.customColorBtn} ${!PREDEFINED_COLORS.includes(newProjectColor) ? styles.selected : ''}`}
                   onClick={handleColorWheelClick}
@@ -292,10 +317,8 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
                   // Se a cor atual não for predefinida, mostramos ela como background desse botão
                   style={!PREDEFINED_COLORS.includes(newProjectColor) ? { background: newProjectColor } : {}}
                 >
-                   {/* Ícone de + ou ícone de conta-gotas */}
                    <span className={styles.plusIcon}>+</span>
 
-                {/* Input invisível para o seletor nativo */}
                   <input 
                     type="color" 
                     ref={colorInputRef}
