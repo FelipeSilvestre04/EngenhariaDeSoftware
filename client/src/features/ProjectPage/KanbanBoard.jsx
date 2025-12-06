@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styles from './Kanban.module.css';
 import getKanbanData from './kanban-data';
 
-const API_URL = 'http://localhost:10000/api/tasks';
+const API_URL = '/api/tasks';
 
 // ===========================================
 // Componente de Formulário (Base para Adicionar e Editar)

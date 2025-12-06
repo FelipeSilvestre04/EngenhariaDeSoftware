@@ -28,7 +28,7 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch('http://localhost:10000/api/projects');
+        const response = await fetch('/api/projects');
 
         if (!response.ok) {
           throw new Error('Erro ao buscar projetos da API');

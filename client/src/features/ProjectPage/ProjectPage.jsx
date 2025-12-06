@@ -17,7 +17,7 @@ function ProjectPage({ theme }) {
   useEffect(() => {
     const fetchProject = async () => {
       try {
-        const response = await fetch(`http://localhost:10000/api/projects/${id}`)
+        const response = await fetch(`/api/projects/${id}`)
 
         if (response.ok) {
           const data = await response.json()
