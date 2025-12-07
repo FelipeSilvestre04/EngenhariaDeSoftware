@@ -101,8 +101,8 @@ export function EmailDraftBox({ initialDraft, onDraftCleared }) {
                 aria-label="Toggle email draft box"
             >
                 <span className={styles.icon}>✉️</span>
-                <span className={styles.label}>Rascunho de Email</span>
-                <span className={styles.arrow}>{isExpanded ? '▼' : '▲'}</span>
+                <span className={styles.label}>Rascunho de Email  </span>
+                <span className={styles.arrow}>{isExpanded ? ' ▼' : ' ▲'}</span>
             </button>
 
             {isExpanded && (

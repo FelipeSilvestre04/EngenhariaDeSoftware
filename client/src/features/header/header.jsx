@@ -95,16 +95,6 @@ function Header({ onThemeToggle, theme, onLogout, user }) {
           )}
         </div>
 
-        <div title="Configurações">
-          <button className={styles.iconButton}>
-            <img 
-              src={settingsIconPath} 
-              alt="Configurações" 
-              className={`${styles.iconImage} ${theme === 'dark' ? styles.invert : ''}`}
-            />
-          </button>
-        </div>
-
       </div>
     </header>
   );

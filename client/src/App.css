@@ -19,6 +19,8 @@
   --new-color-botton-bg: #303030;
 
   --box-shadow-color: rgba(0, 0, 0, 0.3);
+
+  --hover-color: hsla(0, 0%, 35%, 0.274);
 }
 
 .dark {
@@ -41,6 +43,8 @@
   --new-color-botton-bg: #8e8e8e;
 
   --box-shadow-color: rgba(0, 0, 0, 0.7);
+
+  --hover-color: hsla(0, 0%, 45%, 0.404);
 }
 
 body {
