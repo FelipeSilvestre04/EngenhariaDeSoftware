@@ -71,10 +71,10 @@ export class CalendarService {
         }
     }
 
-    async listEvents(maxResults = 10) {
+    async listEvents(maxResults = 10, query = null, timeMin = null, timeMax = null) {
         await this.ensureInitialized(); // Garante inicialização antes de listar
-        console.log("LOG: [CalendarService] Buscando eventos...");
-        const items = await this.model.getEvents(maxResults);
+        console.log(`LOG: [CalendarService] Buscando eventos... (Query: ${query || 'Nenhuma'}, Min: ${timeMin}, Max: ${timeMax})`);
+        const items = await this.model.getEvents(maxResults, query, timeMin, timeMax);
         return items;
     }
 
@@ -97,6 +97,13 @@ export class CalendarService {
         });
 
         console.log("✅ [CalendarService] Evento criado:", event);
+        return event;
+    }
+
+    async getEventById(eventId) {
+        await this.ensureInitialized();
+        console.log("🔍 [CalendarService] Buscando evento:", eventId);
+        const event = await this.model.getEventById(eventId);
         return event;
     }
 
@@ -129,5 +136,27 @@ export class CalendarService {
         } catch (error) {
             throw new Error('Erro ao deslogar!');
         }
+    }
+
+    // ========================================
+    // GMAIL METHODS
+    // ========================================
+
+    async listEmails(maxResults = 10) {
+        await this.ensureInitialized();
+        console.log("📧 [CalendarService] Buscando emails...");
+        const emails = await this.model.listEmails(maxResults);
+        console.log(`✅ [CalendarService] ${emails.length} email(s) encontrado(s)`);
+        return emails;
+    }
+
+    async sendEmail({ to, subject, body }) {
+        await this.ensureInitialized();
+        console.log("📤 [CalendarService] Enviando email para:", to);
+
+        const result = await this.model.sendEmail({ to, subject, body });
+
+        console.log("✅ [CalendarService] Email enviado com sucesso!");
+        return result;
     }
 }

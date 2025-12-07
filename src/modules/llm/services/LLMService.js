@@ -26,12 +26,14 @@ export class LLMService {
     // CORREÇÃO 3: Removido 'async'
     _createTools() {
         const getCalendarEventsTool = tool(
-            async ({ maxResults = 10 }) => {
+            async ({ maxResults = 10, query }) => {
                 try {
-                    const events = await this.calendarService.listEvents(maxResults);
+                    const events = await this.calendarService.listEvents(maxResults, query);
 
                     if (!events || events.length === 0) {
-                        return "Nenhum evento encontrado no calendário.";
+                        return query 
+                            ? `Nenhum evento encontrado para a busca "${query}".`
+                            : "Nenhum evento encontrado no calendário.";
                     }
 
                     const formattedEvents = events.map((event, index) => {
@@ -86,9 +88,10 @@ export class LLMService {
             },
             {
                 name: "get_calendar_events",
-                description: "Busca eventos do calendário Google do usuário. Use esta ferramenta quando precisar verificar a agenda, compromissos ou eventos marcados. Retorna informações detalhadas incluindo ID, datas, horários, descrições e locais.",
+                description: "Busca eventos do calendário Google do usuário. Use esta ferramenta quando precisar verificar a agenda, compromissos ou eventos marcados. Você pode filtrar por um termo de busca (query) para encontrar eventos específicos.",
                 schema: z.object({
-                    maxResults: z.number().optional().default(10).describe("Número máximo de eventos a retornar")
+                    maxResults: z.number().optional().default(10).describe("Número máximo de eventos a retornar"),
+                    query: z.string().optional().describe("Termo de busca para filtrar eventos (ex: 'Reunião', 'Dentista', 'Jogar Bola')")
                 }),
             }
         );
@@ -122,19 +125,53 @@ export class LLMService {
         );
 
         const cancelEventTool = tool(
-            async ({ eventId }) => {
+            async ({ eventId, eventTitle }) => {
                 try {
-                    const result = await this.calendarService.deleteEvent(eventId);
-                    return `Evento cancelado com sucesso! ID: ${eventId}`;
+                    let idToDelete = eventId;
+                    let eventSummary = "";
+
+                    if (!idToDelete && eventTitle) {
+                        // Search for the event by title using the API's query parameter
+                        const matchingEvents = await this.calendarService.listEvents(50, eventTitle);
+
+                        if (matchingEvents.length === 0) {
+                            return `Não encontrei nenhum evento com o título ou descrição contendo "${eventTitle}".`;
+                        } else if (matchingEvents.length > 1) {
+                            // If multiple events, try to find an exact match on summary to disambiguate
+                            const exactMatches = matchingEvents.filter(e => e.summary.toLowerCase() === eventTitle.toLowerCase());
+                            
+                            if (exactMatches.length === 1) {
+                                idToDelete = exactMatches[0].id;
+                                eventSummary = exactMatches[0].summary;
+                            } else {
+                                const matchesList = matchingEvents.map(e => `- ${e.summary} (${e.start})`).join('\\n');
+                                return `Encontrei múltiplos eventos relacionados a "${eventTitle}". Por favor, seja mais específico ou use o ID:\\n${matchesList}`;
+                            }
+                        } else {
+                            idToDelete = matchingEvents[0].id;
+                            eventSummary = matchingEvents[0].summary;
+                        }
+                    } else if (idToDelete) {
+                         const event = await this.calendarService.getEventById(idToDelete);
+                         eventSummary = event.summary;
+                    } else {
+                        return "Por favor, forneça o ID do evento ou o título para cancelar.";
+                    }
+
+                    if (idToDelete) {
+                        await this.calendarService.deleteEvent(idToDelete);
+                        return `Evento "${eventSummary}" cancelado com sucesso! ID: ${idToDelete}`;
+                    }
                 } catch (error) {
                     return `Erro ao cancelar evento: ${error.message}`;
                 }
             },
             {
                 name: "cancel_calendar_event",
-                description: "Cancela (deleta) um evento existente do calendário Google do usuário. Use quando o usuário pedir para cancelar, remover ou deletar um compromisso. IMPORTANTE: Você precisa do ID do evento, então geralmente deve listar os eventos primeiro para encontrar o ID correto.",
+                description: "Cancela (deleta) um evento existente do calendário Google do usuário. Você pode fornecer o ID do evento OU o título (nome) do evento para buscar e deletar.",
                 schema: z.object({
-                    eventId: z.string().describe("ID do evento a ser cancelado (obtido através do get_calendar_events)")
+                    eventId: z.string().optional().describe("ID do evento a ser cancelado"),
+                    eventTitle: z.string().optional().describe("Título/Nome do evento para buscar e cancelar (se não tiver o ID)")
                 }),
             }
         );
@@ -142,6 +179,9 @@ export class LLMService {
         const rescheduleEventTool = tool(
             async ({ eventId, summary, description, location, startDateTime, endDateTime }) => {
                 try {
+                    // Verifica se o evento existe antes de tentar atualizar
+                    const existingEvent = await this.calendarService.getEventById(eventId);
+                    
                     const updates = {};
                     if (summary) updates.summary = summary;
                     if (description !== undefined) updates.description = description;
@@ -217,6 +257,10 @@ export class LLMService {
         const deleteProjectTool = tool(
             async ({ projectId }) => {
                 try {
+                    const project = this.projectService.getProjectById(projectId);
+                    if (!project) {
+                        return `Projeto com ID ${projectId} não encontrado.`;
+                    }
                     const deletedProject = this.projectService.deleteProject(projectId);
                     return `Projeto "${deletedProject.title}" (ID: ${deletedProject.id}) deletado com sucesso!`;
                 } catch (error) {
@@ -313,6 +357,11 @@ Projeto ID: ${projectId}`;
         const updateTaskTool = tool(
             async ({ taskId, title, description, column, tags }) => {
                 try {
+                    const task = this.tasksService.getTaskById(taskId);
+                    if (!task) {
+                        return `Tarefa com ID ${taskId} não encontrada.`;
+                    }
+
                     const updates = {};
                     if (title !== undefined) updates.title = title;
                     if (description !== undefined) updates.description = description;
@@ -351,6 +400,10 @@ Status: ${columnTitles[updatedTask.column]}`;
         const deleteTaskTool = tool(
             async ({ taskId }) => {
                 try {
+                    const task = this.tasksService.getTaskById(taskId);
+                    if (!task) {
+                        return `Tarefa com ID ${taskId} não encontrada.`;
+                    }
                     const deletedTask = this.tasksService.deleteTask(taskId);
                     return `Tarefa "${deletedTask.title}" (ID: ${deletedTask.id}) deletada com sucesso!`;
                 } catch (error) {
@@ -366,6 +419,62 @@ Status: ${columnTitles[updatedTask.column]}`;
             }
         );
 
+        // ========================================
+        // GMAIL TOOLS
+        // ========================================
+
+        const listEmailsTool = tool(
+            async ({ maxResults = 10 }) => {
+                try {
+                    const emails = await this.calendarService.listEmails(maxResults);
+
+                    if (!emails || emails.length === 0) {
+                        return "Nenhum email encontrado na caixa de entrada.";
+                    }
+
+                    const formattedEmails = emails.map((email, index) => {
+                        return `${index + 1}. De: ${email.from}
+   Assunto: ${email.subject}
+   Data: ${email.date}
+   Prévia: ${email.snippet}`;
+                    }).join('\n\n');
+
+                    return `Encontrei ${emails.length} email(s) na caixa de entrada:\n\n${formattedEmails}`;
+                } catch (error) {
+                    return `Erro ao listar emails: ${error.message}`;
+                }
+            },
+            {
+                name: "list_emails",
+                description: "Lista os emails mais recentes da caixa de entrada do Gmail. Use quando o usuário quiser ver seus emails ou verificar mensagens recebidas.",
+                schema: z.object({
+                    maxResults: z.number().optional().default(10).describe("Número máximo de emails a retornar (padrão: 10)")
+                }),
+            }
+        );
+
+        const createEmailDraftTool = tool(
+            async ({ to, subject, body }) => {
+                try {
+                    // Retorna no formato de comando que o ChatWindow detecta
+                    return `/email ${to} | ${subject} | ${body}
+
+Rascunho de email criado com sucesso!`;
+                } catch (error) {
+                    return `Erro ao criar rascunho de email: ${error.message}`;
+                }
+            },
+            {
+                name: "create_email_draft",
+                description: "Cria rascunho de email. Use quando usuário pedir para criar/gerar/compor email.",
+                schema: z.object({
+                    to: z.string().describe("Email do destinatário"),
+                    subject: z.string().describe("Assunto"),
+                    body: z.string().describe("Corpo do email")
+                }),
+            }
+        );
+
         this.tools.push(
             getCalendarEventsTool,
             createEventTool,
@@ -377,7 +486,9 @@ Status: ${columnTitles[updatedTask.column]}`;
             listTasksTool,
             createTaskTool,
             updateTaskTool,
-            deleteTaskTool
+            deleteTaskTool,
+            listEmailsTool,
+            createEmailDraftTool
         );
     }
 
@@ -419,36 +530,35 @@ Status: ${columnTitles[updatedTask.column]}`;
             timestamp: now.getTime()
         };
 
-        const systemPrompt = `Você é um assistente que ajuda os usuários a gerenciar e consultar seus calendários do Google Calendar. Você também
-    pode criar novos projetos quando solicitado. Utilize as ferramentas disponíveis para buscar eventos e criar novos eventos ou projetos conforme necessário.
+        const systemPrompt = `Você é um assistente que ajuda os usuários a gerenciar seus calendários e emails.
 
-    INFORMAÇÕES DE DATA E HORA ATUAL:
-    - Data e hora completa: ${dateTimeInfo.dataCompleta}
-    - Data ISO 8601: ${dateTimeInfo.dataISO}
-    - Dia da semana: ${dateTimeInfo.diaSemana}
-
+    DATA/HORA ATUAL: ${dateTimeInfo.dataCompleta}
     PROJETO: ${projectName}
 
-    INSTRUÇÕES IMPORTANTES:
-    1. Use estas informações para calcular datas relativas (amanhã, próxima semana, etc)
-    2. Ao criar eventos, SEMPRE use o formato ISO 8601 para startDateTime e endDateTime
-    3. Se o usuário não especificar hora, use um horário padrão (ex: 09:00)
-    4. Se o usuário não especificar duração, use 1 hora de duração padrão
-    5. Utilize as ferramentas disponíveis para buscar eventos e criar novos eventos
-    6. Se você adicionar um novo evento, confirme os detalhes ao usuário
-    7. **ATENÇÃO:** Ao chamar a ferramenta de criação de evento, envie APENAS os campos: summary, description, location, startDateTime, endDateTime (todos como string). NÃO envie campos extras como id, status, start, end, htmlLink, ou objetos aninhados. Siga exatamente o schema abaixo:
-
-    {
-      "summary": "Título do evento",
-      "description": "Descrição do evento",
-      "location": "Local do evento",
-      "startDateTime": "2025-10-21T14:00:00-03:00",
-      "endDateTime": "2025-10-21T15:00:00-03:00"
-    }
-
-    Exemplo de formato correto para datas:
-    - Início: "2025-10-21T14:00:00-03:00"
-    - Fim: "2025-10-21T15:00:00-03:00"`;
+    🚨 REGRA CRÍTICA PARA EMAILS 🚨
+    
+    Quando usuário pedir email, você DEVE começar sua resposta EXATAMENTE com o comando /email:
+    
+    FORMATO OBRIGATÓRIO:
+    /email destinatario@exemplo.com | Assunto | Corpo
+    
+    EXEMPLOS CORRETOS:
+    
+    Usuário: "crie email para joao@teste.com sobre reunião"
+    Você: /email joao@teste.com | Reunião | Olá João, gostaria de marcar uma reunião.
+    
+    Pronto! Criei o rascunho.
+    
+    Usuário: "mande email para maria@empresa.com dizendo olá"
+    Você: /email maria@empresa.com | Olá | Olá Maria, tudo bem?
+    
+    Email criado!
+    
+    ⚠️ IMPORTANTE: A primeira linha da sua resposta DEVE ser o comando /email. Não descreva o que fez, EXECUTE o comando primeiro.
+    
+    OUTRAS INSTRUÇÕES:
+    - Eventos: use ISO 8601 para datas
+    - Use ferramentas disponíveis para calendário e projetos`;
 
         const userPrompt = prompt;
         return await this.processConsulta(systemPrompt, userPrompt, name, projectName);

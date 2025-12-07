@@ -19,9 +19,23 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// CORS para desenvolvimento (permite frontend em porta diferente)
+// CORS para desenvolvimento e produção
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
+    const allowedOrigins = [
+        'http://localhost:5173',
+        'http://localhost:3000',
+        process.env.CLIENT_URL
+    ].filter(Boolean);
+
+    const origin = req.headers.origin;
+    
+    if (allowedOrigins.includes(origin)) {
+        res.header('Access-Control-Allow-Origin', origin);
+    } else if (!origin) {
+        // Permite requisições sem origin (ex: mesmo domínio, curl, postman)
+        // Não define header ou define como * se necessário, mas para same-origin não precisa
+    }
+
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.header('Access-Control-Allow-Credentials', 'true');

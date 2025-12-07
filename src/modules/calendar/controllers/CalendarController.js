@@ -56,7 +56,8 @@ export class CalendarController {
             ].join('; ');
 
             // Redireciona de volta para a aplicação React após a autenticação
-            const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+            // Se CLIENT_URL não estiver definido, assume que o frontend está na mesma origem (rota /)
+            const clientUrl = process.env.CLIENT_URL || '/';
             res.writeHead(302, { 
                 Location: clientUrl,
                 'Set-Cookie': cookieOptions
@@ -87,7 +88,13 @@ export class CalendarController {
                 return res.end(JSON.stringify({ success: false, error: 'Usuário não autenticado no Google' }));
             }
 
-            const events = await this.service.listEvents(400);
+            // Extrair parâmetros da query string
+            const url = new URL(req.url, `http://${req.headers.host}`);
+            const timeMin = url.searchParams.get('timeMin');
+            const timeMax = url.searchParams.get('timeMax');
+            const query = url.searchParams.get('q');
+
+            const events = await this.service.listEvents(400, query, timeMin, timeMax);
 
             res.writeHead(200, {'Content-Type': 'application/json'});
             res.end(JSON.stringify({ success: true, count: events.length, events: events }));

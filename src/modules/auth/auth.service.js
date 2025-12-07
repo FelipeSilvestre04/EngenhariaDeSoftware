@@ -166,7 +166,7 @@ export class AuthService {
         try {
             delete payload.password;
             
-            const accessToken = await this.generateToken(payload, '15m');
+            const accessToken = await this.generateToken(payload, '2d');
             const refreshToken = await this.generateRefreshToken(payload, '7d');
 
             return { accessToken, refreshToken, expiresIn: 900 };
@@ -195,7 +195,7 @@ export class AuthService {
             }
 
             const {type, iat, exp, ...payload} = decoded;
-            const accessToken = await this.generateToken(payload, '15m');
+            const accessToken = await this.generateToken(payload, '2d');
             
             return { 
                 accessToken, 
