@@ -3,7 +3,7 @@
 .emailDraftContainer {
     position: fixed;
     right: 1rem;
-    bottom: 5rem;
+    bottom: 2rem;
     /* Um pouco acima do botão de chat do projeto */
     z-index: 999;
     /* Menor que o chat do projeto para não conflitar */
@@ -14,7 +14,7 @@
 }
 
 .toggleButton {
-    width: 200px;
+    width: auto;
     /* Botão mais largo quando contraído */
     display: flex;
     align-items: center;
@@ -54,32 +54,51 @@
 .arrow {
     font-size: 14px;
     transition: transform 0.3s ease;
+    padding-left: 10px;
 }
 
 .emailForm {
     position: fixed;
-    top: 8rem;
+    
+    top: auto;
+    bottom: 2rem;
     right: 1rem;
-    bottom: 1rem;
-    width: 45%;
+    
+    width: 450px;       
+    max-width: 90vw;
+
+    height: auto;       
+    max-height: 90vh;   
+
     padding: 24px;
-    background: var(--surface-color, #1a1a1a);
+
+    background: var(--bg-primary);
     border: 1px solid var(--border-color, #333);
     border-radius: 12px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-    animation: slideIn 0.3s ease;
+    
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
+    
+    overflow-y: auto;   
     overflow-x: hidden;
-    /* Remove horizontal scrollbar */
     z-index: 998;
+    box-sizing: border-box;
+
+    animation: slideIn 0.3s ease;
+
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.emailForm * {
+    box-sizing: border-box;  /* ← ADICIONE: Aplica a TODOS os elementos dentro */
 }
 
 .collapseButton {
     position: absolute;
-    top: 12px;
-    right: 12px;
+    top: 8px;
+    right: 8px;
     width: 32px;
     height: 32px;
     background: rgba(255, 255, 255, 0.1);
@@ -100,26 +119,15 @@
     transform: scale(1.1);
 }
 
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
 .formGroup {
     margin-bottom: 20px;
+    width: 100%;
 }
 
 .formGroup label {
     display: block;
     margin-bottom: 8px;
-    color: var(--text-color, #e0e0e0);
+    color: var(--text-primary);
     font-weight: 500;
     font-size: 14px;
 }
@@ -128,7 +136,7 @@
 .formGroup textarea {
     width: 100%;
     padding: 12px 16px;
-    background: var(--input-bg, #2a2a2a);
+    background: var(--bg-secondary);
     border: 1px solid var(--border-color, #444);
     border-radius: 8px;
     color: var(--text-color, #e0e0e0);
@@ -165,26 +173,20 @@
     animation: fadeIn 0.3s ease;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
 .buttonGroup {
     display: flex;
-    gap: 12px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 16px;
+    width: 100%;
 }
 
 .sendButton,
 .clearButton {
-    flex: 1;
+    width: 48%;
+    flex-grow: 1;
     padding: 14px 24px;
     border: none;
     border-radius: 8px;
@@ -214,27 +216,17 @@
 }
 
 .clearButton {
-    background: var(--button-secondary-bg, #3a3a3a);
-    color: var(--text-color, #e0e0e0);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
 }
 
 .clearButton:hover:not(:disabled) {
-    background: var(--button-secondary-hover, #4a4a4a);
+    background: var(--hover-color);
 }
 
 .clearButton:disabled {
     opacity: 0.6;
     cursor: not-allowed;
-}
-
-/* Light theme support */
-:global(.light) .emailDraftContainer {
-    --surface-color: #ffffff;
-    --border-color: #e0e0e0;
-    --text-color: #333333;
-    --input-bg: #f5f5f5;
-    --button-secondary-bg: #e0e0e0;
-    --button-secondary-hover: #d0d0d0;
 }
 
 /* Responsive */

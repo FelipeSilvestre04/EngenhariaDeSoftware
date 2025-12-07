@@ -5,35 +5,63 @@
 
 /* Estilos do Quadro Kanban */
 .kanbanBoard {
-    display: flex;
-    gap: 8px;
-    align-items: stretch;
-    justify-content: space-between;
+  display: flex;
+  flex-direction: row;
+  
+  /* Espaço padrão entre as colunas */
+  gap: 1.5rem; 
+  
+  /* Ocupa todo o espaço disponível */
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
 
-    /* Removendo estilos de fundo e padding para evitar duplicação com .kanban-board-container */
-    padding: 0;
-    background: none;
-    border-radius: 0;
-
-    /* Manter 100% de altura para garantir que as colunas se expandam */
-    min-height: 100%;
-    height: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+  
+  /* Permite rolagem se a tela for muito pequena */
+  overflow: hidden;
 }
 
-/* Estilos da Coluna */
+/* Coluna Genérica (Layout) */
 .column {
-    min-width: 350px;
-    /* 'flex: 1' é mantido. Ele garante o crescimento (flex-grow: 1) das colunas para preencher o espaço. */
-    flex: 1;
-    flex-shrink: 0;
+  /* Tamanho mínimo para não ficar muito espremido */
+  min-width: 0;
 
-    background-color: var(--bg-primary);
-    border-radius: 10px;
-    padding: 12px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+  /* MÁGICA: Isso faz a coluna esticar para preencher o espaço vazio */
+  flex: 1;
+  
+  /* Estilos visuais */
+  background-color: transparent;
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Responsividade */
+
+/* Telas Gigantes (ex: 2560px+): Centraliza para não ficar "infinito" */
+@media (min-width: 1920px) {
+  .column {
+    max-width: 600px; /* Limite máximo de largura */
+  }
+  .kanbanBoard {
+    justify-content: center; /* Centraliza o bloco no meio da tela */
+  }
+}
+
+/* Tablets/Laptops pequenos: Reduz o gap e largura mínima */
+@media (max-width: 1280px) {
+  .kanbanBoard {
+    gap: 1rem;
+    padding: 15px;
+  }
+  .column {
+    min-width: 280px;
+  }
 }
 
 .columnTitle {

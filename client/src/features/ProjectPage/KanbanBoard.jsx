@@ -119,18 +119,19 @@ function TaskCard({ task, onDragStart, onDragEnd, onDelete, onEditStart }) {
 // Componente para a coluna Kanban
 // ===========================================
 function KanbanColumn({ title, tasks, columnKey, onDrop, onDragOver, onDragStart, onDragEnd, onShowForm, onDeleteTask, onEditStart }) {
-  const columnClass = {
+  const statusClass = {
     'to-do': styles.todo,
     'in-progress': styles.inProgress,
     'done': styles.done,
-  }[columnKey] || styles.column;
+  }[columnKey] || '';
 
   return (
-    <div
-      className={columnClass}
-      onDragOver={(e) => onDragOver(e)}
-      onDrop={(e) => onDrop(e, columnKey)}
-    >
+      <div
+        // 2. APLIQUE AS DUAS CLASSES: A padrão (.column) + a de status
+        className={`${styles.column} ${statusClass}`} 
+        onDragOver={(e) => onDragOver(e)}
+        onDrop={(e) => onDrop(e, columnKey)}
+      >
       <h3 className={styles.columnTitle}>{title} ({tasks.length})</h3>
       <div className={styles.taskList}>
         {tasks.map(task => (

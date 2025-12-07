@@ -16,13 +16,17 @@
 
   --event-dot-color: #525217;
 
+  --new-color-botton-bg: #303030;
+
   --box-shadow-color: rgba(0, 0, 0, 0.3);
+
+  --hover-color: hsla(0, 0%, 35%, 0.274);
 }
 
 .dark {
   --bg-primary: #181818;
   --bg-secondary: hsl(0, 0%, 17%);
-  --bg-sidebar: hsla(0, 0%, 10%, 0.6);
+  --bg-sidebar: hsla(0, 0%, 10%);
   --bg-chat-bubble: #333333;
   --text-primary: #f0f0f0;
   --text-secondary: hsl(0, 0%, 100%);
@@ -36,7 +40,11 @@
 
   --event-dot-color: #F9FA76;
 
+  --new-color-botton-bg: #8e8e8e;
+
   --box-shadow-color: rgba(0, 0, 0, 0.7);
+
+  --hover-color: hsla(0, 0%, 45%, 0.404);
 }
 
 body {
