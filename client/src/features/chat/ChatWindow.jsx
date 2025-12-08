@@ -5,7 +5,19 @@ import sendpath from '../../assets/send.svg';
 
 export function ChatWindow({ theme, projectName, onEmailDraftCreated }) {
 
-  const [messages, setMessages] = useState([]);
+  // Persist messages na sessão por projeto para reabrir o chat mantendo histórico
+  const storageKey = projectName ? `chatMessages:${projectName}` : 'chatMessages:default';
+
+  const [messages, setMessages] = useState(() => {
+    if (typeof sessionStorage === 'undefined') return [];
+    try {
+      const saved = sessionStorage.getItem(storageKey);
+      return saved ? JSON.parse(saved) : [];
+    } catch (err) {
+      console.warn('Não foi possível carregar mensagens salvas:', err);
+      return [];
+    }
+  });
 
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -153,11 +165,34 @@ export function ChatWindow({ theme, projectName, onEmailDraftCreated }) {
     scrollToBottom();
   }, [messages]);
 
-  // When projectName changes, clear the current chat messages so the UI loads fresh context
+  // Sempre que o projeto mudar, recarrega o histórico salvo daquela sessão
   useEffect(() => {
-    setMessages([]);
+    if (typeof sessionStorage === 'undefined') {
+      setMessages([]);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const saved = sessionStorage.getItem(storageKey);
+      setMessages(saved ? JSON.parse(saved) : []);
+    } catch (err) {
+      console.warn('Não foi possível carregar mensagens salvas:', err);
+      setMessages([]);
+    }
+
     setIsLoading(false);
-  }, [projectName]);
+  }, [projectName, storageKey]);
+
+  // Salva as mensagens atuais no sessionStorage para persistir enquanto a aba estiver aberta
+  useEffect(() => {
+    if (typeof sessionStorage === 'undefined') return;
+    try {
+      sessionStorage.setItem(storageKey, JSON.stringify(messages));
+    } catch (err) {
+      console.warn('Não foi possível salvar mensagens:', err);
+    }
+  }, [messages, storageKey]);
 
   return (
     <div className="chat-window-container">
