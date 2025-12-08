@@ -923,22 +923,18 @@ export class LLMService {
 
         const createEmailDraftTool = tool(
             async ({ to, subject, body }) => {
-                // Retorna JSON especial que o Controller intercepta para formatar bonito no front
-                return `[EMAIL_DRAFT]
-                {
-                    "to": "${to}",
-                    "subject": "${subject}",
-                    "body": "${body.replace(/\n/g, '\\n')}"
-                }
-                [/EMAIL_DRAFT]`;
+                // Retorna no formato /email que o ChatWindow detecta e processa
+                return `/email ${to} | ${subject} | ${body}
+
+Rascunho de email criado com sucesso! Você pode revisar e enviar.`;
             },
             {
                 name: "create_email_draft",
-                description: "Gera rascunho de email.",
+                description: "Gera rascunho de email. Use quando usuário pedir para criar/gerar/compor/escrever email.",
                 schema: z.object({
-                    to: z.string(),
-                    subject: z.string(),
-                    body: z.string()
+                    to: z.string().describe("Email do destinatário"),
+                    subject: z.string().describe("Assunto do email"),
+                    body: z.string().describe("Corpo do email")
                 })
             }
         );

@@ -48,40 +48,39 @@ export class LLMController {
             if (result.success) {
                 console.log('📤 [LLMController] Enviando resposta de sucesso');
 
-                // Detectar se a resposta contém um rascunho de email no formato JSON
-                const draftMarker = "[EMAIL_DRAFT]";
-                const draftEndMarker = "[/EMAIL_DRAFT]";
                 let hasDraft = false;
                 let draftData = null;
                 let cleanedContent = result.content;
 
-                if (result.content.includes(draftMarker) && result.content.includes(draftEndMarker)) {
-                    console.log('📧 [LLMController] Rascunho de email detectado no texto!');
-
-                    // Extrair JSON entre os marcadores
-                    const startIndex = result.content.indexOf(draftMarker) + draftMarker.length;
-                    const endIndex = result.content.indexOf(draftEndMarker);
-                    const jsonStr = result.content.substring(startIndex, endIndex).trim();
-
-                    console.log('📧 [LLMController] JSON extraído:', jsonStr);
-
-                    try {
-                        draftData = JSON.parse(jsonStr);
+                // MÉTODO 1: Verificar se a tool create_email_draft foi executada (mais confiável)
+                if (result.steps && result.steps.length > 0) {
+                    const emailDraftStep = result.steps.find(step => step.tool === 'create_email_draft');
+                    if (emailDraftStep && emailDraftStep.args) {
+                        console.log('📧 [LLMController] Tool create_email_draft detectada nos steps!');
+                        draftData = {
+                            to: emailDraftStep.args.to,
+                            subject: emailDraftStep.args.subject,
+                            body: emailDraftStep.args.body
+                        };
                         hasDraft = true;
-                        console.log('✅ [LLMController] Dados do rascunho parseados:', draftData);
-
-                        // Remove os marcadores e o JSON da resposta exibida
-                        cleanedContent = result.content
-                            .replace(draftMarker, '')
-                            .replace(draftEndMarker, '')
-                            .replace(jsonStr, '')
-                            .trim();
-                    } catch (error) {
-                        console.error('❌ [LLMController] Erro ao parsear JSON do rascunho:', error);
-                        console.error('❌ [LLMController] String que falhou:', jsonStr);
+                        console.log('✅ [LLMController] Dados do rascunho extraídos:', draftData);
                     }
-                } else {
-                    console.log('⚠️ [LLMController] Nenhum marcador de email draft encontrado');
+                }
+
+                // MÉTODO 2: Fallback - detectar formato /email no content
+                if (!hasDraft && result.content && result.content.includes('/email')) {
+                    console.log('📧 [LLMController] Detectando /email no content...');
+                    const emailCommandRegex = /\/email\s+([^\s|]+)\s*\|\s*([^|]+)\s*\|\s*(.+)/s;
+                    const match = result.content.match(emailCommandRegex);
+                    if (match) {
+                        draftData = {
+                            to: match[1].trim(),
+                            subject: match[2].trim(),
+                            body: match[3].trim()
+                        };
+                        hasDraft = true;
+                        console.log('✅ [LLMController] Dados extraídos do /email:', draftData);
+                    }
                 }
 
                 console.log('📦 [LLMController] Enviando resposta - hasDraft:', hasDraft, 'draftData:', draftData);
