@@ -4,10 +4,13 @@ FROM node:20-alpine
 # Diretório da aplicação
 WORKDIR /app
 
+# Garante que a pasta do cliente exista antes do COPY (evita inconsistências de layer)
+RUN mkdir -p /app/client
+
 # --- ETAPA 1: INSTALAÇÃO DE DEPENDÊNCIAS (CACHE) ---
-# Copia SÓ os package.json primeiro para otimizar o cache do Docker
-COPY package*.json ./
-COPY client/package*.json ./client/
+# Copia SÓ os manifests para otimizar o cache do Docker (evita wildcard inconsistências do BuildKit)
+COPY package.json package-lock.json ./
+COPY client/package.json client/package-lock.json ./client/
 
 # Instala dependências do backend
 RUN npm install --legacy-peer-deps
