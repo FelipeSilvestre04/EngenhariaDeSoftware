@@ -3,6 +3,9 @@ import ProjectCard from '../ProjectCard/ProjectCard';
 import { Link } from 'react-router-dom';
 import styles from './ProjectSidebar.module.css';
 
+// Usa a mesma origem em produção; permite override via env para desenvolvimento
+const API_BASE = import.meta.env?.VITE_API_URL || '/api';
+
 // Fallback: dados estáticos caso a API falhe
 const FALLBACK_PROJECTS = [
   { id: 1, title: 'Projeto App Mobile', color: '#cf50f2' },
@@ -48,7 +51,7 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch('/api/projects');
+        const response = await fetch(`${API_BASE}/projects`);
 
         if (!response.ok) {
           throw new Error('Erro ao buscar projetos da API');
@@ -106,7 +109,7 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
 
     try {
       const deletePromises = selectedProjects.map(id => 
-        fetch(`http://localhost:10000/api/projects/${id}`, {
+        fetch(`${API_BASE}/projects/${id}`, {
           method: 'DELETE',
         })
       );
@@ -144,7 +147,7 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
     };
 
     try {
-      const response = await fetch('http://localhost:10000/api/projects', {
+      const response = await fetch(`${API_BASE}/projects`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
