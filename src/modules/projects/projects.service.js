@@ -81,6 +81,20 @@ export class ProjectsService {
         return result.rows[0];
     }
 
+    /*async getIdByName(userId, title) {
+        const query = `
+            SELECT "Project_ID" as id 
+            FROM Project 
+            WHERE "User_ID" = $1 AND "Name" = $2
+        `;
+        const result = await db.query(query, [userId, title]);
+        
+        if (result.rows.length === 0) {
+            return null;
+        }
+        return result.rows[0].id;
+    }*/
+
     async createProject(userId, title, color = '#666666') {
         // Trigger Setup_AfterInsertProject [cite: 94-105] criará as listas automaticamente
         const query = `

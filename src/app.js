@@ -6,10 +6,12 @@ import { AuthRoute } from "./modules/auth/auth.route.js";
 import ProjectsRoute from "./modules/projects/projects.routes.js";
 import TasksRoute from "./modules/tasks/tasks.routes.js";
 import { EmailRoutes } from "./modules/email/email.routes.js";
+import { createAuthMiddleware } from "./shared/middleware/authMiddleware.js";
 
 export class AppRouter {
     constructor(config) {
         this.config = config;
+        this.authMiddleware = createAuthMiddleware(config);
         this.modules = this.initializeModules();
     }
 
@@ -90,8 +92,8 @@ export class AppRouter {
         app.use('/calendar', this.calendarInitMiddleware(), this.modules.calendar.getRouter());
         app.use('/llm', this.llmInitMiddleware(), this.modules.llm.getRouter());
         app.use('/auth', this.modules.auth.getRouter());
-        app.use('/api/projects', this.modules.projects);
-        app.use('/api/tasks', this.modules.tasks);
+        app.use('/api/projects', this.authMiddleware.authenticate(), this.modules.projects);
+        app.use('/api/tasks', this.authMiddleware.authenticate(), this.modules.tasks);
         app.use('/api/email', this.calendarInitMiddleware(), this.modules.email.getRouter());
     }
 }
