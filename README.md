@@ -8,8 +8,6 @@ Felipe Silvestre Cardoso Roberto RA:170 425
 
 João Vítor de Moura RA:168 887
 
-Rafael Maximo Barroncas RA:169 222
-
 Stefani Lumy Miyahara RA:169 235
 
 Tasso Eliézer Daflon Cicarino Canellas RA:169 247
