@@ -987,18 +987,20 @@ Rascunho de email criado com sucesso! Você pode revisar e enviar.`;
         - PROJETO: ${projectName || 'Nenhum'}
         - PROJECT_ID: ${projectId ?? 'Não informado (passe projectId explicitamente)'}
 
+        
         AS COLUNAS DO KANBAN REPRESENTAM O STATUS DA TAREFA ATUAL:
         - to-do: Tarefas a serem iniciadas, ou que acabaram de ser criadas.
         - in-progress: Tarefas que o usuário informou estar em andamento.
         - done: Tarefas que o usuário informou estar concluídas.
-
+        
         FERRAMENTAS DISPONÍVEIS (sempre usar quando relevante):
         - Calendário: get_calendar_events, create_calendar_event, cancel_calendar_event, reschedule_calendar_event
         - Projetos (DB): create_project, list_projects, delete_project
         - Tarefas (DB): list_tasks, create_task, update_task, delete_task
         - Emails: list_emails, create_email_draft
-
+        
         REGRAS PARA USO DE FERRAMENTAS:
+        - Sempre que não souber algum ID, use a ferramenta para listar aqueles objetos, seja eventos, tarefa ou projeto, para descobrir o ID
         - Interprete corretamente o pedido do usuário e a partir disso escolha a ferramenta.
         - Use as ferramentas para ações relacionadas a calendário, projetos, tarefas e emails.
         - Sempre utilize as ferramentas para obter dados reais.
