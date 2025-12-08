@@ -110,9 +110,13 @@ export function ChatWindow({ theme, projectName, projectId, onEmailDraftCreated,
 
       const query = params.toString() ? `?${params.toString()}` : '';
 
-      const res = await fetch(`/llm/query${query}`, {
+      const apiBase = (import.meta.env.VITE_BACKEND_URL || '').replace(/\/$/, '');
+      const endpoint = `${apiBase}/llm/query${query}`;
+
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ prompt: input }),
       });
 
