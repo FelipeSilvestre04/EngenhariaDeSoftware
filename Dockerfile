@@ -4,6 +4,9 @@ FROM node:20-alpine
 # Diretório da aplicação
 WORKDIR /app
 
+# Garante que a pasta do cliente exista antes do COPY (evita inconsistências de layer)
+RUN mkdir -p /app/client
+
 # --- ETAPA 1: INSTALAÇÃO DE DEPENDÊNCIAS (CACHE) ---
 # Copia SÓ os package.json primeiro para otimizar o cache do Docker
 COPY package*.json ./
