@@ -591,7 +591,7 @@ export class LLMService {
     }
 
     // GERA AS TOOLS COM O CONTEXTO DO USUÁRIO (userId)
-    createToolsForUser(userId) {
+    createToolsForUser(userId, defaultProjectId = null) {
 
         // ========================================
         // 📅 CALENDAR TOOLS
@@ -792,9 +792,11 @@ export class LLMService {
         const listTasksTool = tool(
             async ({ projectId }) => {
                 try {
-                    // INJEÇÃO DO USER ID
-                    const tasks = await this.tasksService.getTasksByProject(projectId, userId);
-                    if (!tasks || tasks.length === 0) return `Nenhuma tarefa no projeto ${projectId}.`;
+                    const effectiveProjectId = projectId ?? defaultProjectId;
+                    if (!effectiveProjectId) return "Informe o projectId (ex: 2).";
+
+                    const tasks = await this.tasksService.getTasksByProject(effectiveProjectId, userId);
+                    if (!tasks || tasks.length === 0) return `Nenhuma tarefa no projeto ${effectiveProjectId}.`;
 
                     const formatted = tasks.map((t, i) =>
                         `${i + 1}. **${t.title}** (ID: ${t.id})
@@ -802,7 +804,7 @@ export class LLMService {
    Descrição: ${t.description || 'Sem descrição'}`
                     ).join('\n\n');
 
-                    return `Tarefas do projeto ${projectId}:\n\n${formatted}`;
+                    return `Tarefas do projeto ${effectiveProjectId}:\n\n${formatted}`;
                 } catch (error) {
                     return `Erro ao listar tarefas: ${error.message}`;
                 }
@@ -811,7 +813,7 @@ export class LLMService {
                 name: "list_tasks",
                 description: "Lista tarefas de um projeto específico.",
                 schema: z.object({
-                    projectId: z.number().describe("ID do projeto")
+                    projectId: z.number().optional().describe("ID do projeto")
                 }),
             }
         );
@@ -819,10 +821,12 @@ export class LLMService {
         const createTaskTool = tool(
             async ({ projectId, title, description, column, tags }) => {
                 try {
-                    // INJEÇÃO DO USER ID
+                    const effectiveProjectId = projectId ?? defaultProjectId;
+                    if (!effectiveProjectId) return "Informe o projectId (ex: 2).";
+
                     const newTask = await this.tasksService.createTask({
                         userId,
-                        projectId,
+                        projectId: effectiveProjectId,
                         title,
                         description,
                         column: column || 'to-do',
@@ -838,7 +842,7 @@ export class LLMService {
                 name: "create_task",
                 description: "Cria tarefa em um projeto. Use tags para categorizar. Colunas: 'to-do', 'in-progress', 'done'.",
                 schema: z.object({
-                    projectId: z.number().describe("ID do projeto onde criar a tarefa"),
+                    projectId: z.number().optional().describe("ID do projeto onde criar a tarefa"),
                     title: z.string().describe("Título da tarefa"),
                     description: z.string().optional().describe("Descrição da tarefa"),
                     column: z.enum(['to-do', 'in-progress', 'done']).optional().describe("Coluna/status da tarefa"),
@@ -850,9 +854,11 @@ export class LLMService {
         const updateTaskTool = tool(
             async ({ taskId, projectId, currentColumn, ...updates }) => {
                 try {
-                    // INJEÇÃO DO USER ID + LÓGICA DE TROCA DE COLUNA
+                    const effectiveProjectId = projectId ?? defaultProjectId;
+                    if (!effectiveProjectId) return "Informe o projectId (ex: 2).";
+
                     const updated = await this.tasksService.updateTask(
-                        { taskId, projectId, userId, currentColumn },
+                        { taskId, projectId: effectiveProjectId, userId, currentColumn },
                         updates
                     );
                     return `Tarefa atualizada com sucesso!`;
@@ -862,10 +868,10 @@ export class LLMService {
             },
             {
                 name: "update_task",
-                description: "Atualiza tarefa. IMPORTANTE: Requer 'currentColumn' (onde ela está agora) e 'projectId' para funcionar.",
+                description: "Atualiza tarefa. IMPORTANTE: Requer 'currentColumn' (onde ela está agora) e 'projectId' para funcionar, usada para atualizar coisas da tarefa e modificar sua coluna (to-do, in progress, done).",
                 schema: z.object({
                     taskId: z.number().describe("ID da tarefa"),
-                    projectId: z.number().describe("ID do projeto da tarefa"),
+                    projectId: z.number().optional().describe("ID do projeto da tarefa"),
                     currentColumn: z.string().describe("Nome da coluna ATUAL da tarefa (antes de mudar)"),
                     title: z.string().optional(),
                     description: z.string().optional(),
@@ -877,9 +883,11 @@ export class LLMService {
         const deleteTaskTool = tool(
             async ({ taskId, projectId, currentColumn }) => {
                 try {
-                    // INJEÇÃO DO USER ID
+                    const effectiveProjectId = projectId ?? defaultProjectId;
+                    if (!effectiveProjectId) return "Informe o projectId (ex: 2).";
+
                     await this.tasksService.deleteTask({
-                        taskId, projectId, userId, currentColumn
+                        taskId, projectId: effectiveProjectId, userId, currentColumn
                     });
                     return `Tarefa ${taskId} deletada com sucesso.`;
                 } catch (error) {
@@ -891,7 +899,7 @@ export class LLMService {
                 description: "Deleta tarefa. Requer projectId e currentColumn para identificar no banco.",
                 schema: z.object({
                     taskId: z.number(),
-                    projectId: z.number(),
+                    projectId: z.number().optional(),
                     currentColumn: z.string().describe("Coluna onde a tarefa está")
                 }),
             }
@@ -967,25 +975,48 @@ Rascunho de email criado com sucesso! Você pode revisar e enviar.`;
     }
 
     // Método principal chamado pelo Controller
-    async checaAgenda(userId, name, prompt, projectName) {
+    async checaAgenda(userId, name, prompt, projectName, projectId = null) {
         const now = new Date();
         const dateTimeInfo = now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'full', timeStyle: 'short' });
 
-        const systemPrompt = `Você é a SecretarIA, uma assistente pessoal eficiente.
-        
-        DATA/HORA ATUAL: ${dateTimeInfo}
-        USUÁRIO: ${name}
-        PROJETO ATUAL: ${projectName || 'Nenhum'}
+        const systemPrompt = `Você é a SecretarIA, assistente pessoal eficiente e orientada a ações.
 
-        DIRETRIZES:
-        1. Use as ferramentas disponíveis para responder.
-        2. Para tarefas/projetos, você AGORA TEM ACESSO AO BANCO DE DADOS. Use create/list/update/delete conforme pedido.
-        3. Para mover tarefa no Kanban (ex: "passe a tarefa X para feito"), use 'update_task' mudando a coluna.
-        4. Sempre responda de forma cordial e objetiva.
+        CONTEXTO ATUAL
+        - DATA/HORA: ${dateTimeInfo}
+        - USUÁRIO: ${name}
+        - PROJETO: ${projectName || 'Nenhum'}
+        - PROJECT_ID: ${projectId ?? 'Não informado (passe projectId explicitamente)'}
+
+        AS COLUNAS DO KANBAN REPRESENTAM O STATUS DA TAREFA ATUAL:
+        - to-do: Tarefas a serem iniciadas, ou que acabaram de ser criadas.
+        - in-progress: Tarefas que o usuário informou estar em andamento.
+        - done: Tarefas que o usuário informou estar concluídas.
+
+        FERRAMENTAS DISPONÍVEIS (sempre usar quando relevante):
+        - Calendário: get_calendar_events, create_calendar_event, cancel_calendar_event, reschedule_calendar_event
+        - Projetos (DB): create_project, list_projects, delete_project
+        - Tarefas (DB): list_tasks, create_task, update_task, delete_task
+        - Emails: list_emails, create_email_draft
+
+        REGRAS PARA USO DE FERRAMENTAS:
+        - Interprete corretamente o pedido do usuário e a partir disso escolha a ferramenta.
+        - Use as ferramentas para ações relacionadas a calendário, projetos, tarefas e emails.
+        - Sempre utilize as ferramentas para obter dados reais.
+
+        REGRAS DE USO DE PROJECT_ID
+        1) SEMPRE determine o projectId antes de operar em tarefas/projetos. Prioridade: (a) projectId fornecido pelo usuário, (b) projectId passado na requisição, (c) se ausente, peça explicitamente ao usuário.
+        2) Ao chamar tools de tarefas/projetos, sempre envie o projectId explícito.
+        3) Se o projectId não for conhecido, peça para informar (ex: "Qual o ID do projeto?"), não invente.
+
+        REGRAS DE RESPOSTA
+        - Use ferramentas para obter dados reais; não invente tarefas ou eventos.
+        - Para mover tarefa no Kanban, use update_task mudando a coluna.
+        - Seja cordial, direto e com passos curtos.
+        - Se faltar informação crítica (ex: projectId, currentColumn), peça ao usuário.
         `;
 
         // 1. Cria tools vinculadas ao userId
-        const userTools = this.createToolsForUser(userId);
+        const userTools = this.createToolsForUser(userId, projectId);
 
         // 2. Executa a consulta
         return await this.processConsulta(systemPrompt, prompt, name, projectName, userTools);

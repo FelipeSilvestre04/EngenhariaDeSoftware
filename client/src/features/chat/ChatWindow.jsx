@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import styles from './ChatWindow.module.css';
 import sendpath from '../../assets/send.svg';
 
-export function ChatWindow({ theme, projectName, onEmailDraftCreated }) {
+export function ChatWindow({ theme, projectName, projectId, onEmailDraftCreated }) {
 
   // Persist messages na sessão por projeto para reabrir o chat mantendo histórico
   const storageKey = projectName ? `chatMessages:${projectName}` : 'chatMessages:default';
@@ -89,8 +89,13 @@ export function ChatWindow({ theme, projectName, onEmailDraftCreated }) {
     setIsLoading(true);
 
     try {
-      // If projectName is provided, include it as query param so backend can scope context
-      const query = projectName ? `?project=${encodeURIComponent(projectName)}` : '';
+      // Inclui projectName e projectId para o backend da LLM
+      const params = new URLSearchParams();
+      if (projectName) params.append('project', projectName);
+      if (projectId) params.append('projectId', projectId);
+
+      const query = params.toString() ? `?${params.toString()}` : '';
+
       const res = await fetch(`/llm/query${query}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

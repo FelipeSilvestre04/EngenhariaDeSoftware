@@ -73,7 +73,7 @@ function ProjectPage({ theme }) {
         </div>
       </div>
 
-      <ProjectChatToggle projectName={project.title} theme={theme} />
+      <ProjectChatToggle projectName={project.title} projectId={project.id} theme={theme} />
     </div>
   )
 }

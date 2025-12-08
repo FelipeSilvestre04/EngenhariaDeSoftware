@@ -20,7 +20,18 @@ export class LLMController {
             const name = user.name || url.searchParams.get('name') || 'usuário';
             const projectName = url.searchParams.get('project') || 'projeto';
 
-            console.log(`👤 [LLMController] Usuário autenticado: ${name} (${userId})`);
+            // ProjectId pode vir via query (?projectId=2) ou no body; garantimos número válido
+            const parseProjectId = (value) => {
+                if (value === undefined || value === null || value === '') return null;
+                const n = Number(value);
+                return Number.isFinite(n) ? n : null;
+            };
+
+            const projectIdQuery = parseProjectId(url.searchParams.get('projectId'));
+            const projectIdBody = parseProjectId(req.body?.projectId);
+            const projectId = projectIdBody ?? projectIdQuery;
+
+            console.log(`👤 [LLMController] Usuário autenticado: ${name} (${userId}) | projectId=${projectId ?? 'none'}`);
 
             // O Express já parseou o body, então usamos req.body diretamente
             const prompt = req.body.prompt;
@@ -31,7 +42,7 @@ export class LLMController {
             }
 
             console.log('⏳ [LLMController] Processando com LLM...');
-            const result = await this.llmService.checaAgenda(userId, name, prompt, projectName);
+            const result = await this.llmService.checaAgenda(userId, name, prompt, projectName, projectId);
             console.log('✅ [LLMController] Resposta do LLM:', result);
 
             // Log detalhado para debug

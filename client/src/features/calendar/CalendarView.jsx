@@ -44,10 +44,10 @@ export function CalendarView() {
   useEffect(() => {
     fetchEvents(activeStartDate);
     
-    // Atualiza a cada 30 segundos para manter sincronizado
+    // Atualiza a cada 5 segundos para manter sincronizado
     const interval = setInterval(() => {
         fetchEvents(activeStartDate);
-    }, 30000);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [activeStartDate]);
