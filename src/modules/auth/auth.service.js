@@ -98,14 +98,15 @@ export class AuthService {
         } catch (error) {
             console.error("❌ [AuthService] Erro CRÍTICO no OAuth:", error);
 
-            // Tenta extrair detalhes do erro da API do Google
+            let errorMessage = error.message;
             if (error.response && error.response.data) {
                 console.error("❌ [AuthService] Detalhes do erro Google:", JSON.stringify(error.response.data));
+                errorMessage = JSON.stringify(error.response.data);
             }
 
             return {
-                success: false, // Mantido false para o controller saber
-                message: `Erro na autenticação OAuth2: ${error.message}`
+                success: false,
+                message: `Erro OAuth2 Detalhado: ${errorMessage}`
             };
         }
     }

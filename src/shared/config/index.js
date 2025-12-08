@@ -31,7 +31,10 @@ export const config = {
     googleCalendar: {
         clientId: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        redirectUri: process.env.GOOGLE_REDIRECT_URI || `http://localhost:${process.env.PORT || 3000}/auth/callback`,
+        // Tenta pegar da ENV, senão tenta construir com URL do Render, senão usa hardcoded da produção (como fallback de segurança para o usuário), e por ultimo localhost
+        redirectUri: process.env.GOOGLE_REDIRECT_URI ||
+            (process.env.RENDER_EXTERNAL_URL ? `${process.env.RENDER_EXTERNAL_URL}/auth/callback` : null) ||
+            'https://engenhariadesoftware.onrender.com/auth/callback', // Fallback forçado conforme URL do usuário
         scopes: [
             'https://www.googleapis.com/auth/calendar',
             'https://www.googleapis.com/auth/userinfo.profile',
