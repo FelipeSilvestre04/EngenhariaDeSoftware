@@ -33,6 +33,8 @@ export class AuthService {
             throw new Error("Código de autorização não fornecido.");
         }
 
+        console.log(`🔍 [AuthService] Iniciando OAuth callback. RedirectURL configurada: ${this.config.googleCalendar.redirectUri}`);
+
         try {
             // Create a new client instance to avoid race conditions with the singleton this.oauth2Client
             const oauth2Client = new google.auth.OAuth2(
@@ -41,11 +43,13 @@ export class AuthService {
                 this.config.googleCalendar.redirectUri
             );
 
+            console.log("🔄 [AuthService] Trocando code por tokens...");
             const { tokens } = await oauth2Client.getToken(code);
 
             if (!tokens) {
                 throw new Error("Falha ao obter tokens OAuth2.");
             }
+            console.log("✅ [AuthService] Tokens obtidos com sucesso.");
 
             oauth2Client.setCredentials(tokens);
 
@@ -54,20 +58,22 @@ export class AuthService {
                 version: 'v2'
             });
 
+            console.log("🔄 [AuthService] Buscando info do usuário...");
             const { data } = await oauth2.userinfo.get();
-            
+
             if (!data || !data.email) {
                 throw new Error("Falha ao obter informações do usuário.");
             }
+            console.log(`✅ [AuthService] Usuário encontrado no Google: ${data.email}`);
 
             const query = `SELECT Check_User($1, $2) as "userId"`;
             const dbResult = await db.query(query, [data.name, data.email]);
-            
+
             // O ID agora é um NÚMERO (INT) vindo do banco
             const realUserId = dbResult.rows[0].userId;
-            
+
             console.log(`✅ Usuário logado/criado no BD: ${data.email} (ID: ${realUserId})`);
-            
+
             await this.tokenStorage.saveTokens(realUserId.toString(), tokens);
 
             const payload = {
@@ -90,9 +96,15 @@ export class AuthService {
                 tokens: jwtTokens
             };
         } catch (error) {
-            console.error("Erro ao processar callback OAuth2:", error);
+            console.error("❌ [AuthService] Erro CRÍTICO no OAuth:", error);
+
+            // Tenta extrair detalhes do erro da API do Google
+            if (error.response && error.response.data) {
+                console.error("❌ [AuthService] Detalhes do erro Google:", JSON.stringify(error.response.data));
+            }
+
             return {
-                success: false,
+                success: false, // Mantido false para o controller saber
                 message: `Erro na autenticação OAuth2: ${error.message}`
             };
         }
@@ -159,7 +171,7 @@ export class AuthService {
 
     async generateRefreshToken(payload, expiresIn = '15d') {
         try {
-            const refreshToken = await this.jwtLibrary.sign({...payload, type: 'refresh'},
+            const refreshToken = await this.jwtLibrary.sign({ ...payload, type: 'refresh' },
                 process.env.JWT_REFRESH_SECRET,
                 { expiresIn });
             return refreshToken;
@@ -172,7 +184,7 @@ export class AuthService {
     async generateTokenPair(payload) {
         try {
             delete payload.password;
-            
+
             const accessToken = await this.generateToken(payload, '2d');
             const refreshToken = await this.generateRefreshToken(payload, '7d');
 
@@ -196,18 +208,18 @@ export class AuthService {
     async refreshAccessToken(refreshToken) {
         try {
             const decoded = await this.jwtLibrary.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-            
+
             if (!decoded || decoded.type !== 'refresh') {
                 throw new Error("Refresh token inválido");
             }
 
-            const {type, iat, exp, ...payload} = decoded;
+            const { type, iat, exp, ...payload } = decoded;
             const accessToken = await this.generateToken(payload, '2d');
-            
-            return { 
-                accessToken, 
+
+            return {
+                accessToken,
                 refreshToken,
-                expiresIn: 900 
+                expiresIn: 900
             };
 
         } catch (error) {
