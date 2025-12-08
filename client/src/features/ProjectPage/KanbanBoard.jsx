@@ -224,10 +224,16 @@ export function KanbanBoard({ projectId }) {
 
   const handleEditTask = async (updatedTaskData) => {
     try {
+      const payload = {
+        projectId: numericProjectId,        
+        currentColumn: editingTask.column,  
+        ...updatedTaskData                  
+      };
+
       const response = await fetch(`${API_URL}/${updatedTaskData.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedTaskData)
+        body: JSON.stringify(payload)
       });
 
       if (response.ok) {
@@ -266,7 +272,11 @@ export function KanbanBoard({ projectId }) {
       const response = await fetch(`${API_URL}/${taskId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ column: targetColumnKey })
+        body: JSON.stringify({ 
+                column: targetColumnKey, // Para onde vai
+                currentColumn: sourceColumnKey, // Onde estava (para achar no DB)
+                projectId: numericProjectId
+          })
       });
 
       if (response.ok) {
@@ -309,7 +319,12 @@ export function KanbanBoard({ projectId }) {
     }
 
     try {
-      const response = await fetch(`${API_URL}/${taskId}`, {
+      const params = new URLSearchParams({
+            projectId: numericProjectId,
+            currentColumn: columnKey
+        });
+      
+      const response = await fetch(`${API_URL}/${taskId}?${params.toString()}`, {
         method: 'DELETE'
       });
 

@@ -2,6 +2,7 @@ import 'dotenv/config';
 import jwt from 'jsonwebtoken';
 import { TokenStorage } from '../calendar/storage/TokenStorage.js';
 import { google } from 'googleapis';
+import { db } from '../../shared/database/index.js';
 import crypto from 'crypto';
 
 export class AuthService {
@@ -55,16 +56,22 @@ export class AuthService {
 
             const { data } = await oauth2.userinfo.get();
             
-            if (!data || !data.id) {
+            if (!data || !data.email) {
                 throw new Error("Falha ao obter informações do usuário.");
             }
 
-            const userId = crypto.randomUUID();
+            const query = `SELECT Check_User($1, $2) as "userId"`;
+            const dbResult = await db.query(query, [data.name, data.email]);
             
-            await this.tokenStorage.saveTokens(userId, tokens);
+            // O ID agora é um NÚMERO (INT) vindo do banco
+            const realUserId = dbResult.rows[0].userId;
+            
+            console.log(`✅ Usuário logado/criado no BD: ${data.email} (ID: ${realUserId})`);
+            
+            await this.tokenStorage.saveTokens(realUserId.toString(), tokens);
 
             const payload = {
-                userId: userId,
+                userId: realUserId,
                 email: data.email,
                 name: data.name,
                 picture: data.picture,
@@ -75,7 +82,7 @@ export class AuthService {
             return {
                 success: true,
                 message: 'Autenticação bem-sucedida',
-                userId: userId,
+                userId: realUserId,
                 userInfo: {
                     email: data.email,
                     name: data.name

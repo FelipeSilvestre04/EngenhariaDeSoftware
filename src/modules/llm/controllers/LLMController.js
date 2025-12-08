@@ -31,7 +31,7 @@ export class LLMController {
             }
 
             console.log('⏳ [LLMController] Processando com LLM...');
-            const result = await this.llmService.checaAgenda(name, prompt, projectName);
+            const result = await this.llmService.checaAgenda(userId, name, prompt, projectName);
             console.log('✅ [LLMController] Resposta do LLM:', result);
 
             // Log detalhado para debug

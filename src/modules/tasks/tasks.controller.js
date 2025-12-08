@@ -1,4 +1,4 @@
-import { TasksService } from './tasks.service.js';
+/*import { TasksService } from './tasks.service.js';
 
 export class TasksController {
     constructor() {
@@ -101,6 +101,75 @@ export class TasksController {
                 return res.status(404).json({ error: error.message });
             }
 
+            res.status(500).json({ error: error.message });
+        }
+    }
+}*/
+import { TasksService } from './tasks.service.js';
+
+export class TasksController {
+    constructor() {
+        this.tasksService = new TasksService();
+    }
+
+    async getByProject(req, res) {
+        try {
+            const projectId = parseInt(req.query.projectId);
+            const tasks = await this.tasksService.getTasksByProject(projectId, req.userId);
+            res.status(200).json(tasks);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    async create(req, res) {
+        try {
+            const { projectId, title, description, column, tags } = req.body;
+            // Passamos as tags (array de strings) para o serviço
+            const task = await this.tasksService.createTask({
+                userId: req.userId,
+                projectId: parseInt(projectId),
+                title,
+                description,
+                column,
+                tags // Array ['Tag1', 'Tag2']
+            });
+            res.status(201).json(task);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    async update(req, res) {
+        try {
+            const taskId = parseInt(req.params.id);
+            // Frontend precisa enviar currentColumn e projectId para acharmos a task
+            const { projectId, currentColumn, ...updates } = req.body;
+
+            await this.tasksService.updateTask(
+                { taskId, projectId: parseInt(projectId), userId: req.userId, currentColumn },
+                updates
+            );
+            res.status(200).json({ success: true });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    async delete(req, res) {
+        try {
+            const taskId = parseInt(req.params.id);
+            const { projectId, currentColumn } = req.query;
+
+            await this.tasksService.deleteTask({
+                taskId,
+                userId: req.userId,
+                projectId: parseInt(projectId),
+                currentColumn
+            });
+            res.status(200).json({ success: true });
+        } catch (error) {
             res.status(500).json({ error: error.message });
         }
     }

@@ -1,4 +1,4 @@
-import { LLMModel } from "../models/LLMModel.js"
+/*import { LLMModel } from "../models/LLMModel.js"
 import { z } from "zod";
 import { tool } from "@langchain/core/tools";
 import { ProjectsService } from "../../projects/projects.service.js";
@@ -568,5 +568,427 @@ Rascunho de email criado com sucesso!`;
     async generateNaturalResponse(contextualPrompt, name = 'usuário', projectName = null) {
         const systemPrompt = `Você é um assistente pessoal prestativo e conciso. Responda à pergunta do usuário de forma direta, baseado apenas no contexto fornecido. Não use formatação Markdown.`;
         return await this.processConsulta(systemPrompt, contextualPrompt, name, projectName);
+    }
+}*/
+import { LLMModel } from "../models/LLMModel.js"
+import { z } from "zod";
+import { tool } from "@langchain/core/tools";
+import { ProjectsService } from "../../projects/projects.service.js";
+import { TasksService } from "../../tasks/tasks.service.js";
+
+export class LLMService {
+    constructor(apiKey, calendarService) {
+        this.model = new LLMModel(apiKey);
+        this.calendarService = calendarService;
+        this.projectService = new ProjectsService();
+        this.tasksService = new TasksService();
+    }
+
+    // Inicializa o modelo (chamado no Controller)
+    createModel(temperature, modelName) {
+        // Agora apenas inicializa a instância do modelo, sem tools fixas
+        this.model.initialize(modelName, temperature, []); 
+    }
+
+    // GERA AS TOOLS COM O CONTEXTO DO USUÁRIO (userId)
+    createToolsForUser(userId) {
+        
+        // ========================================
+        // 📅 CALENDAR TOOLS
+        // ========================================
+        const getCalendarEventsTool = tool(
+            async ({ maxResults = 10, query }) => {
+                try {
+                    // Garante que o serviço use o usuário atual
+                    await this.calendarService.initialize(userId);
+                    const events = await this.calendarService.listEvents(maxResults, query);
+
+                    if (!events || events.length === 0) {
+                        return query 
+                            ? `Nenhum evento encontrado para a busca "${query}".`
+                            : "Nenhum evento encontrado no calendário.";
+                    }
+
+                    const formattedEvents = events.map((event, index) => {
+                        const startDateTime = event.start;
+                        const endDateTime = event.end;
+                        let dateInfo = 'Horário: Não especificado';
+                        
+                        if (startDateTime) {
+                            const startDate = new Date(startDateTime);
+                            const endDate = endDateTime ? new Date(endDateTime) : null;
+                            const hasTime = startDateTime.includes('T');
+
+                            if (!hasTime) {
+                                dateInfo = `Data: ${startDate.toLocaleDateString('pt-BR')} (dia inteiro)`;
+                            } else {
+                                const dateStr = startDate.toLocaleDateString('pt-BR');
+                                const timeStr = startDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                                if (endDate && hasTime) {
+                                    const endTimeStr = endDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                                    dateInfo = `Data: ${dateStr} | Horário: ${timeStr} - ${endTimeStr}`;
+                                } else {
+                                    dateInfo = `Data: ${dateStr} | Horário: ${timeStr}`;
+                                }
+                            }
+                        }
+
+                        let eventInfo = `${index + 1}. **${event.summary || 'Sem título'}**\n   ID: ${event.id}\n   ${dateInfo}`;
+                        if (event.description) eventInfo += `\n   Descrição: ${event.description}`;
+                        if (event.location) eventInfo += `\n   Local: ${event.location}`;
+                        return eventInfo;
+                    }).join('\n\n');
+
+                    return `Encontrei ${events.length} evento(s):\n\n${formattedEvents}`;
+                } catch (error) {
+                    return `Erro ao buscar eventos: ${error.message}`;
+                }
+            },
+            {
+                name: "get_calendar_events",
+                description: "Busca eventos do calendário Google. Filtre por 'query' para achar eventos específicos.",
+                schema: z.object({
+                    maxResults: z.number().optional().default(10),
+                    query: z.string().optional().describe("Termo de busca (ex: 'Reunião')")
+                }),
+            }
+        );
+
+        const createEventTool = tool(
+            async (args) => {
+                try {
+                    await this.calendarService.initialize(userId);
+                    const event = await this.calendarService.createEvent(args);
+                    return `Evento criado com sucesso: ${event.summary} em ${event.start.dateTime || event.start.date}`;
+                } catch (error) {
+                    return `Erro ao criar evento: ${error.message}`;
+                }
+            },
+            {
+                name: "create_calendar_event",
+                description: "Cria novo evento no calendário.",
+                schema: z.object({
+                    summary: z.string().describe("Título do evento"),
+                    description: z.string().optional(),
+                    location: z.string().optional(),
+                    startDateTime: z.string().describe("Início (ISO 8601)"),
+                    endDateTime: z.string().describe("Fim (ISO 8601)")
+                }),
+            }
+        );
+
+        const cancelEventTool = tool(
+            async ({ eventId }) => {
+                try {
+                    await this.calendarService.initialize(userId);
+                    await this.calendarService.deleteEvent(eventId);
+                    return `Evento cancelado com sucesso! ID: ${eventId}`;
+                } catch (error) {
+                    return `Erro ao cancelar evento: ${error.message}`;
+                }
+            },
+            {
+                name: "cancel_calendar_event",
+                description: "Cancela um evento pelo ID. Liste os eventos antes para pegar o ID.",
+                schema: z.object({
+                    eventId: z.string().describe("ID do evento")
+                }),
+            }
+        );
+
+        const rescheduleEventTool = tool(
+            async (args) => {
+                try {
+                    await this.calendarService.initialize(userId);
+                    const { eventId, ...updates } = args;
+                    const event = await this.calendarService.updateEvent(eventId, updates);
+                    return `Evento reagendado: ${event.summary}`;
+                } catch (error) {
+                    return `Erro ao reagendar: ${error.message}`;
+                }
+            },
+            {
+                name: "reschedule_calendar_event",
+                description: "Atualiza/Reagenda um evento existente.",
+                schema: z.object({
+                    eventId: z.string().describe("ID do evento"),
+                    summary: z.string().optional(),
+                    description: z.string().optional(),
+                    location: z.string().optional(),
+                    startDateTime: z.string().optional(),
+                    endDateTime: z.string().optional()
+                }),
+            }
+        );
+
+        // ========================================
+        // 🚀 PROJECT TOOLS (DATABASE)
+        // ========================================
+        const createProjectTool = tool(
+            async ({ title, color }) => {
+                try {
+                    // INJEÇÃO DO USER ID
+                    const newProject = await this.projectService.createProject(userId, title, color);
+                    return `Projeto criado com sucesso! ID: ${newProject.id}, Nome: "${newProject.title}"`;
+                } catch (error) {
+                    return `Erro ao criar projeto: ${error.message}`;
+                }
+            },
+            {
+                name: "create_project",
+                description: "Cria um novo projeto.",
+                schema: z.object({
+                    title: z.string().describe("Nome do projeto"),
+                    color: z.string().optional().describe("Cor hex (ex: #FF5733)")
+                }),
+            }
+        );
+
+        const listProjectsTool = tool(
+            async () => {
+                try {
+                    // INJEÇÃO DO USER ID
+                    const projects = await this.projectService.getAllProjects(userId);
+                    if (!projects || projects.length === 0) return "Nenhum projeto encontrado.";
+
+                    const formatted = projects.map((p, i) => 
+                        `${i + 1}. **${p.title}** (ID: ${p.id}) - Cor: ${p.color}`
+                    ).join('\n');
+                    
+                    return `Encontrei ${projects.length} projeto(s):\n\n${formatted}`;
+                } catch (error) {
+                    return `Erro ao listar projetos: ${error.message}`;
+                }
+            },
+            {
+                name: "list_projects",
+                description: "Lista todos os projetos do usuário.",
+                schema: z.object({}),
+            }
+        );
+
+        const deleteProjectTool = tool(
+            async ({ projectId }) => {
+                try {
+                    // INJEÇÃO DO USER ID
+                    const deleted = await this.projectService.deleteProject(projectId, userId);
+                    return `Projeto "${deleted.title}" (ID: ${deleted.id}) deletado com sucesso!`;
+                } catch (error) {
+                    return `Erro ao deletar projeto: ${error.message}`;
+                }
+            },
+            {
+                name: "delete_project",
+                description: "Deleta um projeto pelo ID.",
+                schema: z.object({
+                    projectId: z.number().describe("ID do projeto")
+                }),
+            }
+        );
+
+        // ========================================
+        // ✅ TASKS TOOLS (DATABASE)
+        // ========================================
+        const listTasksTool = tool(
+            async ({ projectId }) => {
+                try {
+                    // INJEÇÃO DO USER ID
+                    const tasks = await this.tasksService.getTasksByProject(projectId, userId);
+                    if (!tasks || tasks.length === 0) return `Nenhuma tarefa no projeto ${projectId}.`;
+
+                    const formatted = tasks.map((t, i) => 
+                        `${i + 1}. **${t.title}** (ID: ${t.id})
+   Status: ${t.column}
+   Descrição: ${t.description || 'Sem descrição'}`
+                    ).join('\n\n');
+
+                    return `Tarefas do projeto ${projectId}:\n\n${formatted}`;
+                } catch (error) {
+                    return `Erro ao listar tarefas: ${error.message}`;
+                }
+            },
+            {
+                name: "list_tasks",
+                description: "Lista tarefas de um projeto específico.",
+                schema: z.object({
+                    projectId: z.number().describe("ID do projeto")
+                }),
+            }
+        );
+
+        const createTaskTool = tool(
+            async ({ projectId, title, description, column }) => {
+                try {
+                    // INJEÇÃO DO USER ID
+                    const newTask = await this.tasksService.createTask({
+                        userId,
+                        projectId,
+                        title,
+                        description,
+                        column: column || 'to-do'
+                    });
+                    return `Tarefa criada! ID: ${newTask.id}, Título: "${newTask.title}", Coluna: ${newTask.column}`;
+                } catch (error) {
+                    return `Erro ao criar tarefa: ${error.message}`;
+                }
+            },
+            {
+                name: "create_task",
+                description: "Cria tarefa. Colunas: 'to-do', 'in-progress', 'done'.",
+                schema: z.object({
+                    projectId: z.number(),
+                    title: z.string(),
+                    description: z.string().optional(),
+                    column: z.enum(['to-do', 'in-progress', 'done']).optional()
+                }),
+            }
+        );
+
+        const updateTaskTool = tool(
+            async ({ taskId, projectId, currentColumn, ...updates }) => {
+                try {
+                    // INJEÇÃO DO USER ID + LÓGICA DE TROCA DE COLUNA
+                    const updated = await this.tasksService.updateTask(
+                        { taskId, projectId, userId, currentColumn },
+                        updates
+                    );
+                    return `Tarefa atualizada com sucesso!`;
+                } catch (error) {
+                    return `Erro ao atualizar tarefa: ${error.message}`;
+                }
+            },
+            {
+                name: "update_task",
+                description: "Atualiza tarefa. IMPORTANTE: Requer 'currentColumn' (onde ela está agora) e 'projectId' para funcionar.",
+                schema: z.object({
+                    taskId: z.number().describe("ID da tarefa"),
+                    projectId: z.number().describe("ID do projeto da tarefa"),
+                    currentColumn: z.string().describe("Nome da coluna ATUAL da tarefa (antes de mudar)"),
+                    title: z.string().optional(),
+                    description: z.string().optional(),
+                    column: z.enum(['to-do', 'in-progress', 'done']).optional().describe("NOVA coluna (se for mover)")
+                }),
+            }
+        );
+
+        const deleteTaskTool = tool(
+            async ({ taskId, projectId, currentColumn }) => {
+                try {
+                    // INJEÇÃO DO USER ID
+                    await this.tasksService.deleteTask({
+                        taskId, projectId, userId, currentColumn
+                    });
+                    return `Tarefa ${taskId} deletada com sucesso.`;
+                } catch (error) {
+                    return `Erro ao deletar tarefa: ${error.message}`;
+                }
+            },
+            {
+                name: "delete_task",
+                description: "Deleta tarefa. Requer projectId e currentColumn para identificar no banco.",
+                schema: z.object({
+                    taskId: z.number(),
+                    projectId: z.number(),
+                    currentColumn: z.string().describe("Coluna onde a tarefa está")
+                }),
+            }
+        );
+
+        // ========================================
+        // 📧 GMAIL TOOLS
+        // ========================================
+        const listEmailsTool = tool(
+            async ({ maxResults = 10 }) => {
+                try {
+                    await this.calendarService.initialize(userId);
+                    const emails = await this.calendarService.listEmails(maxResults);
+                    if (!emails.length) return "Caixa de entrada vazia.";
+                    
+                    return emails.map(e => 
+                        `De: ${e.from}\nAssunto: ${e.subject}\nData: ${e.date}\nSnippet: ${e.snippet}`
+                    ).join('\n\n');
+                } catch (error) {
+                    return `Erro ao ler emails: ${error.message}`;
+                }
+            },
+            {
+                name: "list_emails",
+                description: "Lista últimos emails do Gmail.",
+                schema: z.object({ maxResults: z.number().optional() })
+            }
+        );
+
+        const createEmailDraftTool = tool(
+            async ({ to, subject, body }) => {
+                // Retorna JSON especial que o Controller intercepta para formatar bonito no front
+                return `[EMAIL_DRAFT]
+                {
+                    "to": "${to}",
+                    "subject": "${subject}",
+                    "body": "${body.replace(/\n/g, '\\n')}"
+                }
+                [/EMAIL_DRAFT]`;
+            },
+            {
+                name: "create_email_draft",
+                description: "Gera rascunho de email.",
+                schema: z.object({
+                    to: z.string(),
+                    subject: z.string(),
+                    body: z.string()
+                })
+            }
+        );
+
+        // Retorna todas as ferramentas criadas para este usuário
+        return [
+            getCalendarEventsTool, createEventTool, cancelEventTool, rescheduleEventTool,
+            createProjectTool, listProjectsTool, deleteProjectTool,
+            listTasksTool, createTaskTool, updateTaskTool, deleteTaskTool,
+            listEmailsTool, createEmailDraftTool
+        ];
+    }
+
+    async processConsulta(systemPrompt, userPrompt, userName, projectName, tools) {
+        try {
+            // Passa as tools dinâmicas para o model
+            const response = await this.model.queryWithTools(systemPrompt, userPrompt, userName, projectName, tools);
+
+            return {
+                success: true,
+                content: response.content,
+                steps: response.steps,
+                totalToolCalls: response.totalToolCalls,
+                metaData: { timeStamp: new Date().toISOString() }
+            };
+        } catch (error) {
+            console.error("Erro em processConsulta:", error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    // Método principal chamado pelo Controller
+    async checaAgenda(userId, name, prompt, projectName) {
+        const now = new Date();
+        const dateTimeInfo = now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'full', timeStyle: 'short' });
+
+        const systemPrompt = `Você é a SecretarIA, uma assistente pessoal eficiente.
+        
+        DATA/HORA ATUAL: ${dateTimeInfo}
+        USUÁRIO: ${name}
+        PROJETO ATUAL: ${projectName || 'Nenhum'}
+
+        DIRETRIZES:
+        1. Use as ferramentas disponíveis para responder.
+        2. Para tarefas/projetos, você AGORA TEM ACESSO AO BANCO DE DADOS. Use create/list/update/delete conforme pedido.
+        3. Para mover tarefa no Kanban (ex: "passe a tarefa X para feito"), use 'update_task' mudando a coluna.
+        4. Sempre responda de forma cordial e objetiva.
+        `;
+
+        // 1. Cria tools vinculadas ao userId
+        const userTools = this.createToolsForUser(userId);
+
+        // 2. Executa a consulta
+        return await this.processConsulta(systemPrompt, prompt, name, projectName, userTools);
     }
 }

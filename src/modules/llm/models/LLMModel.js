@@ -67,7 +67,14 @@ export class LLMModel {
 
     }
 
-    async queryWithTools(systemPrompt, userPrompt, userName, projectName){
+    async queryWithTools(systemPrompt, userPrompt, userName, projectName, tools){
+        
+        const agent = createReactAgent({
+            llm: this.modelInstance, 
+            tools: tools,
+            store: this.store,
+        });
+
         if (!this.modelInstance) {
             throw new Error("Model not initialized. Call initialize() first.");
         }
@@ -75,7 +82,7 @@ export class LLMModel {
             throw new Error("No tools provided for LLMModel.");
         }
 
-        if(!this.agent){
+        if(!agent){
             throw new Error("No agent initialized.");
         }
 
@@ -98,7 +105,7 @@ export class LLMModel {
         if (contextText.trim()) {
             userPrompt = `Here are some of your previous memories related to this project:\n${contextText}\nBased on these, respond to the following:\n${userPrompt}`;
         }
-        const response = await this.agent.invoke({
+        const response = await agent.invoke({
             messages: [
                 new SystemMessage(systemPrompt),
                 new HumanMessage(userPrompt)

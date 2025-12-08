@@ -1,4 +1,6 @@
-export class ProjectsService {
+import { db } from '../../shared/database/index.js';
+
+/*export class ProjectsService {
     // Singleton: garante que só existe UMA instância compartilhada
     static instance = null;
 
@@ -54,5 +56,51 @@ export class ProjectsService {
         console.log(`❌ [ProjectsService] Projeto deletado: ${deletedProject.title} (ID: ${id})`);
         console.log(`📋 [ProjectsService] Total de projetos: ${this.projects.length}`);
         return deletedProject;
+    }
+}*/
+
+export class ProjectsService {
+    async getAllProjects(userId) {
+        const query = `
+            SELECT "Project_ID" as id, "Name" as title, "Color" as color 
+            FROM Project 
+            WHERE "User_ID" = $1 
+            ORDER BY "Project_ID" ASC
+        `;
+        const result = await db.query(query, [userId]);
+        return result.rows;
+    }
+
+    async getProjectById(id, userId) {
+        const query = `
+            SELECT "Project_ID" as id, "Name" as title, "Color" as color 
+            FROM Project 
+            WHERE "Project_ID" = $1 AND "User_ID" = $2
+        `;
+        const result = await db.query(query, [id, userId]);
+        return result.rows[0];
+    }
+
+    async createProject(userId, title, color = '#666666') {
+        // Trigger Setup_AfterInsertProject [cite: 94-105] criará as listas automaticamente
+        const query = `
+            INSERT INTO Project ("User_ID", "Name", "Color") 
+            VALUES ($1, $2, $3) 
+            RETURNING "Project_ID" as id, "Name" as title, "Color" as color
+        `;
+        const result = await db.query(query, [userId, title, color]);
+        console.log(`✅ Projeto criado: ${title}`);
+        return result.rows[0];
+    }
+
+    async deleteProject(id, userId) {
+        const query = `
+            DELETE FROM Project 
+            WHERE "Project_ID" = $1 AND "User_ID" = $2 
+            RETURNING "Project_ID" as id, "Name" as title
+        `;
+        const result = await db.query(query, [id, userId]);
+        if (result.rows.length === 0) throw new Error('Projeto não encontrado');
+        return result.rows[0];
     }
 }
