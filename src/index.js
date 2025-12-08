@@ -28,7 +28,7 @@ app.use((req, res, next) => {
     ].filter(Boolean);
 
     const origin = req.headers.origin;
-    
+
     if (allowedOrigins.includes(origin)) {
         res.header('Access-Control-Allow-Origin', origin);
     } else if (!origin) {
@@ -59,8 +59,13 @@ app.use((req, res) => {
     res.sendFile(path.join(CLIENT_DIST_PATH, 'index.html'));
 });
 
-const PORT = process.env.PORT || 10000;
+// Prioriza BACKEND_PORT (uso interno com Nginx) sobre PORT (uso externo do Render)
+const PORT = process.env.BACKEND_PORT || process.env.PORT || 10000;
 
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`=================================`);
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📂 Node Env: ${process.env.NODE_ENV}`);
+    console.log(`🔌 Database URL exists: ${!!process.env.DATABASE_URL}`);
+    console.log(`=================================`);
 });

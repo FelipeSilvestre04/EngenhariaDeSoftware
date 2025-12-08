@@ -80,10 +80,23 @@ export class AppRouter {
 
     setupRoutes(app) {
         // Health check
-        app.get('/health', (req, res) => {
+        app.get('/health', async (req, res) => {
+            let dbStatus = 'unknown';
+            try {
+                // Teste simples de conexão com o banco
+                await import('./shared/database/index.js').then(async (module) => {
+                    await module.db.query('SELECT 1');
+                    dbStatus = 'connected';
+                });
+            } catch (error) {
+                dbStatus = 'disconnected';
+                console.error('Health check DB error:', error);
+            }
+
             res.json({
                 status: 'ok',
                 message: 'Server is running',
+                database: dbStatus,
                 timestamp: new Date().toISOString()
             });
         });

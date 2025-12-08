@@ -94,6 +94,7 @@ EOF
 
 RUN mkdir -p /app/src/modules/calendar/storage
 RUN echo '#!/bin/sh' > /app/start.sh && \
+    echo 'export BACKEND_PORT=10000' >> /app/start.sh && \
     echo 'nginx &' >> /app/start.sh && \
     echo 'node src/index.js' >> /app/start.sh && \
     chmod +x /app/start.sh
