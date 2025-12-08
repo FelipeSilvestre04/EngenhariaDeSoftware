@@ -99,72 +99,127 @@
 import { db } from '../../shared/database/index.js';
 
 export class TasksService {
-    
-    // Auxiliar para pegar o List_ID pelo nome (o banco já cria 'to-do', etc)
+
+    // Auxiliar para pegar o list_id pelo nome (o banco já cria 'to-do', etc)
     async getListId(projectId, userId, listName) {
+        console.log(`🔍 getListId: projectId=${projectId}, userId=${userId}, listName=${listName}`);
         const query = `
-            SELECT "List_ID" FROM List 
-            WHERE "Project_ID" = $1 AND "User_ID" = $2 AND "Name" = $3
+            SELECT list_id FROM list 
+            WHERE project_id = $1 AND user_id = $2 AND name = $3
         `;
         const result = await db.query(query, [projectId, userId, listName]);
         if (result.rows.length === 0) {
+            console.log(`⚠️ Lista '${listName}' não encontrada, usando fallback`);
             // Fallback para 'to-do' se não achar
-            const fallback = await db.query(`SELECT "List_ID" FROM List WHERE "Project_ID"=$1 AND "Name"='to-do'`, [projectId]);
-            return fallback.rows[0]?.List_ID || 1;
+            const fallback = await db.query(`SELECT list_id FROM list WHERE project_id=$1 AND name='to-do'`, [projectId]);
+            const listId = fallback.rows[0]?.list_id || 1;
+            console.log(`🔍 Fallback list_id=${listId}`);
+            return listId;
         }
-        return result.rows[0].List_ID;
+        console.log(`🔍 Encontrado list_id=${result.rows[0].list_id}`);
+        return result.rows[0].list_id;
     }
 
     async getTasksByProject(projectId, userId) {
         // Query complexa: Busca a Task E faz um array com os nomes das Tags (JOIN)
         const query = `
             SELECT 
-                t."Task_ID" as id, 
-                t."Project_ID" as "projectId", 
-                t."Text" as title, 
-                t."Description" as description,
-                l."Name" as column,
+                t.task_id as id, 
+                t.project_id as "projectId", 
+                t.text as title, 
+                t.description as description,
+                l.name as column,
                 COALESCE(
-                    array_agg(tg."Tag_Name") FILTER (WHERE tg."Tag_Name" IS NOT NULL), 
+                    array_agg(tg.tag_name ORDER BY tg.tag_id) FILTER (WHERE tg.tag_name IS NOT NULL), 
                     '{}'
                 ) as tags
-            FROM Task t
-            JOIN List l ON t."List_ID" = l."List_ID" 
-                AND t."Project_ID" = l."Project_ID" 
-                AND t."User_ID" = l."User_ID"
-            LEFT JOIN Tag_Task tt ON t."Task_ID" = tt."Task_ID" 
-                AND t."Project_ID" = tt."Project_ID"
-            LEFT JOIN Tag tg ON tt."Tag_ID" = tg."Tag_ID"
-            WHERE t."Project_ID" = $1 AND t."User_ID" = $2
-            GROUP BY t."Task_ID", l."List_ID", l."Name"
-            ORDER BY l."List_ID", t."Task_ID" ASC
+            FROM task t
+            JOIN list l ON t.list_id = l.list_id 
+                AND t.project_id = l.project_id 
+                AND t.user_id = l.user_id
+            LEFT JOIN tag_task tt ON t.task_id = tt.task_id 
+                AND t.project_id = tt.project_id
+                AND t.list_id = tt.list_id
+                AND t.user_id = tt.user_id
+            LEFT JOIN tag tg ON tt.tag_id = tg.tag_id
+            WHERE t.project_id = $1 AND t.user_id = $2
+            GROUP BY t.task_id, t.project_id, t.text, t.description, l.list_id, l.name
+            ORDER BY l.list_id, t.task_id ASC
         `;
-        
+
         const result = await db.query(query, [projectId, userId]);
+
+        // Log detalhado das tags
+        console.log(`🏷️  [Tags Debug] Tasks retornadas para projeto ${projectId}:`);
+        result.rows.forEach(task => {
+            console.log(`   Task #${task.id} "${task.title}" - Tags: ${JSON.stringify(task.tags)}`);
+        });
+
         return result.rows;
     }
 
     async createTask({ userId, projectId, title, description, column = 'to-do', tags = [] }) {
         const listId = await this.getListId(projectId, userId, column);
+        console.log(`🏷️  [Tags Debug] Criando task com tags: ${JSON.stringify(tags)}`);
 
         // 1. Criar a Task
         const insertTaskQuery = `
-            INSERT INTO Task ("List_ID", "Project_ID", "User_ID", "Text", "Description")
+            INSERT INTO task (list_id, project_id, user_id, text, description)
             VALUES ($1, $2, $3, $4, $5)
-            RETURNING "Task_ID" as id
+            RETURNING task_id as id
         `;
         const taskResult = await db.query(insertTaskQuery, [listId, projectId, userId, title, description || '']);
         const newTaskId = taskResult.rows[0].id;
+        console.log(`🏷️  [Tags Debug] Task criada com id=${newTaskId}`);
 
-        // 2. Vincular Tags usando sua função Link_Tag_Task
+        // 2. Vincular Tags - INSERT direto (sem usar stored procedure)
         if (tags && tags.length > 0) {
+            console.log(`🏷️  [Tags Debug] Tentando vincular ${tags.length} tags...`);
             for (const tagName of tags) {
-                // Link_Tag_Task(p_Tag_Name, p_Task_ID, p_List_ID, p_Project_ID, p_User_ID)
-                await db.query(`SELECT Link_Tag_Task($1, $2, $3, $4, $5)`, 
-                    [tagName, newTaskId, listId, projectId, userId]);
+                try {
+                    // Primeiro, verifica se a tag já existe
+                    let selectTag = await db.query('SELECT tag_id FROM tag WHERE tag_name = $1', [tagName]);
+                    let tagId;
+
+                    if (selectTag.rows.length === 0) {
+                        // Tag não existe, cria
+                        const insertTagResult = await db.query(
+                            'INSERT INTO tag (tag_name) VALUES ($1) RETURNING tag_id',
+                            [tagName]
+                        );
+                        tagId = insertTagResult.rows[0].tag_id;
+                        console.log(`🏷️  [Tags Debug] Tag '${tagName}' criada com tag_id=${tagId}`);
+                    } else {
+                        tagId = selectTag.rows[0].tag_id;
+                        console.log(`🏷️  [Tags Debug] Tag '${tagName}' já existe com tag_id=${tagId}`);
+                    }
+
+                    if (tagId) {
+                        // Verifica se a associação já existe - INCLUINDO list_id
+                        const existsCheck = await db.query(`
+                            SELECT 1 FROM tag_task 
+                            WHERE tag_id = $1 AND task_id = $2 AND project_id = $3 AND list_id = $4
+                        `, [tagId, newTaskId, projectId, listId]);
+
+                        if (existsCheck.rows.length === 0) {
+                            // Insere na tag_task
+                            await db.query(`
+                                INSERT INTO tag_task (tag_id, task_id, list_id, project_id, user_id)
+                                VALUES ($1, $2, $3, $4, $5)
+                            `, [tagId, newTaskId, listId, projectId, userId]);
+                            console.log(`   ✅ Tag '${tagName}' vinculada com sucesso`);
+                        } else {
+                            console.log(`   ⚠️ Tag '${tagName}' já estava vinculada a esta task nesta lista`);
+                        }
+                    }
+                } catch (err) {
+                    console.error(`   ❌ Erro ao vincular tag '${tagName}':`, err.message);
+                }
             }
+        } else {
+            console.log(`🏷️  [Tags Debug] Nenhuma tag para vincular`);
         }
-        
+
         return {
             id: newTaskId,
             projectId, title, description, column, tags
@@ -173,14 +228,72 @@ export class TasksService {
 
     async updateTask({ taskId, projectId, userId, currentColumn }, updates) {
         const oldListId = await this.getListId(projectId, userId, currentColumn);
+        console.log(`🔄 [TasksService] updateTask: taskId=${taskId}, oldListId=${oldListId}`);
 
-        // 1. Mover de Coluna (TrocarTask)
+        // 1. Mover de Coluna - DELETE + INSERT (pois list_id faz parte da PK)
         if (updates.column && updates.column !== currentColumn) {
             const newListId = await this.getListId(projectId, userId, updates.column);
-            await db.query(`SELECT TrocarTask($1, $2, $3, $4, $5)`, 
-                [oldListId, newListId, taskId, projectId, userId]);
-            // Nota: TrocarTask altera o Task_ID. O front deve recarregar a lista.
-            return { message: "Tarefa movida" };
+            console.log(`🔄 [TasksService] Movendo task de list_id=${oldListId} para list_id=${newListId}`);
+
+            // Primeiro busca os dados atuais da task
+            const selectQuery = `
+                SELECT text, description FROM task 
+                WHERE task_id = $1 AND project_id = $2 AND user_id = $3 AND list_id = $4
+            `;
+            const current = await db.query(selectQuery, [taskId, projectId, userId, oldListId]);
+
+            if (current.rows.length === 0) {
+                throw new Error('Task não encontrada');
+            }
+
+            const { text, description } = current.rows[0];
+
+            // Busca as tags associadas antes de deletar - INCLUINDO list_id para não pegar tags de outras tasks
+            const tagsQuery = await db.query(`
+                SELECT tag_id FROM tag_task 
+                WHERE task_id = $1 AND project_id = $2 AND user_id = $3 AND list_id = $4
+            `, [taskId, projectId, userId, oldListId]);
+            const tagIds = tagsQuery.rows.map(r => r.tag_id);
+            console.log(`🏷️  [Tags Debug] Tags a preservar da task ${taskId} na list ${oldListId}: ${tagIds.length > 0 ? tagIds.join(', ') : 'nenhuma'}`);
+
+            // Delete da lista antiga (cascade vai deletar tag_task)
+            await db.query(`
+                DELETE FROM task 
+                WHERE task_id = $1 AND project_id = $2 AND user_id = $3 AND list_id = $4
+            `, [taskId, projectId, userId, oldListId]);
+            console.log(`🏷️  [Tags Debug] DELETE executado`);
+
+            // Insert na nova lista - NÃO passar task_id, deixar o banco gerar
+            let newTaskId;
+            try {
+                const insertResult = await db.query(`
+                    INSERT INTO task (list_id, project_id, user_id, text, description)
+                    VALUES ($1, $2, $3, $4, $5)
+                    RETURNING task_id
+                `, [newListId, projectId, userId, text, description]);
+                newTaskId = insertResult.rows[0].task_id;
+                console.log(`🏷️  [Tags Debug] INSERT resultado - novo task_id=${newTaskId}`);
+            } catch (insertErr) {
+                console.error(`❌ [Tags Debug] ERRO no INSERT:`, insertErr.message);
+                throw insertErr;
+            }
+
+            // Re-insere as tags associadas com o NOVO task_id
+            for (const tagId of tagIds) {
+                try {
+                    console.log(`🏷️  [Tags Debug] Inserindo tag_task: tag_id=${tagId}, task_id=${newTaskId}, list_id=${newListId}`);
+                    await db.query(`
+                        INSERT INTO tag_task (tag_id, task_id, list_id, project_id, user_id)
+                        VALUES ($1, $2, $3, $4, $5)
+                    `, [tagId, newTaskId, newListId, projectId, userId]);
+                    console.log(`   ✅ Tag vinculada`);
+                } catch (err) {
+                    console.error(`   ❌ Erro ao re-inserir tag_id=${tagId}:`, err.message);
+                }
+            }
+
+            console.log(`✅ Task movida de ${currentColumn} para ${updates.column} com ${tagIds.length} tags (novo id=${newTaskId})`);
+            return { message: "Tarefa movida", newTaskId };
         }
 
         // 2. Atualizar Dados (Titulo, Descrição)
@@ -188,30 +301,29 @@ export class TasksService {
         const values = [];
         let idx = 1;
 
-        if (updates.title) { fields.push(`"Text" = $${idx++}`); values.push(updates.title); }
-        if (updates.description) { fields.push(`"Description" = $${idx++}`); values.push(updates.description); }
+        if (updates.title) { fields.push(`text = $${idx++}`); values.push(updates.title); }
+        if (updates.description) { fields.push(`description = $${idx++}`); values.push(updates.description); }
 
         if (fields.length > 0) {
             values.push(taskId, userId, projectId, oldListId);
             const query = `
-                UPDATE Task SET ${fields.join(', ')}
-                WHERE "Task_ID" = $${idx++} AND "User_ID" = $${idx++} AND "Project_ID" = $${idx++} AND "List_ID" = $${idx++}
+                UPDATE task SET ${fields.join(', ')}
+                WHERE task_id = $${idx++} AND user_id = $${idx++} AND project_id = $${idx++} AND list_id = $${idx++}
             `;
             await db.query(query, values);
         }
 
         // 3. Atualizar Tags (Sincronização)
         if (updates.tags) {
-            // Primeiro removemos as associações antigas dessa tarefa para evitar duplicatas ou lixo
-            // (Sua função Link_Tag_Task apenas adiciona, não remove)
+            // Primeiro removemos as associações antigas dessa tarefa
             await db.query(`
-                DELETE FROM Tag_Task 
-                WHERE "Task_ID" = $1 AND "Project_ID" = $2 AND "User_ID" = $3
+                DELETE FROM tag_task 
+                WHERE task_id = $1 AND project_id = $2 AND user_id = $3
             `, [taskId, projectId, userId]);
 
             // Re-adiciona as tags enviadas usando sua função
             for (const tagName of updates.tags) {
-                await db.query(`SELECT Link_Tag_Task($1, $2, $3, $4, $5)`, 
+                await db.query(`SELECT link_tag_task($1, $2, $3, $4, $5)`,
                     [tagName, taskId, oldListId, projectId, userId]);
             }
         }
@@ -221,15 +333,15 @@ export class TasksService {
 
     async deleteTask({ taskId, projectId, userId, currentColumn }) {
         const listId = await this.getListId(projectId, userId, currentColumn);
-        
-        // O ON DELETE CASCADE no banco deve limpar a tabela Tag_Task automaticamente
+
+        // O ON DELETE CASCADE no banco deve limpar a tabela tag_task automaticamente
         const query = `
-            DELETE FROM Task 
-            WHERE "Task_ID" = $1 AND "User_ID" = $2 AND "Project_ID" = $3 AND "List_ID" = $4
-            RETURNING "Task_ID"
+            DELETE FROM task 
+            WHERE task_id = $1 AND user_id = $2 AND project_id = $3 AND list_id = $4
+            RETURNING task_id
         `;
         const result = await db.query(query, [taskId, userId, projectId, listId]);
-        
+
         if (result.rows.length === 0) throw new Error('Tarefa não encontrada');
         return result.rows[0];
     }

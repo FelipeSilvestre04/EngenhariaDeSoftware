@@ -20,11 +20,11 @@ const FALLBACK_PROJECTS = [
 
 const PREDEFINED_COLORS = [
   '#ff5b5b',
-  '#cf50f2', 
-  '#3357ff', 
+  '#cf50f2',
+  '#3357ff',
   '#33ff57',
-  '#ffbd33', 
-  '#33ccff', 
+  '#ffbd33',
+  '#33ccff',
 ];
 
 function ProjectSidebar({ isOpen, onToggleClick }) {
@@ -32,7 +32,7 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
   const [projects, setProjects] = useState(FALLBACK_PROJECTS);
   const [loading, setLoading] = useState(true);
   const [usingFallback, setUsingFallback] = useState(false);
-  
+
   const [showOptions, setShowOptions] = useState(false);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [selectedProjects, setSelectedProjects] = useState([]);
@@ -84,8 +84,8 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
   // Ativa o modo de exclusão
   const handleEnterDeleteMode = () => {
     setIsDeleteMode(true);
-    setShowOptions(false); 
-    setSelectedProjects([]); 
+    setShowOptions(false);
+    setSelectedProjects([]);
   };
 
   const handleCancelDelete = () => {
@@ -105,9 +105,10 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
     console.log("Excluindo projetos na API:", selectedProjects);
 
     try {
-      const deletePromises = selectedProjects.map(id => 
-        fetch(`http://localhost:10000/api/projects/${id}`, {
+      const deletePromises = selectedProjects.map(id =>
+        fetch(`/api/projects/${id}`, {
           method: 'DELETE',
+          credentials: 'include'
         })
       );
 
@@ -117,7 +118,7 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
 
       const newProjectList = projects.filter(p => !selectedProjects.includes(p.id));
       setProjects(newProjectList);
-      
+
       handleCancelDelete();
 
     } catch (error) {
@@ -130,13 +131,13 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
 
   const openCreateModal = () => {
     setNewProjectName('');
-    setNewProjectColor(PREDEFINED_COLORS[0]); 
+    setNewProjectColor(PREDEFINED_COLORS[0]);
     setIsCreateModalOpen(true);
-    setShowOptions(false); 
+    setShowOptions(false);
   };
 
   const handleCreateProject = async () => {
-    if (!newProjectName.trim()) return; 
+    if (!newProjectName.trim()) return;
 
     const projectPayload = {
       title: newProjectName,
@@ -144,11 +145,12 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
     };
 
     try {
-      const response = await fetch('http://localhost:10000/api/projects', {
+      const response = await fetch('/api/projects', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(projectPayload),
       });
 
@@ -160,7 +162,7 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
       console.log("✅ Projeto criado na API:", createdProject);
 
       setProjects(prev => [...prev, createdProject]);
-      
+
       setIsCreateModalOpen(false);
       setNewProjectName('');
       setNewProjectColor(PREDEFINED_COLORS[0]);
@@ -193,7 +195,7 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
                 <svg className={styles.homeIcon} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" /></svg>
                 <h2>Meus Projetos {usingFallback && '(offline)'}</h2>
               </div>
-              
+
               <div className={styles.headerRight}>
                 {!isDeleteMode && (
                   <>
@@ -201,11 +203,11 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
                       <span className={styles.homeText}>Início</span>
                     </Link>
 
-                    <button 
-                      className={styles.optionsButton} 
+                    <button
+                      className={styles.optionsButton}
                       onClick={() => setShowOptions(!showOptions)}
                     >
-                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" /></svg>
                     </button>
                   </>
                 )}
@@ -215,7 +217,7 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
                     <button className={styles.optionItem} onClick={openCreateModal}>
                       Criar projeto
                     </button>
-                    <button 
+                    <button
                       className={`${styles.optionItem} ${styles.danger}`}
                       onClick={handleEnterDeleteMode}
                     >
@@ -227,32 +229,32 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
             </div>
 
             <div className={styles.projectsCardBody}>
-               {loading ? (
+              {loading ? (
                 <p style={{ textAlign: 'center', color: '#999', padding: '20px' }}>Carregando...</p>
               ) : (
                 <div className={styles.cardList}>
                   {projects.map(project => (
-                      <div 
-                        key={project.id} 
-                        className={`${styles.projectItemWrapper} ${isDeleteMode ? styles.shaking : ''}`}
-                        onClick={() => isDeleteMode && toggleSelection(project.id)}
-                      >
-                        <div style={{ flex: 1, pointerEvents: isDeleteMode ? 'none' : 'auto' }}>
-                          <ProjectCard
-                            id={project.id}
-                            title={project.title}
-                            color={project.color}
-                          />
-                        </div>
-                        {isDeleteMode && (
-                          <input 
-                            type="checkbox" 
-                            className={styles.deleteCheckbox}
-                            checked={selectedProjects.includes(project.id)}
-                            onChange={() => {}} 
-                          />
-                        )}
+                    <div
+                      key={project.id}
+                      className={`${styles.projectItemWrapper} ${isDeleteMode ? styles.shaking : ''}`}
+                      onClick={() => isDeleteMode && toggleSelection(project.id)}
+                    >
+                      <div style={{ flex: 1, pointerEvents: isDeleteMode ? 'none' : 'auto' }}>
+                        <ProjectCard
+                          id={project.id}
+                          title={project.title}
+                          color={project.color}
+                        />
                       </div>
+                      {isDeleteMode && (
+                        <input
+                          type="checkbox"
+                          className={styles.deleteCheckbox}
+                          checked={selectedProjects.includes(project.id)}
+                          onChange={() => { }}
+                        />
+                      )}
+                    </div>
                   ))}
                 </div>
               )}
@@ -260,13 +262,13 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
 
             {isDeleteMode && (
               <div className={styles.bottomActions}>
-                <button 
+                <button
                   className={`${styles.actionBtn} ${styles.cancelBtn}`}
                   onClick={handleCancelDelete}
                 >
                   Cancelar
                 </button>
-                <button 
+                <button
                   className={`${styles.actionBtn} ${styles.confirmBtn}`}
                   onClick={handleDeleteConfirm}
                   disabled={selectedProjects.length === 0}
@@ -283,12 +285,12 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
             <h3 className={styles.modalTitle}>Novo Projeto</h3>
-            
+
             <div className={styles.inputGroup}>
               <label className={styles.inputLabel}>Nome do Projeto</label>
-              <input 
-                type="text" 
-                className={styles.textInput} 
+              <input
+                type="text"
+                className={styles.textInput}
                 placeholder="Ex: Meu projeto"
                 value={newProjectName}
                 onChange={(e) => setNewProjectName(e.target.value)}
@@ -298,7 +300,7 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
 
             <div className={styles.inputGroup}>
               <label className={styles.inputLabel}>Cor do Projeto</label>
-              
+
               <div className={styles.colorSelectionContainer}>
                 {PREDEFINED_COLORS.map((color) => (
                   <div
@@ -310,17 +312,17 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
                   />
                 ))}
 
-                <div 
+                <div
                   className={`${styles.customColorBtn} ${!PREDEFINED_COLORS.includes(newProjectColor) ? styles.selected : ''}`}
                   onClick={handleColorWheelClick}
                   title="Escolher cor personalizada"
                   // Se a cor atual não for predefinida, mostramos ela como background desse botão
                   style={!PREDEFINED_COLORS.includes(newProjectColor) ? { background: newProjectColor } : {}}
                 >
-                   <span className={styles.plusIcon}>+</span>
+                  <span className={styles.plusIcon}>+</span>
 
-                  <input 
-                    type="color" 
+                  <input
+                    type="color"
                     ref={colorInputRef}
                     className={styles.hiddenColorInput}
                     onChange={(e) => setNewProjectColor(e.target.value)}
@@ -331,14 +333,14 @@ function ProjectSidebar({ isOpen, onToggleClick }) {
             </div>
 
             <div className={styles.modalActions}>
-              <button 
+              <button
                 className={`${styles.modalBtn} ${styles.modalBtnCancel}`}
                 onClick={() => setIsCreateModalOpen(false)}
               >
                 Cancelar
               </button>
-              
-              <button 
+
+              <button
                 className={`${styles.modalBtn} ${styles.modalBtnConfirm}`}
                 onClick={handleCreateProject}
                 disabled={!newProjectName.trim()}

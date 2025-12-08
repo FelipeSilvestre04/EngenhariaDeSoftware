@@ -126,12 +126,12 @@ function KanbanColumn({ title, tasks, columnKey, onDrop, onDragOver, onDragStart
   }[columnKey] || '';
 
   return (
-      <div
-        // 2. APLIQUE AS DUAS CLASSES: A padrão (.column) + a de status
-        className={`${styles.column} ${statusClass}`} 
-        onDragOver={(e) => onDragOver(e)}
-        onDrop={(e) => onDrop(e, columnKey)}
-      >
+    <div
+      // 2. APLIQUE AS DUAS CLASSES: A padrão (.column) + a de status
+      className={`${styles.column} ${statusClass}`}
+      onDragOver={(e) => onDragOver(e)}
+      onDrop={(e) => onDrop(e, columnKey)}
+    >
       <h3 className={styles.columnTitle}>{title} ({tasks.length})</h3>
       <div className={styles.taskList}>
         {tasks.map(task => (
@@ -225,9 +225,9 @@ export function KanbanBoard({ projectId }) {
   const handleEditTask = async (updatedTaskData) => {
     try {
       const payload = {
-        projectId: numericProjectId,        
-        currentColumn: editingTask.column,  
-        ...updatedTaskData                  
+        projectId: numericProjectId,
+        currentColumn: editingTask.column,
+        ...updatedTaskData
       };
 
       const response = await fetch(`${API_URL}/${updatedTaskData.id}`, {
@@ -272,11 +272,11 @@ export function KanbanBoard({ projectId }) {
       const response = await fetch(`${API_URL}/${taskId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-                column: targetColumnKey, // Para onde vai
-                currentColumn: sourceColumnKey, // Onde estava (para achar no DB)
-                projectId: numericProjectId
-          })
+        body: JSON.stringify({
+          column: targetColumnKey, // Para onde vai
+          currentColumn: sourceColumnKey, // Onde estava (para achar no DB)
+          projectId: numericProjectId
+        })
       });
 
       if (response.ok) {
@@ -293,6 +293,13 @@ export function KanbanBoard({ projectId }) {
   }
 
   const handleAddTask = async (newTaskData) => {
+    // Proteção contra dupla submissão
+    if (handleAddTask.isSubmitting) {
+      console.log('⚠️ Requisição já em andamento, ignorando...');
+      return;
+    }
+    handleAddTask.isSubmitting = true;
+
     try {
       const response = await fetch(API_URL, {
         method: 'POST',
@@ -308,6 +315,8 @@ export function KanbanBoard({ projectId }) {
       }
     } catch (err) {
       console.error('Erro ao criar tarefa:', err);
+    } finally {
+      handleAddTask.isSubmitting = false;
     }
 
     setIsAddFormVisible(false);
@@ -320,10 +329,10 @@ export function KanbanBoard({ projectId }) {
 
     try {
       const params = new URLSearchParams({
-            projectId: numericProjectId,
-            currentColumn: columnKey
-        });
-      
+        projectId: numericProjectId,
+        currentColumn: columnKey
+      });
+
       const response = await fetch(`${API_URL}/${taskId}?${params.toString()}`, {
         method: 'DELETE'
       });

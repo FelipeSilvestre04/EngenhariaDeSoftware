@@ -115,9 +115,12 @@ export class TasksController {
     async getByProject(req, res) {
         try {
             const projectId = parseInt(req.query.projectId);
+            console.log(`📋 Buscando tasks do projeto ${projectId} para userId ${req.userId}`);
             const tasks = await this.tasksService.getTasksByProject(projectId, req.userId);
+            console.log(`✅ Retornando ${tasks.length} tasks`);
             res.status(200).json(tasks);
         } catch (error) {
+            console.error('❌ Erro ao buscar tasks:', error);
             res.status(500).json({ error: error.message });
         }
     }
@@ -146,13 +149,16 @@ export class TasksController {
             // Frontend precisa enviar currentColumn e projectId para acharmos a task
             const { projectId, currentColumn, ...updates } = req.body;
 
+            console.log(`🔄 Update task ${taskId}: currentColumn=${currentColumn}, newColumn=${updates.column}, projectId=${projectId}`);
+
             await this.tasksService.updateTask(
                 { taskId, projectId: parseInt(projectId), userId: req.userId, currentColumn },
                 updates
             );
+            console.log(`✅ Task ${taskId} atualizada com sucesso`);
             res.status(200).json({ success: true });
         } catch (error) {
-            console.error(error);
+            console.error('❌ Erro ao atualizar task:', error);
             res.status(500).json({ error: error.message });
         }
     }

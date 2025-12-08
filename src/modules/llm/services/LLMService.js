@@ -587,12 +587,12 @@ export class LLMService {
     // Inicializa o modelo (chamado no Controller)
     createModel(temperature, modelName) {
         // Agora apenas inicializa a instância do modelo, sem tools fixas
-        this.model.initialize(modelName, temperature, []); 
+        this.model.initialize(modelName, temperature, []);
     }
 
     // GERA AS TOOLS COM O CONTEXTO DO USUÁRIO (userId)
     createToolsForUser(userId) {
-        
+
         // ========================================
         // 📅 CALENDAR TOOLS
         // ========================================
@@ -604,7 +604,7 @@ export class LLMService {
                     const events = await this.calendarService.listEvents(maxResults, query);
 
                     if (!events || events.length === 0) {
-                        return query 
+                        return query
                             ? `Nenhum evento encontrado para a busca "${query}".`
                             : "Nenhum evento encontrado no calendário.";
                     }
@@ -613,7 +613,7 @@ export class LLMService {
                         const startDateTime = event.start;
                         const endDateTime = event.end;
                         let dateInfo = 'Horário: Não especificado';
-                        
+
                         if (startDateTime) {
                             const startDate = new Date(startDateTime);
                             const endDate = endDateTime ? new Date(endDateTime) : null;
@@ -751,10 +751,10 @@ export class LLMService {
                     const projects = await this.projectService.getAllProjects(userId);
                     if (!projects || projects.length === 0) return "Nenhum projeto encontrado.";
 
-                    const formatted = projects.map((p, i) => 
+                    const formatted = projects.map((p, i) =>
                         `${i + 1}. **${p.title}** (ID: ${p.id}) - Cor: ${p.color}`
                     ).join('\n');
-                    
+
                     return `Encontrei ${projects.length} projeto(s):\n\n${formatted}`;
                 } catch (error) {
                     return `Erro ao listar projetos: ${error.message}`;
@@ -796,7 +796,7 @@ export class LLMService {
                     const tasks = await this.tasksService.getTasksByProject(projectId, userId);
                     if (!tasks || tasks.length === 0) return `Nenhuma tarefa no projeto ${projectId}.`;
 
-                    const formatted = tasks.map((t, i) => 
+                    const formatted = tasks.map((t, i) =>
                         `${i + 1}. **${t.title}** (ID: ${t.id})
    Status: ${t.column}
    Descrição: ${t.description || 'Sem descrição'}`
@@ -817,7 +817,7 @@ export class LLMService {
         );
 
         const createTaskTool = tool(
-            async ({ projectId, title, description, column }) => {
+            async ({ projectId, title, description, column, tags }) => {
                 try {
                     // INJEÇÃO DO USER ID
                     const newTask = await this.tasksService.createTask({
@@ -825,21 +825,24 @@ export class LLMService {
                         projectId,
                         title,
                         description,
-                        column: column || 'to-do'
+                        column: column || 'to-do',
+                        tags: tags || []
                     });
-                    return `Tarefa criada! ID: ${newTask.id}, Título: "${newTask.title}", Coluna: ${newTask.column}`;
+                    const tagsStr = tags && tags.length > 0 ? `, Tags: ${tags.join(', ')}` : '';
+                    return `Tarefa criada! ID: ${newTask.id}, Título: "${newTask.title}", Coluna: ${newTask.column}${tagsStr}`;
                 } catch (error) {
                     return `Erro ao criar tarefa: ${error.message}`;
                 }
             },
             {
                 name: "create_task",
-                description: "Cria tarefa. Colunas: 'to-do', 'in-progress', 'done'.",
+                description: "Cria tarefa em um projeto. Use tags para categorizar. Colunas: 'to-do', 'in-progress', 'done'.",
                 schema: z.object({
-                    projectId: z.number(),
-                    title: z.string(),
-                    description: z.string().optional(),
-                    column: z.enum(['to-do', 'in-progress', 'done']).optional()
+                    projectId: z.number().describe("ID do projeto onde criar a tarefa"),
+                    title: z.string().describe("Título da tarefa"),
+                    description: z.string().optional().describe("Descrição da tarefa"),
+                    column: z.enum(['to-do', 'in-progress', 'done']).optional().describe("Coluna/status da tarefa"),
+                    tags: z.array(z.string()).optional().describe("Lista de tags para categorizar a tarefa (ex: ['urgente', 'backend'])")
                 }),
             }
         );
@@ -903,8 +906,8 @@ export class LLMService {
                     await this.calendarService.initialize(userId);
                     const emails = await this.calendarService.listEmails(maxResults);
                     if (!emails.length) return "Caixa de entrada vazia.";
-                    
-                    return emails.map(e => 
+
+                    return emails.map(e =>
                         `De: ${e.from}\nAssunto: ${e.subject}\nData: ${e.date}\nSnippet: ${e.snippet}`
                     ).join('\n\n');
                 } catch (error) {
