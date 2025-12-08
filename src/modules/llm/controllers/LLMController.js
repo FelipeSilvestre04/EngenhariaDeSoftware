@@ -18,7 +18,7 @@ export class LLMController {
             // Pega o nome do usuário autenticado ou fallback para query param
             const url = new URL(req.url, `http://${req.headers.host}`);
             const name = user.name || url.searchParams.get('name') || 'usuário';
-            const projectName = url.searchParams.get('project') || 'projeto';
+            const projectName = url.searchParams.get('project');
 
             console.log(`👤 [LLMController] Usuário autenticado: ${name} (${userId})`);
 
@@ -89,7 +89,7 @@ export class LLMController {
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({
                     question: `${prompt}`,
-                    answer: cleanedContent,
+                    answer: result.content,
                     user: { name: name, userId: userId },
                     hasDraft: hasDraft,
                     draft: draftData

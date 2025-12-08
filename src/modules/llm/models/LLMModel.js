@@ -144,130 +144,136 @@ export class LLMModel {
         ]);
     }
 }*/
-import { BaseMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { ChatGroq } from "@langchain/groq";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
-import { StateGraph, InMemoryStore } from "@langchain/langgraph";
-import { tool } from "@langchain/core/tools";
-import { z } from "zod";
+import { db } from "../../../shared/database/index.js"; 
 import { config } from "../../../shared/config/index.js";
 import { InferenceClient } from "@huggingface/inference";
 
 export class LLMModel {
-    constructor(apiKey){
+    constructor(apiKey) {
         this.apiKey = apiKey;
         this.modelInstance = null;
-        this.agent = null;
-        this.tools = [];
-        this.store = new InMemoryStore();
-        this.messageState = z.object({
-            messages: z.array(z.any())
-        });
-        
-        // --- Mantendo a lógica original de memória (Sem Banco de Dados) ---
         this.hfClient = new InferenceClient(config.llm.hfToken);
-        
-        this.embeddings = async (input) => {
-            try {
-                const res = await this.hfClient.featureExtraction({
-                    model: config.llm.modelHf,
-                    inputs: input
-                });
-                return Array.isArray(res[0]) ? res[0] : res;
-            } catch (e) {
-                console.error("Erro ao gerar embedding:", e);
-                return [];
-            }
-        };
-        
-        const embeddingsObject = {
-            embedQuery: this.embeddings,
-            embedDocuments: async (documents) => {
-                return await Promise.all(
-                    documents.map(doc => this.embeddings(doc))
-                );
-            }
-        };
-        
-        this.store = new InMemoryStore({
-            index: {
-                embeddings: embeddingsObject,
-                dims: 384
-            }
-        });
     }
 
-    initialize(modelName, temperature, tools){
+    initialize(modelName, temperature, tools) {
         this.modelInstance = new ChatGroq({
             apiKey: this.apiKey,
             model: modelName,
             temperature: temperature
         });
+        // Tools são passadas dinamicamente na query agora
+    }
 
-        // CORREÇÃO: Não criamos o agente aqui porque as tools são dinâmicas (por usuário).
-        // O agente será criado apenas na hora da consulta (queryWithTools).
-        if (tools && tools.length > 0){
-            this.tools = tools;
+    // Gera o vetor para o banco de dados
+    async generateEmbedding(text) {
+        try {
+            const output = await this.hfClient.featureExtraction({
+                model: config.llm.modelHf,
+                inputs: text,
+            });
+            const embedding = Array.isArray(output[0]) ? output[0] : output;
+            // Formata array para string compatível com pgvector '[0.1, 0.2...]'
+            return `[${embedding.join(',')}]`; 
+        } catch (error) {
+            console.error("Erro ao gerar embedding:", error);
+            return null;
         }
     }
 
-    async queryWithTools(systemPrompt, userPrompt, userName, projectName, tools){
-        
+    // Salva mensagem no banco (Substitui store.put)
+    async saveMessageToDB(userId, projectId, message, role) {
+        if (!projectId) return; 
+
+        try {
+            // Adiciona prefixo para identificar quem falou no histórico
+            const textToSave = `${role}: ${message}`;
+            const vector = await this.generateEmbedding(textToSave);
+
+            // Trigger do banco (Setup_BeforeInsertChat) calcula o Chat_ID automaticamente
+            const query = `
+                INSERT INTO chat (project_id, user_id, message, embedding)
+                VALUES ($1, $2, $3, $4)
+            `;
+            await db.query(query, [projectId, userId, textToSave, vector]);
+            // console.log(`💾 Mensagem salva no DB (Projeto: ${projectId})`);
+        } catch (error) {
+            console.error(`Erro ao salvar mensagem (${role}) no BD:`, error.message);
+        }
+    }
+
+    // Busca contexto (Substitui store.search)
+    async getContextFromDB(userId, projectId, queryVector) {
+        if (!projectId || !queryVector) return "";
+
+        try {
+            // Busca as 3 mensagens mais similares
+            const query = `
+                SELECT message 
+                FROM chat 
+                WHERE project_id = $1 AND user_id = $2
+                ORDER BY embedding <=> $3 ASC 
+                LIMIT 3
+            `;
+            const result = await db.query(query, [projectId, userId, queryVector]);
+            
+            if (result.rows.length === 0) return "";
+
+            let contextText = "CONTEXTO (Memórias anteriores do projeto):\n";
+            result.rows.forEach(row => {
+                contextText += `- ${row.message}\n`;
+            });
+            return contextText;
+
+        } catch (error) {
+            console.error("Erro ao buscar contexto no DB:", error);
+            return "";
+        }
+    }
+
+    async queryWithTools(systemPrompt, userPrompt, userName, projectName, tools, userId, projectId) {
         if (!this.modelInstance) {
             throw new Error("Model not initialized. Call initialize() first.");
         }
 
-        // Cria o agente "on-the-fly" com as ferramentas deste usuário específico
+        // 1. Gera embedding da pergunta atual
+        const vector = await this.generateEmbedding(userPrompt);
+
+        // 2. Busca contexto no banco
+        const dbContext = await this.getContextFromDB(userId, projectId, vector);
+
+        // 3. Enriquece o prompt
+        let finalUserPrompt = userPrompt;
+        if (dbContext) {
+            finalUserPrompt = `${dbContext}\n\nCom base nessas memórias e no pedido atual, responda:\n${userPrompt}`;
+        }
+
+        // 4. Salva a pergunta do usuário no Banco (Antes de processar)
+        await this.saveMessageToDB(userId, projectId, userPrompt, "User");
+
+        // 5. Cria agente e executa
         const agent = createReactAgent({
-            llm: this.modelInstance, 
-            tools: tools || [], // Garante que não quebre se tools for null
-            store: this.store,
+            llm: this.modelInstance,
+            tools: tools || [],
         });
 
-        if(!agent){
-            throw new Error("No agent initialized.");
-        }
-
-        // Lógica de Memória (RAG) usando InMemoryStore
-        const keyPath = projectName ? ['memories', userName, projectName] : ['memories', userName];
-
-        // Busca memórias relevantes
-        const related = await this.store.search(keyPath, {
-            query: userPrompt,
-            k: 3,
-        });
-        
-        let contextText = '';
-        for (const item of related){
-            contextText += `Memory: ${item.value.text}\n`;
-        }
-        
-        let finalPrompt = userPrompt;
-        if (contextText.trim()) {
-            finalPrompt = `Here are some of your previous memories related to this project:\n${contextText}\nBased on these, respond to the following:\n${userPrompt}`;
-        }
-
-        // Executa a IA
         const response = await agent.invoke({
             messages: [
                 new SystemMessage(systemPrompt),
-                new HumanMessage(finalPrompt)
+                new HumanMessage(finalUserPrompt)
             ]
         });
 
         const messages = response.messages;
         const lastMessage = messages[messages.length - 1];
 
-        // Salva a nova memória
-        const messageKey = Date.now().toString();
-        await this.store.put(keyPath, messageKey, {
-            text: lastMessage.content,
-            metadata: {
-                date: new Date(),
-            }
-        });
+        // 6. Salva a resposta da IA no Banco
+        if (lastMessage && lastMessage.content) {
+            await this.saveMessageToDB(userId, projectId, lastMessage.content, "AI");
+        }
 
-        // Processa os passos (tool calls) para o frontend
         const steps = messages
             .filter(msg => msg.tool_calls && msg.tool_calls.length > 0)
             .flatMap(msg => msg.tool_calls.map(toolCall => ({
@@ -279,13 +285,6 @@ export class LLMModel {
             content: lastMessage.content,
             steps: steps,
             totalToolCalls: steps.length
-        }
-    }
-
-    async query(systemPrompt, userPrompt){
-        return await this.modelInstance.invoke([
-            new SystemMessage(systemPrompt),
-            new HumanMessage(userPrompt)
-        ]);
+        };
     }
 }

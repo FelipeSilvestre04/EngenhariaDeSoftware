@@ -1,5 +1,5 @@
 // client/src/features/chat/ChatWindow.jsx
-import { useState, useEffect, useRef } from 'react';
+/*import { useState, useEffect, useRef } from 'react';
 import styles from './ChatWindow.module.css';
 import sendpath from '../../assets/send.svg';
 
@@ -249,6 +249,173 @@ export function ChatWindow({ theme, projectName, onEmailDraftCreated }) {
         </button>
       </div>
 
+    </div>
+  );
+}*/
+
+import { useState, useEffect, useRef } from 'react';
+import styles from './ChatWindow.module.css';
+import sendpath from '../../assets/send.svg';
+
+// Adicione projectId como prop
+export function ChatWindow({ theme, projectName, projectId, onEmailDraftCreated }) {
+
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isHistoryLoaded, setIsHistoryLoaded] = useState(false); // Para evitar flash
+
+  const messagesAreaRef = useRef(null);
+  const messagesEndRef = useRef(null);
+
+  // --- BUSCAR HISTÓRICO DO BANCO ---
+  useEffect(() => {
+    const fetchHistory = async () => {
+      setIsLoading(true);
+      try {
+        // Monta a URL: Se tiver ID, passa. Se não (Chat Geral), vai sem param.
+        const url = projectId 
+            ? `/api/chat/history?projectId=${projectId}` 
+            : `/api/chat/history`;
+
+        const res = await fetch(url);
+        
+        if (res.ok) {
+          const history = await res.json();
+          setMessages(history);
+        } else {
+          console.error("Erro ao carregar histórico");
+        }
+      } catch (error) {
+        console.error("Erro de conexão:", error);
+      } finally {
+        setIsLoading(false);
+        setIsHistoryLoaded(true);
+      }
+    };
+
+    // Reseta e busca sempre que mudar de projeto (ou sair dele)
+    setMessages([]);
+    fetchHistory();
+  }, [projectId]); 
+  // ---------------------------------
+
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    e.currentTarget.style.setProperty('--mouse-x', `${x}%`);
+    e.currentTarget.style.setProperty('--mouse-y', `${y}%`);
+  };
+
+  const handleSubmit = async () => {
+    if (!input.trim()) return;
+
+    // Adiciona mensagem do usuário na tela imediatamente (Otimista)
+    const userMessage = {
+      id: Date.now(),
+      text: input,
+      sender: 'user'
+    };
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      // Envia nome do projeto para o LLMService saber onde salvar
+      // Se projectName for nulo, o backend entende como Chat Geral
+      const queryParams = projectName ? `?project=${encodeURIComponent(projectName)}` : '';
+      
+      const res = await fetch(`/llm/query${queryParams}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: userMessage.text }),
+      });
+
+      if (!res.ok) throw new Error(`Erro: ${res.statusText}`);
+
+      const data = await res.json();
+
+      // Lógica de Email (se houver)
+      if (data.hasDraft && data.draft && onEmailDraftCreated) {
+        onEmailDraftCreated(data.draft);
+      }
+
+      // Adiciona resposta da IA
+      const aiMessage = {
+        id: Date.now() + 1,
+        text: data.answer,
+        sender: 'ai'
+      };
+      setMessages(prev => [...prev, aiMessage]);
+
+    } catch (err) {
+      const errorMessage = {
+        id: Date.now() + 1,
+        text: `Erro: ${err.message}`,
+        sender: 'ai',
+        isError: true
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isLoading]);
+
+  return (
+    <div className="chat-window-container">
+      
+      {/* Mostra mensagem vazia apenas se carregou histórico e não tem nada */}
+      {isHistoryLoaded && messages.length === 0 ? (
+        <div className="empty-chat-container">
+          <h2
+            className="empty-chat-title"
+            onMouseMove={handleMouseMove}>
+            {projectName ? `O que deseja saber de ${projectName}?` : "Como posso ajudar hoje?"}
+          </h2>
+        </div>
+      ) : (
+        <div className="messages-area" ref={messagesAreaRef}>
+          {messages.map((message) => (
+            <div
+              key={message.id || Math.random()}
+              className={`message ${message.sender === 'ai' ? 'ai-message' : 'user-message'}`}
+              style={{ color: message.isError ? 'red' : 'inherit' }}
+            >
+              {message.text}
+            </div>
+          ))}
+          
+          {isLoading && (
+            <div className={styles['dot-typing']}>
+               <span>.</span><span>.</span><span>.</span>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+      )}
+
+      <div className="input-area">
+        <input
+          type="text"
+          placeholder="Digite sua mensagem..."
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+          disabled={isLoading}
+        />
+        <button onClick={handleSubmit} disabled={isLoading}>
+          {isLoading ? '...' : <img className={`send-button-img ${theme === 'dark' ? 'invert' : ''}`} src={sendpath} alt="Enviar" />}
+        </button>
+      </div>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import styles from './ProjectChatToggle.module.css'
 import { ChatWindow } from '../chat/ChatWindow'
 import ChatIconPath from '../../assets/chat.svg';
 
-export default function ProjectChatToggle({ projectName, theme}) {
+export default function ProjectChatToggle({projectName, projectId, theme}) {
   const [open, setOpen] = useState(false)
 
   const currentTheme = typeof theme === 'object' ? theme.theme : theme;
@@ -12,7 +12,7 @@ export default function ProjectChatToggle({ projectName, theme}) {
     <div className={styles.chatToggleContainer} aria-live="polite">
       {open && (
         <div className={styles.chatPanel}>
-          <ChatWindow theme={theme} projectName={projectName} />
+          <ChatWindow theme={theme} projectName={projectName} projectId={projectId} />
         </div>
       )}
 

@@ -7,6 +7,7 @@ import ProjectsRoute from "./modules/projects/projects.routes.js";
 import TasksRoute from "./modules/tasks/tasks.routes.js";
 import { EmailRoutes } from "./modules/email/email.routes.js";
 import { createAuthMiddleware } from "./shared/middleware/authMiddleware.js";
+import { ChatRoutes } from "./modules/chat/chat.routes.js";
 
 export class AppRouter {
     constructor(config) {
@@ -22,6 +23,7 @@ export class AppRouter {
         const projects = ProjectsRoute;
         const tasks = TasksRoute;
         const email = new EmailRoutes(calendar.controller.service);
+        const chat = new ChatRoutes(this.config);
 
         return {
             llm: llm,
@@ -30,6 +32,7 @@ export class AppRouter {
             projects: projects,
             tasks: tasks,
             email: email,
+            chat: chat,
         };
     }
 
@@ -94,6 +97,7 @@ export class AppRouter {
         app.use('/auth', this.modules.auth.getRouter());
         app.use('/api/projects', this.authMiddleware.authenticate(), this.modules.projects);
         app.use('/api/tasks', this.authMiddleware.authenticate(), this.modules.tasks);
+        app.use('/api/chat', this.modules.chat.getRouter());
         app.use('/api/email', this.calendarInitMiddleware(), this.modules.email.getRouter());
     }
 }

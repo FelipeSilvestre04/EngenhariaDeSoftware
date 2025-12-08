@@ -586,7 +586,6 @@ export class LLMService {
 
     // Inicializa o modelo (chamado no Controller)
     createModel(temperature, modelName) {
-        // Agora apenas inicializa a instância do modelo, sem tools fixas
         this.model.initialize(modelName, temperature, []);
     }
 
@@ -952,10 +951,37 @@ export class LLMService {
         ];
     }
 
-    async processConsulta(systemPrompt, userPrompt, userName, projectName, tools) {
+    async processConsulta(systemPrompt, userPrompt, userName, projectName, tools, userId) {
         try {
-            // Passa as tools dinâmicas para o model
-            const response = await this.model.queryWithTools(systemPrompt, userPrompt, userName, projectName, tools);
+            let projectId = null;
+            
+            // CENÁRIO: CHAT DE PROJETO
+            if (projectName) {
+                const decodedName = decodeURIComponent(projectName);
+                projectId = await this.projectService.getIdByName(userId, decodedName);
+            }
+
+            // CENÁRIO: CHAT GERAL (Projeto Fantasma)
+            // Se não veio nome, ou se o nome não existe no banco, tentamos o Fantasma
+            if (!projectId) {
+                projectId = await this.projectService.getIdByName(userId, 'Projeto Fantasma');
+                
+                if (projectId) {
+                    console.log(`👻 [LLMService] Usando 'Projeto Fantasma' (ID: ${projectId}) para Chat Geral`);
+                } else {
+                    console.warn("⚠️ [LLMService] Projeto Fantasma não encontrado! O histórico pode não ser salvo.");
+                }
+            }
+
+            const response = await this.model.queryWithTools(
+                systemPrompt, 
+                userPrompt, 
+                userName, 
+                projectName, 
+                tools,
+                userId,    
+                projectId  
+            );
 
             return {
                 success: true,
@@ -988,10 +1014,8 @@ export class LLMService {
         4. Sempre responda de forma cordial e objetiva.
         `;
 
-        // 1. Cria tools vinculadas ao userId
         const userTools = this.createToolsForUser(userId);
 
-        // 2. Executa a consulta
-        return await this.processConsulta(systemPrompt, prompt, name, projectName, userTools);
+        return await this.processConsulta(systemPrompt, prompt, name, projectName, userTools, userId);
     }
 }
