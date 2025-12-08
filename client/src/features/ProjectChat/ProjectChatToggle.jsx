@@ -10,11 +10,17 @@ export default function ProjectChatToggle({ projectName, projectId, theme}) {
 
   return (
     <div className={styles.chatToggleContainer} aria-live="polite">
-      {open && (
-        <div className={styles.chatPanel}>
-          <ChatWindow theme={theme} projectName={projectName} projectId={projectId} />
-        </div>
-      )}
+      <div
+        className={`${styles.chatPanel} ${open ? styles.chatPanelOpen : styles.chatPanelClosed}`}
+        aria-hidden={!open}
+      >
+        <ChatWindow
+          theme={theme}
+          projectName={projectName}
+          projectId={projectId}
+          isOpen={open}
+        />
+      </div>
 
       <button
         className={`${styles.toggleButton} ${open ? styles.open : ''}`}

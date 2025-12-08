@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import styles from './ChatWindow.module.css';
 import sendpath from '../../assets/send.svg';
 
-export function ChatWindow({ theme, projectName, projectId, onEmailDraftCreated }) {
+export function ChatWindow({ theme, projectName, projectId, onEmailDraftCreated, isOpen = true }) {
 
   // Persist messages na sessão por projeto para reabrir o chat mantendo histórico
   const storageKey = projectName ? `chatMessages:${projectName}` : 'chatMessages:default';
@@ -22,8 +22,19 @@ export function ChatWindow({ theme, projectName, projectId, onEmailDraftCreated 
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const isMountedRef = useRef(true);
+  const messagesRef = useRef(messages);
   const messagesAreaRef = useRef(null);
   const messagesEndRef = useRef(null);
+
+  const persistMessages = (list) => {
+    if (typeof sessionStorage === 'undefined') return;
+    try {
+      sessionStorage.setItem(storageKey, JSON.stringify(list));
+    } catch (err) {
+      console.warn('Não foi possível salvar mensagens:', err);
+    }
+  };
 
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -83,7 +94,10 @@ export function ChatWindow({ theme, projectName, projectId, onEmailDraftCreated 
       text: input,
       sender: 'user'
     };
-    setMessages(prevMessages => [...prevMessages, userMessage]);
+    const optimisticMessages = [...messagesRef.current, userMessage];
+    messagesRef.current = optimisticMessages;
+    persistMessages(optimisticMessages);
+    setMessages(optimisticMessages);
 
     setInput('');
     setIsLoading(true);
@@ -147,7 +161,12 @@ export function ChatWindow({ theme, projectName, projectId, onEmailDraftCreated 
         text: answerText,
         sender: 'ai'
       };
-      setMessages(prevMessages => [...prevMessages, aiMessage]);
+      const finalMessages = [...messagesRef.current, aiMessage];
+      messagesRef.current = finalMessages;
+      persistMessages(finalMessages);
+      if (isMountedRef.current) {
+        setMessages(finalMessages);
+      }
 
     } catch (err) {
       const errorMessage = {
@@ -156,7 +175,12 @@ export function ChatWindow({ theme, projectName, projectId, onEmailDraftCreated 
         sender: 'ai',
         isError: true
       };
-      setMessages(prevMessages => [...prevMessages, errorMessage]);
+      const finalMessages = [...messagesRef.current, errorMessage];
+      messagesRef.current = finalMessages;
+      persistMessages(finalMessages);
+      if (isMountedRef.current) {
+        setMessages(finalMessages);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -169,6 +193,24 @@ export function ChatWindow({ theme, projectName, projectId, onEmailDraftCreated 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Quando reabrir o painel, garante que a última resposta fique visível
+      setTimeout(() => scrollToBottom(), 0);
+    }
+  }, [isOpen, messages.length]);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+    persistMessages(messages);
+  }, [messages, storageKey]);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Sempre que o projeto mudar, recarrega o histórico salvo daquela sessão
   useEffect(() => {
@@ -188,16 +230,6 @@ export function ChatWindow({ theme, projectName, projectId, onEmailDraftCreated 
 
     setIsLoading(false);
   }, [projectName, storageKey]);
-
-  // Salva as mensagens atuais no sessionStorage para persistir enquanto a aba estiver aberta
-  useEffect(() => {
-    if (typeof sessionStorage === 'undefined') return;
-    try {
-      sessionStorage.setItem(storageKey, JSON.stringify(messages));
-    } catch (err) {
-      console.warn('Não foi possível salvar mensagens:', err);
-    }
-  }, [messages, storageKey]);
 
   return (
     <div className="chat-window-container">
