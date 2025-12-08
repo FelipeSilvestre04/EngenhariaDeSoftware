@@ -55,36 +55,28 @@ export class LLMModel {
             temperature: temperature
         });
 
+        // Armazena tools se fornecidas
         if (tools && tools.length > 0){
             this.tools = tools;
         }
-
-        this.agent = createReactAgent({
-            llm: this.modelInstance,
-            tools: this.tools,
-            store: this.store,
-        });
-
+        
+        // Agent é criado dinamicamente em queryWithTools() com as tools do usuário
     }
 
     async queryWithTools(systemPrompt, userPrompt, userName, projectName, tools){
         
+        if (!this.modelInstance) {
+            throw new Error("Model not initialized. Call initialize() first.");
+        }
+        if (!tools || tools.length === 0) {
+            throw new Error("No tools provided for queryWithTools.");
+        }
+
         const agent = createReactAgent({
             llm: this.modelInstance, 
             tools: tools,
             store: this.store,
         });
-
-        if (!this.modelInstance) {
-            throw new Error("Model not initialized. Call initialize() first.");
-        }
-        if (!this.tools || this.tools.length === 0) {
-            throw new Error("No tools provided for LLMModel.");
-        }
-
-        if(!agent){
-            throw new Error("No agent initialized.");
-        }
 
 
         // Use project-specific key path to simulate separate vector stores per project.
@@ -154,7 +146,7 @@ import { config } from "../../../shared/config/index.js";
 import { InferenceClient } from "@huggingface/inference";
 
 export class LLMModel {
-    constructor(apiKey){
+    constructor(apiKey) {
         this.apiKey = apiKey;
         this.modelInstance = null;
         this.agent = null;
@@ -163,10 +155,10 @@ export class LLMModel {
         this.messageState = z.object({
             messages: z.array(z.any())
         });
-        
+
         // --- Mantendo a lógica original de memória (Sem Banco de Dados) ---
         this.hfClient = new InferenceClient(config.llm.hfToken);
-        
+
         this.embeddings = async (input) => {
             try {
                 const res = await this.hfClient.featureExtraction({
@@ -179,7 +171,7 @@ export class LLMModel {
                 return [];
             }
         };
-        
+
         const embeddingsObject = {
             embedQuery: this.embeddings,
             embedDocuments: async (documents) => {
@@ -188,7 +180,7 @@ export class LLMModel {
                 );
             }
         };
-        
+
         this.store = new InMemoryStore({
             index: {
                 embeddings: embeddingsObject,
@@ -197,7 +189,7 @@ export class LLMModel {
         });
     }
 
-    initialize(modelName, temperature, tools){
+    initialize(modelName, temperature, tools) {
         this.modelInstance = new ChatGroq({
             apiKey: this.apiKey,
             model: modelName,
@@ -206,25 +198,25 @@ export class LLMModel {
 
         // CORREÇÃO: Não criamos o agente aqui porque as tools são dinâmicas (por usuário).
         // O agente será criado apenas na hora da consulta (queryWithTools).
-        if (tools && tools.length > 0){
+        if (tools && tools.length > 0) {
             this.tools = tools;
         }
     }
 
-    async queryWithTools(systemPrompt, userPrompt, userName, projectName, tools){
-        
+    async queryWithTools(systemPrompt, userPrompt, userName, projectName, tools) {
+
         if (!this.modelInstance) {
             throw new Error("Model not initialized. Call initialize() first.");
         }
 
         // Cria o agente "on-the-fly" com as ferramentas deste usuário específico
         const agent = createReactAgent({
-            llm: this.modelInstance, 
+            llm: this.modelInstance,
             tools: tools || [], // Garante que não quebre se tools for null
             store: this.store,
         });
 
-        if(!agent){
+        if (!agent) {
             throw new Error("No agent initialized.");
         }
 
@@ -236,12 +228,12 @@ export class LLMModel {
             query: userPrompt,
             k: 3,
         });
-        
+
         let contextText = '';
-        for (const item of related){
+        for (const item of related) {
             contextText += `Memory: ${item.value.text}\n`;
         }
-        
+
         let finalPrompt = userPrompt;
         if (contextText.trim()) {
             finalPrompt = `Here are some of your previous memories related to this project:\n${contextText}\nBased on these, respond to the following:\n${userPrompt}`;
@@ -274,7 +266,7 @@ export class LLMModel {
                 tool: toolCall.name,
                 args: toolCall.args,
             })));
-        
+
         return {
             content: lastMessage.content,
             steps: steps,
@@ -282,7 +274,7 @@ export class LLMModel {
         }
     }
 
-    async query(systemPrompt, userPrompt){
+    async query(systemPrompt, userPrompt) {
         return await this.modelInstance.invoke([
             new SystemMessage(systemPrompt),
             new HumanMessage(userPrompt)

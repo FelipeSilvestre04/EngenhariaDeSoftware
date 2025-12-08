@@ -55,19 +55,27 @@ export class AuthService {
             });
 
             const { data } = await oauth2.userinfo.get();
-            
+
             if (!data || !data.email) {
                 throw new Error("Falha ao obter informações do usuário.");
             }
 
-            const query = `SELECT Check_User($1, $2) as "userId"`;
-            const dbResult = await db.query(query, [data.name, data.email]);
-            
-            // O ID agora é um NÚMERO (INT) vindo do banco
-            const realUserId = dbResult.rows[0].userId;
-            
-            console.log(`✅ Usuário logado/criado no BD: ${data.email} (ID: ${realUserId})`);
-            
+            console.log(`🔍 [Auth] Usuário Google: ${data.email}, ${data.name}`);
+
+            // Tentar criar/verificar usuário no banco
+            let realUserId;
+            try {
+                const query = `SELECT check_user($1, $2) as userid`;
+                console.log(`🔍 [Auth] Executando check_user no banco...`);
+                const dbResult = await db.query(query, [data.name, data.email]);
+                realUserId = dbResult.rows[0].userid;
+                console.log(`✅ [Auth] Usuário no BD: ${data.email} (ID: ${realUserId})`);
+            } catch (dbError) {
+                console.error(`❌ [Auth] Erro no banco:`, dbError.message);
+                console.error(`❌ [Auth] Detalhes:`, dbError);
+                throw new Error(`Erro no banco de dados: ${dbError.message}`);
+            }
+
             await this.tokenStorage.saveTokens(realUserId.toString(), tokens);
 
             const payload = {
@@ -159,7 +167,7 @@ export class AuthService {
 
     async generateRefreshToken(payload, expiresIn = '15d') {
         try {
-            const refreshToken = await this.jwtLibrary.sign({...payload, type: 'refresh'},
+            const refreshToken = await this.jwtLibrary.sign({ ...payload, type: 'refresh' },
                 process.env.JWT_REFRESH_SECRET,
                 { expiresIn });
             return refreshToken;
@@ -172,7 +180,7 @@ export class AuthService {
     async generateTokenPair(payload) {
         try {
             delete payload.password;
-            
+
             const accessToken = await this.generateToken(payload, '2d');
             const refreshToken = await this.generateRefreshToken(payload, '7d');
 
@@ -196,18 +204,18 @@ export class AuthService {
     async refreshAccessToken(refreshToken) {
         try {
             const decoded = await this.jwtLibrary.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-            
+
             if (!decoded || decoded.type !== 'refresh') {
                 throw new Error("Refresh token inválido");
             }
 
-            const {type, iat, exp, ...payload} = decoded;
+            const { type, iat, exp, ...payload } = decoded;
             const accessToken = await this.generateToken(payload, '2d');
-            
-            return { 
-                accessToken, 
+
+            return {
+                accessToken,
                 refreshToken,
-                expiresIn: 900 
+                expiresIn: 900
             };
 
         } catch (error) {

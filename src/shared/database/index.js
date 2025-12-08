@@ -3,10 +3,20 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// DEBUG: Verificar DATABASE_URL
+const dbUrl = process.env.DATABASE_URL;
+console.log(`🔍 [DB] DATABASE_URL definida: ${dbUrl ? 'Sim' : 'NÃO!'}`);
+if (dbUrl) {
+    // Mostra apenas o host (oculta senha)
+    const match = dbUrl.match(/@([^/]+)/);
+    console.log(`🔍 [DB] Host do banco: ${match ? match[1] : 'não identificado'}`);
+}
+
 // Configuração do pool de conexão
 const pool = new pg.Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    // SSL sempre ativo para funcionar com Render (exige conexão segura)
+    ssl: { rejectUnauthorized: false }
 });
 
 // Função auxiliar para logs

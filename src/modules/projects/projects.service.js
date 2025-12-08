@@ -62,10 +62,10 @@ import { db } from '../../shared/database/index.js';
 export class ProjectsService {
     async getAllProjects(userId) {
         const query = `
-            SELECT "Project_ID" as id, "Name" as title, "Color" as color 
-            FROM Project 
-            WHERE "User_ID" = $1 
-            ORDER BY "Project_ID" ASC
+            SELECT project_id as id, name as title, color 
+            FROM project 
+            WHERE user_id = $1 
+            ORDER BY project_id ASC
         `;
         const result = await db.query(query, [userId]);
         return result.rows;
@@ -73,9 +73,9 @@ export class ProjectsService {
 
     async getProjectById(id, userId) {
         const query = `
-            SELECT "Project_ID" as id, "Name" as title, "Color" as color 
-            FROM Project 
-            WHERE "Project_ID" = $1 AND "User_ID" = $2
+            SELECT project_id as id, name as title, color 
+            FROM project 
+            WHERE project_id = $1 AND user_id = $2
         `;
         const result = await db.query(query, [id, userId]);
         return result.rows[0];
@@ -83,9 +83,9 @@ export class ProjectsService {
 
     /*async getIdByName(userId, title) {
         const query = `
-            SELECT "Project_ID" as id 
-            FROM Project 
-            WHERE "User_ID" = $1 AND "Name" = $2
+            SELECT project_id as id 
+            FROM project 
+            WHERE user_id = $1 AND name = $2
         `;
         const result = await db.query(query, [userId, title]);
         
@@ -96,11 +96,10 @@ export class ProjectsService {
     }*/
 
     async createProject(userId, title, color = '#666666') {
-        // Trigger Setup_AfterInsertProject [cite: 94-105] criará as listas automaticamente
         const query = `
-            INSERT INTO Project ("User_ID", "Name", "Color") 
+            INSERT INTO project (user_id, name, color) 
             VALUES ($1, $2, $3) 
-            RETURNING "Project_ID" as id, "Name" as title, "Color" as color
+            RETURNING project_id as id, name as title, color
         `;
         const result = await db.query(query, [userId, title, color]);
         console.log(`✅ Projeto criado: ${title}`);
@@ -109,9 +108,9 @@ export class ProjectsService {
 
     async deleteProject(id, userId) {
         const query = `
-            DELETE FROM Project 
-            WHERE "Project_ID" = $1 AND "User_ID" = $2 
-            RETURNING "Project_ID" as id, "Name" as title
+            DELETE FROM project 
+            WHERE project_id = $1 AND user_id = $2 
+            RETURNING project_id as id, name as title
         `;
         const result = await db.query(query, [id, userId]);
         if (result.rows.length === 0) throw new Error('Projeto não encontrado');

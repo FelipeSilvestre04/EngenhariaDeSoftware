@@ -99,47 +99,46 @@
 import { db } from '../../shared/database/index.js';
 
 export class TasksService {
-    
-    // Auxiliar para pegar o List_ID pelo nome (o banco já cria 'to-do', etc)
+
+    // Auxiliar para pegar o list_id pelo nome
     async getListId(projectId, userId, listName) {
         const query = `
-            SELECT "List_ID" FROM List 
-            WHERE "Project_ID" = $1 AND "User_ID" = $2 AND "Name" = $3
+            SELECT list_id FROM list 
+            WHERE project_id = $1 AND user_id = $2 AND name = $3
         `;
         const result = await db.query(query, [projectId, userId, listName]);
         if (result.rows.length === 0) {
             // Fallback para 'to-do' se não achar
-            const fallback = await db.query(`SELECT "List_ID" FROM List WHERE "Project_ID"=$1 AND "Name"='to-do'`, [projectId]);
-            return fallback.rows[0]?.List_ID || 1;
+            const fallback = await db.query(`SELECT list_id FROM list WHERE project_id=$1 AND name='to-do'`, [projectId]);
+            return fallback.rows[0]?.list_id || 1;
         }
-        return result.rows[0].List_ID;
+        return result.rows[0].list_id;
     }
 
     async getTasksByProject(projectId, userId) {
-        // Query complexa: Busca a Task E faz um array com os nomes das Tags (JOIN)
         const query = `
             SELECT 
-                t."Task_ID" as id, 
-                t."Project_ID" as "projectId", 
-                t."Text" as title, 
-                t."Description" as description,
-                l."Name" as column,
+                t.task_id as id, 
+                t.project_id as "projectId", 
+                t.text as title, 
+                t.description as description,
+                l.name as column,
                 COALESCE(
-                    array_agg(tg."Tag_Name") FILTER (WHERE tg."Tag_Name" IS NOT NULL), 
+                    array_agg(tg.tag_name) FILTER (WHERE tg.tag_name IS NOT NULL), 
                     '{}'
                 ) as tags
-            FROM Task t
-            JOIN List l ON t."List_ID" = l."List_ID" 
-                AND t."Project_ID" = l."Project_ID" 
-                AND t."User_ID" = l."User_ID"
-            LEFT JOIN Tag_Task tt ON t."Task_ID" = tt."Task_ID" 
-                AND t."Project_ID" = tt."Project_ID"
-            LEFT JOIN Tag tg ON tt."Tag_ID" = tg."Tag_ID"
-            WHERE t."Project_ID" = $1 AND t."User_ID" = $2
-            GROUP BY t."Task_ID", l."List_ID", l."Name"
-            ORDER BY l."List_ID", t."Task_ID" ASC
+            FROM task t
+            JOIN list l ON t.list_id = l.list_id 
+                AND t.project_id = l.project_id 
+                AND t.user_id = l.user_id
+            LEFT JOIN tag_task tt ON t.task_id = tt.task_id 
+                AND t.project_id = tt.project_id
+            LEFT JOIN tag tg ON tt.tag_id = tg.tag_id
+            WHERE t.project_id = $1 AND t.user_id = $2
+            GROUP BY t.task_id, l.list_id, l.name
+            ORDER BY l.list_id, t.task_id ASC
         `;
-        
+
         const result = await db.query(query, [projectId, userId]);
         return result.rows;
     }
@@ -147,24 +146,21 @@ export class TasksService {
     async createTask({ userId, projectId, title, description, column = 'to-do', tags = [] }) {
         const listId = await this.getListId(projectId, userId, column);
 
-        // 1. Criar a Task
         const insertTaskQuery = `
-            INSERT INTO Task ("List_ID", "Project_ID", "User_ID", "Text", "Description")
+            INSERT INTO task (list_id, project_id, user_id, text, description)
             VALUES ($1, $2, $3, $4, $5)
-            RETURNING "Task_ID" as id
+            RETURNING task_id as id
         `;
         const taskResult = await db.query(insertTaskQuery, [listId, projectId, userId, title, description || '']);
         const newTaskId = taskResult.rows[0].id;
 
-        // 2. Vincular Tags usando sua função Link_Tag_Task
         if (tags && tags.length > 0) {
             for (const tagName of tags) {
-                // Link_Tag_Task(p_Tag_Name, p_Task_ID, p_List_ID, p_Project_ID, p_User_ID)
-                await db.query(`SELECT Link_Tag_Task($1, $2, $3, $4, $5)`, 
+                await db.query(`SELECT link_tag_task($1, $2, $3, $4, $5)`,
                     [tagName, newTaskId, listId, projectId, userId]);
             }
         }
-        
+
         return {
             id: newTaskId,
             projectId, title, description, column, tags
@@ -174,44 +170,40 @@ export class TasksService {
     async updateTask({ taskId, projectId, userId, currentColumn }, updates) {
         const oldListId = await this.getListId(projectId, userId, currentColumn);
 
-        // 1. Mover de Coluna (TrocarTask)
+        // 1. Mover de Coluna
         if (updates.column && updates.column !== currentColumn) {
             const newListId = await this.getListId(projectId, userId, updates.column);
-            await db.query(`SELECT TrocarTask($1, $2, $3, $4, $5)`, 
+            await db.query(`SELECT trocartask($1, $2, $3, $4, $5)`,
                 [oldListId, newListId, taskId, projectId, userId]);
-            // Nota: TrocarTask altera o Task_ID. O front deve recarregar a lista.
             return { message: "Tarefa movida" };
         }
 
-        // 2. Atualizar Dados (Titulo, Descrição)
+        // 2. Atualizar Dados
         const fields = [];
         const values = [];
         let idx = 1;
 
-        if (updates.title) { fields.push(`"Text" = $${idx++}`); values.push(updates.title); }
-        if (updates.description) { fields.push(`"Description" = $${idx++}`); values.push(updates.description); }
+        if (updates.title) { fields.push(`text = $${idx++}`); values.push(updates.title); }
+        if (updates.description) { fields.push(`description = $${idx++}`); values.push(updates.description); }
 
         if (fields.length > 0) {
             values.push(taskId, userId, projectId, oldListId);
             const query = `
-                UPDATE Task SET ${fields.join(', ')}
-                WHERE "Task_ID" = $${idx++} AND "User_ID" = $${idx++} AND "Project_ID" = $${idx++} AND "List_ID" = $${idx++}
+                UPDATE task SET ${fields.join(', ')}
+                WHERE task_id = $${idx++} AND user_id = $${idx++} AND project_id = $${idx++} AND list_id = $${idx++}
             `;
             await db.query(query, values);
         }
 
-        // 3. Atualizar Tags (Sincronização)
+        // 3. Atualizar Tags
         if (updates.tags) {
-            // Primeiro removemos as associações antigas dessa tarefa para evitar duplicatas ou lixo
-            // (Sua função Link_Tag_Task apenas adiciona, não remove)
             await db.query(`
-                DELETE FROM Tag_Task 
-                WHERE "Task_ID" = $1 AND "Project_ID" = $2 AND "User_ID" = $3
+                DELETE FROM tag_task 
+                WHERE task_id = $1 AND project_id = $2 AND user_id = $3
             `, [taskId, projectId, userId]);
 
-            // Re-adiciona as tags enviadas usando sua função
             for (const tagName of updates.tags) {
-                await db.query(`SELECT Link_Tag_Task($1, $2, $3, $4, $5)`, 
+                await db.query(`SELECT link_tag_task($1, $2, $3, $4, $5)`,
                     [tagName, taskId, oldListId, projectId, userId]);
             }
         }
@@ -221,16 +213,16 @@ export class TasksService {
 
     async deleteTask({ taskId, projectId, userId, currentColumn }) {
         const listId = await this.getListId(projectId, userId, currentColumn);
-        
-        // O ON DELETE CASCADE no banco deve limpar a tabela Tag_Task automaticamente
+
         const query = `
-            DELETE FROM Task 
-            WHERE "Task_ID" = $1 AND "User_ID" = $2 AND "Project_ID" = $3 AND "List_ID" = $4
-            RETURNING "Task_ID"
+            DELETE FROM task 
+            WHERE task_id = $1 AND user_id = $2 AND project_id = $3 AND list_id = $4
+            RETURNING task_id
         `;
         const result = await db.query(query, [taskId, userId, projectId, listId]);
-        
+
         if (result.rows.length === 0) throw new Error('Tarefa não encontrada');
         return result.rows[0];
     }
 }
+
