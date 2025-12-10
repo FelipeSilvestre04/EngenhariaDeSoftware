@@ -727,7 +727,6 @@ export class LLMService {
         const createProjectTool = tool(
             async ({ title, color }) => {
                 try {
-                    // INJEÇÃO DO USER ID
                     const newProject = await this.projectService.createProject(userId, title, color);
                     return `Projeto criado com sucesso! ID: ${newProject.id}, Nome: "${newProject.title}"`;
                 } catch (error) {
@@ -747,7 +746,6 @@ export class LLMService {
         const listProjectsTool = tool(
             async () => {
                 try {
-                    // INJEÇÃO DO USER ID
                     const projects = await this.projectService.getAllProjects(userId);
                     if (!projects || projects.length === 0) return "Nenhum projeto encontrado.";
 
@@ -770,7 +768,6 @@ export class LLMService {
         const deleteProjectTool = tool(
             async ({ projectId }) => {
                 try {
-                    // INJEÇÃO DO USER ID
                     const deleted = await this.projectService.deleteProject(projectId, userId);
                     return `Projeto "${deleted.title}" (ID: ${deleted.id}) deletado com sucesso!`;
                 } catch (error) {

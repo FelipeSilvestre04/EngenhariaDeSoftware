@@ -25,16 +25,15 @@ export const config = {
         defaultModel: 'moonshotai/kimi-k2-instruct-0905',
         defaultTemperature: 0.7,
         hfToken: process.env.HFTOKEN || '',
-        // CORREÇÃO: Linha adicionada para o modelo de embeddings do HuggingFace
         modelHf: process.env.MODELHF || 'sentence-transformers/all-MiniLM-L6-v2'
     },
     googleCalendar: {
         clientId: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        // Tenta pegar da ENV, senão tenta construir com URL do Render, senão usa hardcoded da produção (como fallback de segurança para o usuário), e por ultimo localhost
+        // Fallback: ENV > Render URL > hardcoded
         redirectUri: process.env.GOOGLE_REDIRECT_URI ||
             (process.env.RENDER_EXTERNAL_URL ? `${process.env.RENDER_EXTERNAL_URL}/auth/callback` : null) ||
-            'https://engenhariadesoftware.onrender.com/auth/callback', // Fallback forçado conforme URL do usuário
+            'https://engenhariadesoftware.onrender.com/auth/callback',
         scopes: [
             'https://www.googleapis.com/auth/calendar',
             'https://www.googleapis.com/auth/userinfo.profile',

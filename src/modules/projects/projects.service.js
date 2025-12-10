@@ -96,7 +96,6 @@ export class ProjectsService {
     }*/
 
     async createProject(userId, title, color = '#666666') {
-        // Trigger Setup_AfterInsertProject [cite: 94-105] criará as listas automaticamente
         const query = `
             INSERT INTO project (user_id, name, color) 
             VALUES ($1, $2, $3) 
